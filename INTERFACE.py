@@ -208,11 +208,10 @@ class ControleGastosApp(ctk.CTk):
         cards_container.pack_propagate(False)
         cards_container.grid_columnconfigure(0, weight=1)
         cards_container.grid_columnconfigure(1, weight=1)
-        cards_container.grid_columnconfigure(2, weight=1)
 
         self.card_total = self.criar_card_resumo(cards_container, "Total registrado", 0)
-        self.card_ticket = self.criar_card_resumo(cards_container, "Ticket medio", 1)
-        self.card_quantidade = self.criar_card_resumo(cards_container, "Qtd. de registros", 2)
+        self.card_ticket = None
+        self.card_quantidade = self.criar_card_resumo(cards_container, "Qtd. de registros", 1)
 
         botoes_stats = ctk.CTkFrame(stats_frame, fg_color="transparent")
         botoes_stats.pack(fill="x", padx=20, pady=(5, 5))
@@ -324,7 +323,7 @@ class ControleGastosApp(ctk.CTk):
 
         # Limpar campos
         self.limpar_campos()
-
+        
     def limpar_campos(self):
         """Limpa todos os campos do formulário"""
         self.entry_data.delete(0, 'end')
@@ -341,8 +340,6 @@ class ControleGastosApp(ctk.CTk):
 
         if hasattr(self, 'card_total'):
             self.card_total.configure(text=f"R$ {total:,.2f}")
-        if hasattr(self, 'card_ticket'):
-            self.card_ticket.configure(text=f"R$ {media:,.2f}")
         if hasattr(self, 'card_quantidade'):
             self.card_quantidade.configure(text=str(quantidade))
 
