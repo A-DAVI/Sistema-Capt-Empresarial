@@ -22,10 +22,23 @@ class ControleGastosApp(ctk.CTk):
         self.gastos = self.carregar_dados()
         self.janela_gestao = None
         self.lista_gastos_frame = None
-        self.filtro_data_entry = None
-        self.filtro_tipo_combo = None
-        self.filtro_forma_combo = None
-        self.filtro_valor_combo = None
+        self.filtros_colunas = {
+            "data": None,
+            "forma": None,
+            "tipo": None,
+            "valor": None,
+            "historico": None
+        }
+        self.dropdown_filtros = {}
+        self._atualizando_dropdowns = False
+        self.colunas_planilha = [
+            {"titulo": "Data", "chave": "data", "peso": 2, "anchor": "center"},
+            {"titulo": "Forma de Pagamento (Banco/Caixa)", "chave": "forma", "peso": 3, "anchor": "w"},
+            {"titulo": "Despesa", "chave": "tipo", "peso": 3, "anchor": "w"},
+            {"titulo": "Valor", "chave": "valor", "peso": 2, "anchor": "e"},
+            {"titulo": "Historico (Descricao da Despesa)", "chave": "historico", "peso": 4, "anchor": "w"}
+        ]
+        self.peso_coluna_acoes = 2
 
         # Criar interface
         self.criar_widgets()
@@ -429,60 +442,41 @@ class ControleGastosApp(ctk.CTk):
             font=ctk.CTkFont(size=20, weight="bold")
         ).pack(pady=20)
 
-        filtros_frame = ctk.CTkFrame(self.janela_gestao, corner_radius=12)
-        filtros_frame.pack(fill="x", padx=20, pady=(0, 15))
-        filtros_frame.grid_columnconfigure((0, 1, 2, 3), weight=1)
+        for chave in self.filtros_colunas:
+            self.filtros_colunas[chave] = None
 
-        ctk.CTkLabel(filtros_frame, text="Data (DD/MM/AAAA)").grid(row=0, column=0, sticky="w", padx=10, pady=(10, 2))
-        self.filtro_data_entry = ctk.CTkEntry(filtros_frame, height=32)
-        self.filtro_data_entry.grid(row=1, column=0, padx=10, pady=(0, 10), sticky="ew")
+        self.dropdown_filtros = {}
 
-        ctk.CTkLabel(filtros_frame, text="Tipo").grid(row=0, column=1, sticky="w", padx=10, pady=(10, 2))
-        tipos_filtro = ["Todos"] + sorted(self.tipos_despesa)
-        self.filtro_tipo_combo = ctk.CTkComboBox(filtros_frame, values=tipos_filtro, height=32)
-        self.filtro_tipo_combo.set("Todos")
-        self.filtro_tipo_combo.grid(row=1, column=1, padx=10, pady=(0, 10), sticky="ew")
+        tabela_container = ctk.CTkFrame(self.janela_gestao, corner_radius=12)
+        tabela_container.pack(fill="both", expand=True, padx=20, pady=(0, 20))
 
-        ctk.CTkLabel(filtros_frame, text="Forma de Pagamento").grid(row=0, column=2, sticky="w", padx=10, pady=(10, 2))
-        formas_filtro = ["Todos"] + sorted(self.formas_pagamento)
-        self.filtro_forma_combo = ctk.CTkComboBox(filtros_frame, values=formas_filtro, height=32)
-        self.filtro_forma_combo.set("Todos")
-        self.filtro_forma_combo.grid(row=1, column=2, padx=10, pady=(0, 10), sticky="ew")
-
-        ctk.CTkLabel(filtros_frame, text="Valor").grid(row=0, column=3, sticky="w", padx=10, pady=(10, 2))
-        self.filtro_valor_combo = ctk.CTkComboBox(
-            filtros_frame,
-            values=["Todos", "Até 100", "100 a 500", "500 a 1000", "Acima de 1000"],
-            height=32
-        )
-        self.filtro_valor_combo.set("Todos")
-        self.filtro_valor_combo.grid(row=1, column=3, padx=10, pady=(0, 10), sticky="ew")
-
-        botoes_filtro = ctk.CTkFrame(filtros_frame, fg_color="transparent")
-        botoes_filtro.grid(row=2, column=0, columnspan=4, pady=(0, 10), sticky="ew")
-
+        botoes_auxiliares = ctk.CTkFrame(tabela_container, fg_color="transparent")
+        botoes_auxiliares.pack(fill="x", padx=20, pady=(15, 5))
         ctk.CTkButton(
-            botoes_filtro,
-            text="Aplicar filtros",
-            command=self.renderizar_lista_gastos,
-            height=32
-        ).pack(side="left", expand=True, fill="x", padx=(0, 5))
-
-        ctk.CTkButton(
-            botoes_filtro,
-            text="Limpar filtros",
+            botoes_auxiliares,
+            text="Limpar filtros aplicados",
             command=self.limpar_filtros_gestao,
-            height=32,
+            height=30,
             fg_color="#95a5a6",
             hover_color="#7f8c8d"
-        ).pack(side="left", expand=True, fill="x", padx=(5, 0))
+        ).pack(anchor="e")
+
+        planilha_frame = ctk.CTkFrame(tabela_container, corner_radius=14, fg_color="#0f131c")
+        planilha_frame.pack(fill="both", expand=True, padx=15, pady=(0, 10))
+        planilha_frame.grid_rowconfigure(1, weight=1)
+        planilha_frame.grid_columnconfigure(0, weight=1)
+
+        header = self.criar_header_tabela(planilha_frame)
+        header.grid(row=0, column=0, sticky="ew", padx=0, pady=(10, 0))
 
         self.lista_gastos_frame = ctk.CTkScrollableFrame(
-            self.janela_gestao,
-            width=850,
-            height=460
+            planilha_frame,
+            width=820,
+            height=420,
+            fg_color="transparent"
         )
-        self.lista_gastos_frame.pack(fill="both", expand=True, padx=20, pady=(0, 20))
+        self.lista_gastos_frame.grid(row=1, column=0, sticky="nsew", padx=0, pady=(5, 12))
+        self.lista_gastos_frame.grid_columnconfigure(0, weight=1)
 
         ctk.CTkButton(
             self.janela_gestao,
@@ -500,21 +494,14 @@ class ControleGastosApp(ctk.CTk):
             self.janela_gestao.destroy()
         self.janela_gestao = None
         self.lista_gastos_frame = None
-        self.filtro_data_entry = None
-        self.filtro_tipo_combo = None
-        self.filtro_forma_combo = None
-        self.filtro_valor_combo = None
+        self.filtro_labels = {}
 
     def limpar_filtros_gestao(self):
-        """Limpa todos os filtros e atualiza a lista"""
-        if self.filtro_data_entry:
-            self.filtro_data_entry.delete(0, 'end')
-        if self.filtro_tipo_combo:
-            self.filtro_tipo_combo.set("Todos")
-        if self.filtro_forma_combo:
-            self.filtro_forma_combo.set("Todos")
-        if self.filtro_valor_combo:
-            self.filtro_valor_combo.set("Todos")
+        """Limpa filtros ativos no cabeçalho da tabela"""
+        for chave in self.filtros_colunas:
+            self.filtros_colunas[chave] = None
+        for dropdown in self.dropdown_filtros.values():
+            dropdown.set("Todos")
         self.renderizar_lista_gastos()
 
     def obter_gastos_ordenados(self):
@@ -539,121 +526,270 @@ class ControleGastosApp(ctk.CTk):
         for child in self.lista_gastos_frame.winfo_children():
             child.destroy()
 
-        gastos_filtrados = self.filtrar_gastos(self.obter_gastos_ordenados())
+        gastos_filtrados = self.filtrar_gastos()
 
         if not gastos_filtrados:
             ctk.CTkLabel(
                 self.lista_gastos_frame,
-                text="Nenhuma despesa registrada.",
-                font=ctk.CTkFont(size=14, weight="bold")
-            ).pack(pady=20)
+                text="Nenhuma despesa encontrada com os filtros atuais.",
+                font=ctk.CTkFont(size=13)
+            ).grid(pady=30, padx=10)
             return
 
-        for indice, gasto in gastos_filtrados:
-            card = ctk.CTkFrame(self.lista_gastos_frame, corner_radius=12)
-            card.pack(fill="x", padx=15, pady=7)
+        linha_altura = 42
+        divisor_cor = "#b0b9ce"
 
-            topo = ctk.CTkFrame(card, fg_color="transparent")
-            topo.pack(fill="x", padx=15, pady=(10, 0))
-            topo.grid_columnconfigure(0, weight=1)
-            topo.grid_columnconfigure(1, weight=0)
+        for linha_idx, (indice, gasto) in enumerate(gastos_filtrados):
+            bg_color = "#ffffff" if linha_idx % 2 == 0 else "#f8fbff"
+            linha_wrapper = ctk.CTkFrame(self.lista_gastos_frame, fg_color="transparent")
+            linha_wrapper.grid(row=linha_idx * 2, column=0, sticky="ew", padx=18, pady=0)
 
-            data_txt = gasto.get('data', '--')
-            ctk.CTkLabel(
-                topo,
-                text=data_txt,
-                font=ctk.CTkFont(size=15, weight="bold")
-            ).grid(row=0, column=0, sticky="w")
+            linha = ctk.CTkFrame(linha_wrapper, fg_color="transparent")
+            linha.pack(fill="x", expand=True)
 
-            ctk.CTkLabel(
-                topo,
-                text=f"R$ {gasto.get('valor', 0):,.2f}",
-                font=ctk.CTkFont(size=16, weight="bold"),
-                text_color="#1abc9c"
-            ).grid(row=0, column=1, sticky="e")
+            total_colunas = len(self.colunas_planilha) + 1
+            for col in range(total_colunas):
+                peso = self.colunas_planilha[col]["peso"] if col < len(self.colunas_planilha) else self.peso_coluna_acoes
+                linha.grid_columnconfigure(col, weight=peso)
 
-            detalhes = ctk.CTkFrame(card, fg_color="transparent")
-            detalhes.pack(fill="x", padx=15, pady=(4, 8))
-            detalhes.grid_columnconfigure(0, weight=1)
+            for col_idx, coluna in enumerate(self.colunas_planilha):
+                cell = ctk.CTkFrame(
+                    linha,
+                    fg_color=bg_color,
+                    border_color=divisor_cor,
+                    border_width=1,
+                    corner_radius=0,
+                    height=linha_altura
+                )
+                cell.grid(row=0, column=col_idx, sticky="nsew")
+                cell.grid_propagate(False)
+                cell.grid_columnconfigure(0, weight=1)
 
-            ctk.CTkLabel(
-                detalhes,
-                text=f"{gasto.get('tipo', '--')}  ·  Forma: {gasto.get('forma_pagamento', '--')}",
-                font=ctk.CTkFont(size=13)
-            ).grid(row=0, column=0, sticky="w")
+                texto = self.obter_valor_coluna(gasto, coluna["chave"])
+                padding = (8, 0) if coluna.get("anchor") == "center" else (12, 0)
+                fonte = ctk.CTkFont(
+                    size=12,
+                    weight="bold" if coluna["chave"] in ("data", "valor") else "normal"
+                )
+                ctk.CTkLabel(
+                    cell,
+                    text=texto,
+                    anchor=coluna.get("anchor", "w"),
+                    font=fonte,
+                    text_color="#1c7d5f" if coluna["chave"] == "valor" else "#293347"
+                ).grid(row=0, column=0, padx=padding, pady=6, sticky="nsew")
 
-            timestamp = gasto.get('timestamp')
-            if timestamp:
-                exibicao = timestamp.replace('T', ' ')[:16]
-            else:
-                exibicao = "Sem registro de horário"
+            acoes_cell = ctk.CTkFrame(
+                linha,
+                fg_color=bg_color,
+                border_color=divisor_cor,
+                border_width=1,
+                corner_radius=0,
+                height=linha_altura
+            )
+            acoes_cell.grid(row=0, column=len(self.colunas_planilha), sticky="nsew")
+            acoes_cell.grid_propagate(False)
 
-            ctk.CTkLabel(
-                detalhes,
-                text=f"Registrado em {exibicao}",
-                font=ctk.CTkFont(size=11),
-                text_color="#bdc3c7"
-            ).grid(row=1, column=0, sticky="w", pady=(2, 0))
-
-            botoes_frame = ctk.CTkFrame(card, fg_color="transparent")
-            botoes_frame.pack(fill="x", padx=15, pady=(0, 12))
+            botoes = ctk.CTkFrame(acoes_cell, fg_color="transparent")
+            botoes.pack(expand=True, padx=10, pady=4)
 
             ctk.CTkButton(
-                botoes_frame,
+                botoes,
                 text="Editar",
                 width=90,
+                height=28,
                 command=lambda idx=indice: self.abrir_editor_gasto(idx)
-            ).pack(side="left", padx=(0, 6))
+            ).pack(side="left", padx=(0, 4))
 
             ctk.CTkButton(
-                botoes_frame,
+                botoes,
                 text="Excluir",
                 width=90,
+                height=28,
                 fg_color="#e74c3c",
                 hover_color="#c0392b",
                 command=lambda idx=indice: self.excluir_gasto(idx)
             ).pack(side="left")
 
-    def filtrar_gastos(self, gastos_ordenados):
-        """Aplica os filtros selecionados antes de exibir o histórico"""
-        data_filtro = self.filtro_data_entry.get().strip() if self.filtro_data_entry else ""
-        tipo_filtro = self.filtro_tipo_combo.get() if self.filtro_tipo_combo else "Todos"
-        forma_filtro = self.filtro_forma_combo.get() if self.filtro_forma_combo else "Todos"
-        valor_filtro = self.filtro_valor_combo.get() if self.filtro_valor_combo else "Todos"
+            ctk.CTkFrame(
+                self.lista_gastos_frame,
+                height=1,
+                fg_color=divisor_cor
+            ).grid(row=linha_idx * 2 + 1, column=0, sticky="ew", padx=18)
 
-        def corresponde_valor(valor, criterio):
-            if criterio == "Todos":
-                return True
-            if criterio == "Até 100":
-                return valor <= 100
-            if criterio == "100 a 500":
-                return 100 < valor <= 500
-            if criterio == "500 a 1000":
-                return 500 < valor <= 1000
-            if criterio == "Acima de 1000":
-                return valor > 1000
-            return True
-
+    def filtrar_gastos(self):
+        """Aplica filtros ativos ao dataset ordenado"""
         resultado = []
-        for indice, gasto in gastos_ordenados:
-            if data_filtro and gasto.get('data') != data_filtro:
-                continue
-            if tipo_filtro != "Todos" and gasto.get('tipo') != tipo_filtro:
-                continue
-            if forma_filtro != "Todos" and gasto.get('forma_pagamento') != forma_filtro:
-                continue
-
-            valor = gasto.get('valor', 0)
-            try:
-                valor_float = float(valor)
-            except (TypeError, ValueError):
-                valor_float = 0
-
-            if not corresponde_valor(valor_float, valor_filtro):
-                continue
-
-            resultado.append((indice, gasto))
+        for indice, gasto in self.obter_gastos_ordenados():
+            if self.registro_corresponde_filtros(gasto):
+                resultado.append((indice, gasto))
         return resultado
+
+    def registro_corresponde_filtros(self, gasto):
+        """Retorna True quando o gasto atende todos os filtros aplicados"""
+        for coluna, filtro in self.filtros_colunas.items():
+            if not filtro:
+                continue
+            if self.obter_valor_coluna(gasto, coluna) != filtro:
+                return False
+        return True
+
+    def obter_valor_coluna(self, gasto, coluna):
+        """Retorna o texto exibido para determinada coluna"""
+        if coluna == "data":
+            return gasto.get('data', '--')
+        if coluna == "tipo":
+            return gasto.get('tipo', '--')
+        if coluna == "forma":
+            return gasto.get('forma_pagamento', '--')
+        if coluna == "valor":
+            return self.formatar_moeda(gasto.get('valor', 0))
+        if coluna == "historico":
+            return gasto.get('historico') or gasto.get('descricao') or '--'
+        return "--"
+
+    def formatar_moeda(self, valor):
+        """Formata os valores monetários utilizados na planilha"""
+        try:
+            numero = float(valor)
+        except (TypeError, ValueError):
+            numero = 0
+        return f"R$ {numero:,.2f}"
+
+    def criar_header_tabela(self, parent):
+        """Constroi cabeçalho estilo planilha com dropdowns embutidos"""
+        header = ctk.CTkFrame(parent, fg_color="#f0f0f0", corner_radius=0, border_width=1, border_color="#a6a6a6")
+        for idx, coluna in enumerate(self.colunas_planilha):
+            header.grid_columnconfigure(idx, weight=coluna["peso"])
+        header.grid_columnconfigure(len(self.colunas_planilha), weight=self.peso_coluna_acoes)
+
+        fonte_titulo = ctk.CTkFont(size=12, weight="bold")
+        for idx, coluna in enumerate(self.colunas_planilha):
+            bloco = ctk.CTkFrame(
+                header,
+                fg_color="#d9d9d9",
+                corner_radius=0,
+                border_color="#a6a6a6",
+                border_width=1
+            )
+            margem_esq = 14 if idx == 0 else 4
+            margem_dir = 14 if idx == len(self.colunas_planilha) - 1 else 4
+            bloco.grid(row=0, column=idx, sticky="nsew", padx=(margem_esq, margem_dir), pady=(6, 0))
+            bloco.grid_columnconfigure(0, weight=1)
+
+            ctk.CTkLabel(
+                bloco,
+                text=coluna["titulo"],
+                font=fonte_titulo,
+                text_color="#1f1f1f",
+                anchor=coluna.get("anchor", "w")
+            ).pack(fill="x", padx=10, pady=(4, 2))
+
+            filtro_btn = ctk.CTkButton(
+                bloco,
+                text="▼",
+                width=30,
+                height=24,
+                font=ctk.CTkFont(size=12),
+                fg_color="#c4c4c4",
+                hover_color="#b0b0b0",
+                text_color="#1f1f1f",
+                command=lambda chave=coluna["chave"]: self.mostrar_menu_filtro(chave)
+            )
+            filtro_btn.pack(padx=10, pady=(0, 4), anchor="e")
+
+        bloco_acoes = ctk.CTkFrame(
+            header,
+            fg_color="#d9d9d9",
+            corner_radius=0,
+            border_color="#a6a6a6",
+            border_width=1
+        )
+        bloco_acoes.grid(
+            row=0,
+            column=len(self.colunas_planilha),
+            sticky="nsew",
+            padx=(4, 14),
+            pady=(6, 0)
+        )
+        ctk.CTkLabel(
+            bloco_acoes,
+            text="Acoes",
+            font=fonte_titulo,
+            text_color="#1f1f1f",
+            anchor="center"
+        ).pack(fill="both", pady=10)
+
+        ctk.CTkFrame(header, height=1, fg_color="#a6a6a6").grid(
+            row=1,
+            column=0,
+            columnspan=len(self.colunas_planilha) + 1,
+            sticky="ew",
+            padx=10,
+            pady=(0, 6)
+        )
+
+        return header
+
+    def mostrar_menu_filtro(self, coluna):
+        """Exibe popup simples de filtro ao estilo Excel"""
+        if not self.janela_gestao:
+            return
+
+        valores = ["Todos"] + self.coletar_valores_para_dropdown(coluna)
+        popup = ctk.CTkToplevel(self.janela_gestao)
+        popup.title(f"Filtrar por {coluna}")
+        popup.geometry("220x150")
+        popup.resizable(False, False)
+        popup.transient(self.janela_gestao)
+        popup.grab_set()
+
+        ctk.CTkLabel(
+            popup,
+            text="Selecione um valor",
+            font=ctk.CTkFont(size=14, weight="bold")
+        ).pack(pady=(20, 10))
+
+        combo = ctk.CTkOptionMenu(
+            popup,
+            values=valores or ["Todos"],
+            width=160
+        )
+        combo.pack(pady=(0, 12))
+        combo.set(self.filtros_colunas.get(coluna) or "Todos")
+
+        def aplicar():
+            selecionado = combo.get()
+            self.filtros_colunas[coluna] = None if selecionado == "Todos" else selecionado
+            self.renderizar_lista_gastos()
+            popup.destroy()
+
+        ctk.CTkButton(
+            popup,
+            text="Aplicar",
+            command=aplicar,
+            width=120
+        ).pack()
+
+    def coletar_valores_para_dropdown(self, coluna):
+        """Lista itens disponíveis considerando outros filtros ativos"""
+        valores = set()
+        for gasto in self.gastos:
+            if not self.registro_corresponde_filtros_exceto(gasto, coluna):
+                continue
+            valor = self.obter_valor_coluna(gasto, coluna)
+            if valor:
+                valores.add(valor)
+        return sorted(valores)
+
+    def registro_corresponde_filtros_exceto(self, gasto, coluna_ignorada):
+        """Verifica se gasto respeita filtros exceto coluna fornecida"""
+        for chave, filtro in self.filtros_colunas.items():
+            if chave == coluna_ignorada or not filtro:
+                continue
+            if self.obter_valor_coluna(gasto, chave) != filtro:
+                return False
+        return True
 
     def abrir_editor_gasto(self, indice):
         """Abre modal para editar um gasto especifico"""
