@@ -1,30 +1,37 @@
 [
   {
-    "data": "13/11/2025",
+    "data": "14/11/2025",
     "tipo": "Aluguel",
-    "forma_pagamento": "Dinheiro",
-    "valor": 200000.0,
-    "timestamp": "2025-11-13T14:12:29.803848"
+    "forma_pagamento": "PIX",
+    "valor": 1850.0,
+    "timestamp": "2025-11-14T10:34:26.430044"
   },
   {
-    "data": "13/11/2025",
-    "tipo": "Combustível",
+    "data": "14/11/2025",
+    "tipo": "Energia Elétrica",
+    "forma_pagamento": "PIX",
+    "valor": 150.0,
+    "timestamp": "2025-11-14T10:34:50.025091"
+  },
+  {
+    "data": "14/11/2025",
+    "tipo": "Marketing",
+    "forma_pagamento": "PIX",
+    "valor": 700.0,
+    "timestamp": "2025-11-14T10:35:04.998434"
+  },
+  {
+    "data": "14/11/2025",
+    "tipo": "Software/Licenças",
     "forma_pagamento": "Cartão de Crédito",
-    "valor": 55.0,
-    "timestamp": "2025-11-13T14:13:15.810410"
+    "valor": 150.0,
+    "timestamp": "2025-11-14T10:35:23.383532"
   },
   {
-    "data": "13/11/2025",
+    "data": "14/11/2025",
     "tipo": "Consultoria",
     "forma_pagamento": "Cheque",
-    "valor": 151515.0,
-    "timestamp": "2025-11-13T15:00:12.344349"
-  },
-  {
-    "data": "13/11/2025",
-    "tipo": "Água",
-    "forma_pagamento": "Cartão de Débito",
-    "valor": 9090.0,
-    "timestamp": "2025-11-13T15:00:45.124757"
+    "valor": 800.0,
+    "timestamp": "2025-11-14T10:35:35.537504"
   }
 ]
