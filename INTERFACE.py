@@ -14,7 +14,7 @@ class ControleGastosApp(ctk.CTk):
 
         # Configurações da janela
         self.title("Controle de Gastos Empresariais")
-        self.geometry("700x650")
+        self.geometry("780x720")
         self.resizable(False, False)
 
         # Arquivo de dados
@@ -22,6 +22,10 @@ class ControleGastosApp(ctk.CTk):
         self.gastos = self.carregar_dados()
         self.janela_gestao = None
         self.lista_gastos_frame = None
+        self.filtro_data_entry = None
+        self.filtro_tipo_combo = None
+        self.filtro_forma_combo = None
+        self.filtro_valor_combo = None
 
         # Criar interface
         self.criar_widgets()
@@ -189,45 +193,63 @@ class ControleGastosApp(ctk.CTk):
         self.btn_gerenciar.pack(side="left", expand=True, fill="x", padx=(5, 0))
 
 
-        # Frame de estatísticas
-        stats_frame = ctk.CTkFrame(main_frame, corner_radius=10)
+        # Frame de estatisticas
+        stats_frame = ctk.CTkFrame(main_frame, corner_radius=12)
         stats_frame.pack(fill="x", padx=20, pady=(0, 20))
 
         ctk.CTkLabel(
             stats_frame,
-            text="📊 Resumo",
+            text="Resumo Financeiro",
             font=ctk.CTkFont(size=16, weight="bold")
-        ).pack(pady=(15, 10))
+        ).pack(pady=(12, 4))
 
-        # Labels de estatísticas
-        self.label_total = ctk.CTkLabel(
-            stats_frame,
-            text="Total de Despesas: R$ 0,00",
-            font=ctk.CTkFont(size=13)
-        )
-        self.label_total.pack(pady=5)
+        cards_container = ctk.CTkFrame(stats_frame, fg_color="transparent", height=90)
+        cards_container.pack(fill="x", padx=20, pady=(5, 5))
+        cards_container.pack_propagate(False)
+        cards_container.grid_columnconfigure(0, weight=1)
+        cards_container.grid_columnconfigure(1, weight=1)
+        cards_container.grid_columnconfigure(2, weight=1)
 
-        self.label_quantidade = ctk.CTkLabel(
-            stats_frame,
-            text="Quantidade de Registros: 0",
-            font=ctk.CTkFont(size=13)
-        )
-        self.label_quantidade.pack(pady=(5, 15))
+        self.card_total = self.criar_card_resumo(cards_container, "Total registrado", 0)
+        self.card_ticket = self.criar_card_resumo(cards_container, "Ticket medio", 1)
+        self.card_quantidade = self.criar_card_resumo(cards_container, "Qtd. de registros", 2)
 
-        # Botão Ver Relatório
+        botoes_stats = ctk.CTkFrame(stats_frame, fg_color="transparent")
+        botoes_stats.pack(fill="x", padx=20, pady=(5, 5))
+
         self.btn_relatorio = ctk.CTkButton(
-            main_frame,
-            text="📋 Ver Relatório Completo",
+            botoes_stats,
+            text="Ver Relatorio Completo",
             command=self.mostrar_relatorio,
-            height=40,
-            font=ctk.CTkFont(size=14, weight="bold"),
+            height=38,
+            font=ctk.CTkFont(size=13, weight="bold"),
             fg_color="#3498db",
             hover_color="#2980b9"
         )
-        self.btn_relatorio.pack(fill="x", padx=20, pady=(0, 20))
+        self.btn_relatorio.pack(fill="x")
 
         # Atualizar estatísticas
         self.atualizar_stats()
+
+    def criar_card_resumo(self, parent, titulo, coluna=0):
+        """Cria cards do resumo financeiro"""
+        card = ctk.CTkFrame(parent, corner_radius=12)
+        card.grid(row=0, column=coluna, padx=5, sticky="nsew")
+
+        ctk.CTkLabel(
+            card,
+            text=titulo,
+            font=ctk.CTkFont(size=11, weight="bold")
+        ).pack(pady=(8, 2))
+
+        valor_label = ctk.CTkLabel(
+            card,
+            text="--",
+            font=ctk.CTkFont(size=18, weight="bold")
+        )
+        valor_label.pack(pady=(0, 8))
+        return valor_label
+
 
     def validar_data(self, data_str):
         """Valida formato de data DD/MM/AAAA"""
@@ -312,12 +334,18 @@ class ControleGastosApp(ctk.CTk):
         self.entry_valor.delete(0, 'end')
 
     def atualizar_stats(self):
-        """Atualiza as estatísticas na interface"""
+        """Atualiza as estatisticas na interface"""
         total = sum(g['valor'] for g in self.gastos)
         quantidade = len(self.gastos)
+        media = total / quantidade if quantidade else 0
 
-        self.label_total.configure(text=f"Total de Despesas: R$ {total:,.2f}")
-        self.label_quantidade.configure(text=f"Quantidade de Registros: {quantidade}")
+        if hasattr(self, 'card_total'):
+            self.card_total.configure(text=f"R$ {total:,.2f}")
+        if hasattr(self, 'card_ticket'):
+            self.card_ticket.configure(text=f"R$ {media:,.2f}")
+        if hasattr(self, 'card_quantidade'):
+            self.card_quantidade.configure(text=str(quantidade))
+
 
     def mostrar_relatorio(self):
         """Mostra janela com relatório completo"""
@@ -379,6 +407,7 @@ class ControleGastosApp(ctk.CTk):
             height=35
         ).pack(pady=(0, 20))
 
+
     def abrir_gestao_gastos(self):
         """Abre interface para listar, editar e excluir despesas"""
         if not self.gastos:
@@ -399,6 +428,54 @@ class ControleGastosApp(ctk.CTk):
             text="Gestao de Despesas",
             font=ctk.CTkFont(size=20, weight="bold")
         ).pack(pady=20)
+
+        filtros_frame = ctk.CTkFrame(self.janela_gestao, corner_radius=12)
+        filtros_frame.pack(fill="x", padx=20, pady=(0, 15))
+        filtros_frame.grid_columnconfigure((0, 1, 2, 3), weight=1)
+
+        ctk.CTkLabel(filtros_frame, text="Data (DD/MM/AAAA)").grid(row=0, column=0, sticky="w", padx=10, pady=(10, 2))
+        self.filtro_data_entry = ctk.CTkEntry(filtros_frame, height=32)
+        self.filtro_data_entry.grid(row=1, column=0, padx=10, pady=(0, 10), sticky="ew")
+
+        ctk.CTkLabel(filtros_frame, text="Tipo").grid(row=0, column=1, sticky="w", padx=10, pady=(10, 2))
+        tipos_filtro = ["Todos"] + sorted(self.tipos_despesa)
+        self.filtro_tipo_combo = ctk.CTkComboBox(filtros_frame, values=tipos_filtro, height=32)
+        self.filtro_tipo_combo.set("Todos")
+        self.filtro_tipo_combo.grid(row=1, column=1, padx=10, pady=(0, 10), sticky="ew")
+
+        ctk.CTkLabel(filtros_frame, text="Forma de Pagamento").grid(row=0, column=2, sticky="w", padx=10, pady=(10, 2))
+        formas_filtro = ["Todos"] + sorted(self.formas_pagamento)
+        self.filtro_forma_combo = ctk.CTkComboBox(filtros_frame, values=formas_filtro, height=32)
+        self.filtro_forma_combo.set("Todos")
+        self.filtro_forma_combo.grid(row=1, column=2, padx=10, pady=(0, 10), sticky="ew")
+
+        ctk.CTkLabel(filtros_frame, text="Valor").grid(row=0, column=3, sticky="w", padx=10, pady=(10, 2))
+        self.filtro_valor_combo = ctk.CTkComboBox(
+            filtros_frame,
+            values=["Todos", "Até 100", "100 a 500", "500 a 1000", "Acima de 1000"],
+            height=32
+        )
+        self.filtro_valor_combo.set("Todos")
+        self.filtro_valor_combo.grid(row=1, column=3, padx=10, pady=(0, 10), sticky="ew")
+
+        botoes_filtro = ctk.CTkFrame(filtros_frame, fg_color="transparent")
+        botoes_filtro.grid(row=2, column=0, columnspan=4, pady=(0, 10), sticky="ew")
+
+        ctk.CTkButton(
+            botoes_filtro,
+            text="Aplicar filtros",
+            command=self.renderizar_lista_gastos,
+            height=32
+        ).pack(side="left", expand=True, fill="x", padx=(0, 5))
+
+        ctk.CTkButton(
+            botoes_filtro,
+            text="Limpar filtros",
+            command=self.limpar_filtros_gestao,
+            height=32,
+            fg_color="#95a5a6",
+            hover_color="#7f8c8d"
+        ).pack(side="left", expand=True, fill="x", padx=(5, 0))
 
         self.lista_gastos_frame = ctk.CTkScrollableFrame(
             self.janela_gestao,
@@ -423,6 +500,22 @@ class ControleGastosApp(ctk.CTk):
             self.janela_gestao.destroy()
         self.janela_gestao = None
         self.lista_gastos_frame = None
+        self.filtro_data_entry = None
+        self.filtro_tipo_combo = None
+        self.filtro_forma_combo = None
+        self.filtro_valor_combo = None
+
+    def limpar_filtros_gestao(self):
+        """Limpa todos os filtros e atualiza a lista"""
+        if self.filtro_data_entry:
+            self.filtro_data_entry.delete(0, 'end')
+        if self.filtro_tipo_combo:
+            self.filtro_tipo_combo.set("Todos")
+        if self.filtro_forma_combo:
+            self.filtro_forma_combo.set("Todos")
+        if self.filtro_valor_combo:
+            self.filtro_valor_combo.set("Todos")
+        self.renderizar_lista_gastos()
 
     def obter_gastos_ordenados(self):
         """Retorna lista de tuplas (indice, gasto) ordenada por data desc"""
@@ -446,9 +539,9 @@ class ControleGastosApp(ctk.CTk):
         for child in self.lista_gastos_frame.winfo_children():
             child.destroy()
 
-        gastos_ordenados = self.obter_gastos_ordenados()
+        gastos_filtrados = self.filtrar_gastos(self.obter_gastos_ordenados())
 
-        if not gastos_ordenados:
+        if not gastos_filtrados:
             ctk.CTkLabel(
                 self.lista_gastos_frame,
                 text="Nenhuma despesa registrada.",
@@ -456,33 +549,61 @@ class ControleGastosApp(ctk.CTk):
             ).pack(pady=20)
             return
 
-        for indice, gasto in gastos_ordenados:
-            gasto_frame = ctk.CTkFrame(self.lista_gastos_frame, corner_radius=8)
-            gasto_frame.pack(fill="x", padx=10, pady=5)
+        for indice, gasto in gastos_filtrados:
+            card = ctk.CTkFrame(self.lista_gastos_frame, corner_radius=12)
+            card.pack(fill="x", padx=15, pady=7)
 
-            info_text = (
-                f"Data: {gasto.get('data', '--')} | "
-                f"Tipo: {gasto.get('tipo', '--')}\n"
-                f"Forma: {gasto.get('forma_pagamento', '--')} | "
-                f"Valor: R$ {gasto.get('valor', 0):,.2f}"
-            )
+            topo = ctk.CTkFrame(card, fg_color="transparent")
+            topo.pack(fill="x", padx=15, pady=(10, 0))
+            topo.grid_columnconfigure(0, weight=1)
+            topo.grid_columnconfigure(1, weight=0)
+
+            data_txt = gasto.get('data', '--')
+            ctk.CTkLabel(
+                topo,
+                text=data_txt,
+                font=ctk.CTkFont(size=15, weight="bold")
+            ).grid(row=0, column=0, sticky="w")
 
             ctk.CTkLabel(
-                gasto_frame,
-                text=info_text,
-                justify="left",
-                font=ctk.CTkFont(size=13)
-            ).pack(side="left", fill="x", expand=True, padx=(15, 5), pady=10)
+                topo,
+                text=f"R$ {gasto.get('valor', 0):,.2f}",
+                font=ctk.CTkFont(size=16, weight="bold"),
+                text_color="#1abc9c"
+            ).grid(row=0, column=1, sticky="e")
 
-            botoes_frame = ctk.CTkFrame(gasto_frame, fg_color="transparent")
-            botoes_frame.pack(side="right", padx=10, pady=10)
+            detalhes = ctk.CTkFrame(card, fg_color="transparent")
+            detalhes.pack(fill="x", padx=15, pady=(4, 8))
+            detalhes.grid_columnconfigure(0, weight=1)
+
+            ctk.CTkLabel(
+                detalhes,
+                text=f"{gasto.get('tipo', '--')}  ·  Forma: {gasto.get('forma_pagamento', '--')}",
+                font=ctk.CTkFont(size=13)
+            ).grid(row=0, column=0, sticky="w")
+
+            timestamp = gasto.get('timestamp')
+            if timestamp:
+                exibicao = timestamp.replace('T', ' ')[:16]
+            else:
+                exibicao = "Sem registro de horário"
+
+            ctk.CTkLabel(
+                detalhes,
+                text=f"Registrado em {exibicao}",
+                font=ctk.CTkFont(size=11),
+                text_color="#bdc3c7"
+            ).grid(row=1, column=0, sticky="w", pady=(2, 0))
+
+            botoes_frame = ctk.CTkFrame(card, fg_color="transparent")
+            botoes_frame.pack(fill="x", padx=15, pady=(0, 12))
 
             ctk.CTkButton(
                 botoes_frame,
                 text="Editar",
                 width=90,
                 command=lambda idx=indice: self.abrir_editor_gasto(idx)
-            ).pack(side="left", padx=(0, 5))
+            ).pack(side="left", padx=(0, 6))
 
             ctk.CTkButton(
                 botoes_frame,
@@ -493,46 +614,122 @@ class ControleGastosApp(ctk.CTk):
                 command=lambda idx=indice: self.excluir_gasto(idx)
             ).pack(side="left")
 
+    def filtrar_gastos(self, gastos_ordenados):
+        """Aplica os filtros selecionados antes de exibir o histórico"""
+        data_filtro = self.filtro_data_entry.get().strip() if self.filtro_data_entry else ""
+        tipo_filtro = self.filtro_tipo_combo.get() if self.filtro_tipo_combo else "Todos"
+        forma_filtro = self.filtro_forma_combo.get() if self.filtro_forma_combo else "Todos"
+        valor_filtro = self.filtro_valor_combo.get() if self.filtro_valor_combo else "Todos"
+
+        def corresponde_valor(valor, criterio):
+            if criterio == "Todos":
+                return True
+            if criterio == "Até 100":
+                return valor <= 100
+            if criterio == "100 a 500":
+                return 100 < valor <= 500
+            if criterio == "500 a 1000":
+                return 500 < valor <= 1000
+            if criterio == "Acima de 1000":
+                return valor > 1000
+            return True
+
+        resultado = []
+        for indice, gasto in gastos_ordenados:
+            if data_filtro and gasto.get('data') != data_filtro:
+                continue
+            if tipo_filtro != "Todos" and gasto.get('tipo') != tipo_filtro:
+                continue
+            if forma_filtro != "Todos" and gasto.get('forma_pagamento') != forma_filtro:
+                continue
+
+            valor = gasto.get('valor', 0)
+            try:
+                valor_float = float(valor)
+            except (TypeError, ValueError):
+                valor_float = 0
+
+            if not corresponde_valor(valor_float, valor_filtro):
+                continue
+
+            resultado.append((indice, gasto))
+        return resultado
+
     def abrir_editor_gasto(self, indice):
         """Abre modal para editar um gasto especifico"""
         gasto = self.gastos[indice]
 
         editor = ctk.CTkToplevel(self)
         editor.title("Editar Despesa")
-        editor.geometry("400x450")
+        editor.geometry("460x520")
+        editor.resizable(False, False)
+        editor.transient(self)
+        editor.grab_set()
 
         ctk.CTkLabel(
             editor,
-            text="Editar Despesa",
+            text="Editar registro selecionado",
             font=ctk.CTkFont(size=18, weight="bold")
-        ).pack(pady=20)
+        ).pack(pady=(20, 10))
 
-        ctk.CTkLabel(editor, text="Data (DD/MM/AAAA)").pack(anchor="w", padx=20)
-        entry_data = ctk.CTkEntry(editor)
-        entry_data.pack(fill="x", padx=20, pady=(5, 15))
+        destaque = ctk.CTkFrame(editor, corner_radius=12)
+        destaque.pack(fill="x", padx=20, pady=(0, 15))
+        ctk.CTkLabel(
+            destaque,
+            text=gasto.get('tipo', '--'),
+            font=ctk.CTkFont(size=16, weight="bold")
+        ).pack(pady=(12, 2))
+        ctk.CTkLabel(
+            destaque,
+            text=f"Valor atual: R$ {gasto.get('valor', 0):,.2f}",
+            font=ctk.CTkFont(size=13)
+        ).pack(pady=(0, 12))
+
+        form_frame = ctk.CTkFrame(editor, fg_color="transparent")
+        form_frame.pack(fill="x", padx=20, pady=(0, 10))
+
+        def criar_campo(rotulo, widget_factory):
+            bloco = ctk.CTkFrame(form_frame, fg_color="transparent")
+            bloco.pack(fill="x", pady=8)
+            ctk.CTkLabel(
+                bloco,
+                text=rotulo,
+                font=ctk.CTkFont(size=12, weight="bold")
+            ).pack(anchor="w")
+            widget = widget_factory(bloco)
+            widget.pack(fill="x", pady=(5, 0))
+            return widget
+
+        entry_data = criar_campo(
+            "Data (DD/MM/AAAA)",
+            lambda parent: ctk.CTkEntry(parent, height=36)
+        )
         entry_data.insert(0, gasto.get('data', ''))
 
         tipos = self.tipos_despesa.copy()
         if gasto.get('tipo') and gasto['tipo'] not in tipos:
             tipos.append(gasto['tipo'])
 
-        ctk.CTkLabel(editor, text="Tipo de Despesa").pack(anchor="w", padx=20)
-        combo_tipo = ctk.CTkComboBox(editor, values=tipos)
-        combo_tipo.pack(fill="x", padx=20, pady=(5, 15))
+        combo_tipo = criar_campo(
+            "Tipo de Despesa",
+            lambda parent: ctk.CTkComboBox(parent, values=tipos)
+        )
         combo_tipo.set(gasto.get('tipo', "Selecione o tipo"))
 
         formas = self.formas_pagamento.copy()
         if gasto.get('forma_pagamento') and gasto['forma_pagamento'] not in formas:
             formas.append(gasto['forma_pagamento'])
 
-        ctk.CTkLabel(editor, text="Forma de Pagamento").pack(anchor="w", padx=20)
-        combo_pagamento = ctk.CTkComboBox(editor, values=formas)
-        combo_pagamento.pack(fill="x", padx=20, pady=(5, 15))
+        combo_pagamento = criar_campo(
+            "Forma de Pagamento",
+            lambda parent: ctk.CTkComboBox(parent, values=formas)
+        )
         combo_pagamento.set(gasto.get('forma_pagamento', "Selecione a forma"))
 
-        ctk.CTkLabel(editor, text="Valor (R$)").pack(anchor="w", padx=20)
-        entry_valor = ctk.CTkEntry(editor)
-        entry_valor.pack(fill="x", padx=20, pady=(5, 20))
+        entry_valor = criar_campo(
+            "Valor (R$)",
+            lambda parent: ctk.CTkEntry(parent, height=36)
+        )
         entry_valor.insert(0, f"{gasto.get('valor', 0):.2f}")
 
         def salvar_edicao():
@@ -569,20 +766,23 @@ class ControleGastosApp(ctk.CTk):
             messagebox.showinfo("Sucesso", "Despesa atualizada com sucesso!")
             editor.destroy()
 
+        botoes_modal = ctk.CTkFrame(editor, fg_color="transparent")
+        botoes_modal.pack(fill="x", padx=20, pady=(10, 0))
+
         ctk.CTkButton(
-            editor,
+            botoes_modal,
             text="Salvar alteracoes",
             command=salvar_edicao,
             height=40
-        ).pack(fill="x", padx=20, pady=(0, 10))
+        ).pack(side="left", expand=True, fill="x", padx=(0, 5))
 
         ctk.CTkButton(
-            editor,
+            botoes_modal,
             text="Cancelar",
             command=editor.destroy,
             fg_color="#95a5a6",
             hover_color="#7f8c8d"
-        ).pack(fill="x", padx=20)
+        ).pack(side="left", expand=True, fill="x", padx=(5, 0))
 
     def excluir_gasto(self, indice):
         """Remove gasto apos confirmacao"""
