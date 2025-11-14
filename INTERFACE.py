@@ -4,7 +4,7 @@ from datetime import datetime
 import json
 import os
 
-# Configurações de aparência
+
 ctk.set_appearance_mode("dark")
 ctk.set_default_color_theme("blue")
 
@@ -20,6 +20,8 @@ class ControleGastosApp(ctk.CTk):
         # Arquivo de dados
         self.arquivo_dados = "gastos_empresa.json"
         self.gastos = self.carregar_dados()
+        self.janela_gestao = None
+        self.lista_gastos_frame = None
 
         # Criar interface
         self.criar_widgets()
@@ -71,7 +73,7 @@ class ControleGastosApp(ctk.CTk):
             font=ctk.CTkFont(size=14, weight="bold")
         ).pack(anchor="w")
 
-        tipos_despesa = [
+        self.tipos_despesa = [
             "Salários e Encargos",
             "Aluguel",
             "Energia Elétrica",
@@ -91,7 +93,7 @@ class ControleGastosApp(ctk.CTk):
 
         self.combo_tipo = ctk.CTkComboBox(
             tipo_frame,
-            values=tipos_despesa,
+            values=self.tipos_despesa,
             height=35,
             font=ctk.CTkFont(size=13),
             dropdown_font=ctk.CTkFont(size=12)
@@ -109,7 +111,7 @@ class ControleGastosApp(ctk.CTk):
             font=ctk.CTkFont(size=14, weight="bold")
         ).pack(anchor="w")
 
-        formas_pagamento = [
+        self.formas_pagamento = [
             "Dinheiro",
             "Cartão de Crédito",
             "Cartão de Débito",
@@ -121,7 +123,7 @@ class ControleGastosApp(ctk.CTk):
 
         self.combo_pagamento = ctk.CTkComboBox(
             pagamento_frame,
-            values=formas_pagamento,
+            values=self.formas_pagamento,
             height=35,
             font=ctk.CTkFont(size=13),
             dropdown_font=ctk.CTkFont(size=12)
@@ -174,6 +176,18 @@ class ControleGastosApp(ctk.CTk):
             hover_color="#7f8c8d"
         )
         self.btn_limpar.pack(side="left", expand=True, fill="x", padx=(5, 0))
+        # Botão Gerenciar
+        self.btn_gerenciar = ctk.CTkButton(
+            botoes_frame,
+            text="Gerenciar Despesas",
+            command=self.abrir_gestao_gastos,
+            height=40,
+            font=ctk.CTkFont(size=14, weight="bold"),
+            fg_color="#8e44ad",
+            hover_color="#71368a"
+        )
+        self.btn_gerenciar.pack(side="left", expand=True, fill="x", padx=(5, 0))
+
 
         # Frame de estatísticas
         stats_frame = ctk.CTkFrame(main_frame, corner_radius=10)
@@ -278,6 +292,7 @@ class ControleGastosApp(ctk.CTk):
 
         # Atualizar estatísticas
         self.atualizar_stats()
+        self.renderizar_lista_gastos()
 
         # Mensagem de sucesso
         messagebox.showinfo(
@@ -363,6 +378,231 @@ class ControleGastosApp(ctk.CTk):
             command=relatorio_window.destroy,
             height=35
         ).pack(pady=(0, 20))
+
+    def abrir_gestao_gastos(self):
+        """Abre interface para listar, editar e excluir despesas"""
+        if not self.gastos:
+            messagebox.showinfo("Info", "Nenhuma despesa registrada ainda.")
+            return
+
+        if self.janela_gestao and self.janela_gestao.winfo_exists():
+            self.janela_gestao.focus_force()
+            self.renderizar_lista_gastos()
+            return
+
+        self.janela_gestao = ctk.CTkToplevel(self)
+        self.janela_gestao.title("Gerenciar Despesas")
+        self.janela_gestao.geometry("900x600")
+
+        ctk.CTkLabel(
+            self.janela_gestao,
+            text="Gestao de Despesas",
+            font=ctk.CTkFont(size=20, weight="bold")
+        ).pack(pady=20)
+
+        self.lista_gastos_frame = ctk.CTkScrollableFrame(
+            self.janela_gestao,
+            width=850,
+            height=460
+        )
+        self.lista_gastos_frame.pack(fill="both", expand=True, padx=20, pady=(0, 20))
+
+        ctk.CTkButton(
+            self.janela_gestao,
+            text="Fechar",
+            command=self.fechar_janela_gestao,
+            height=35
+        ).pack(pady=(0, 20))
+
+        self.janela_gestao.protocol("WM_DELETE_WINDOW", self.fechar_janela_gestao)
+        self.renderizar_lista_gastos()
+
+    def fechar_janela_gestao(self):
+        """Fecha janela de gestao e limpa referencias"""
+        if self.janela_gestao and self.janela_gestao.winfo_exists():
+            self.janela_gestao.destroy()
+        self.janela_gestao = None
+        self.lista_gastos_frame = None
+
+    def obter_gastos_ordenados(self):
+        """Retorna lista de tuplas (indice, gasto) ordenada por data desc"""
+        def parse_data(gasto):
+            try:
+                return datetime.strptime(gasto.get('data', ''), "%d/%m/%Y")
+            except (ValueError, TypeError):
+                return datetime.min
+
+        return sorted(
+            enumerate(self.gastos),
+            key=lambda item: (parse_data(item[1]), item[1].get('timestamp', '')),
+            reverse=True
+        )
+
+    def renderizar_lista_gastos(self):
+        """Atualiza a listagem na janela de gestao"""
+        if not self.lista_gastos_frame:
+            return
+
+        for child in self.lista_gastos_frame.winfo_children():
+            child.destroy()
+
+        gastos_ordenados = self.obter_gastos_ordenados()
+
+        if not gastos_ordenados:
+            ctk.CTkLabel(
+                self.lista_gastos_frame,
+                text="Nenhuma despesa registrada.",
+                font=ctk.CTkFont(size=14, weight="bold")
+            ).pack(pady=20)
+            return
+
+        for indice, gasto in gastos_ordenados:
+            gasto_frame = ctk.CTkFrame(self.lista_gastos_frame, corner_radius=8)
+            gasto_frame.pack(fill="x", padx=10, pady=5)
+
+            info_text = (
+                f"Data: {gasto.get('data', '--')} | "
+                f"Tipo: {gasto.get('tipo', '--')}\n"
+                f"Forma: {gasto.get('forma_pagamento', '--')} | "
+                f"Valor: R$ {gasto.get('valor', 0):,.2f}"
+            )
+
+            ctk.CTkLabel(
+                gasto_frame,
+                text=info_text,
+                justify="left",
+                font=ctk.CTkFont(size=13)
+            ).pack(side="left", fill="x", expand=True, padx=(15, 5), pady=10)
+
+            botoes_frame = ctk.CTkFrame(gasto_frame, fg_color="transparent")
+            botoes_frame.pack(side="right", padx=10, pady=10)
+
+            ctk.CTkButton(
+                botoes_frame,
+                text="Editar",
+                width=90,
+                command=lambda idx=indice: self.abrir_editor_gasto(idx)
+            ).pack(side="left", padx=(0, 5))
+
+            ctk.CTkButton(
+                botoes_frame,
+                text="Excluir",
+                width=90,
+                fg_color="#e74c3c",
+                hover_color="#c0392b",
+                command=lambda idx=indice: self.excluir_gasto(idx)
+            ).pack(side="left")
+
+    def abrir_editor_gasto(self, indice):
+        """Abre modal para editar um gasto especifico"""
+        gasto = self.gastos[indice]
+
+        editor = ctk.CTkToplevel(self)
+        editor.title("Editar Despesa")
+        editor.geometry("400x450")
+
+        ctk.CTkLabel(
+            editor,
+            text="Editar Despesa",
+            font=ctk.CTkFont(size=18, weight="bold")
+        ).pack(pady=20)
+
+        ctk.CTkLabel(editor, text="Data (DD/MM/AAAA)").pack(anchor="w", padx=20)
+        entry_data = ctk.CTkEntry(editor)
+        entry_data.pack(fill="x", padx=20, pady=(5, 15))
+        entry_data.insert(0, gasto.get('data', ''))
+
+        tipos = self.tipos_despesa.copy()
+        if gasto.get('tipo') and gasto['tipo'] not in tipos:
+            tipos.append(gasto['tipo'])
+
+        ctk.CTkLabel(editor, text="Tipo de Despesa").pack(anchor="w", padx=20)
+        combo_tipo = ctk.CTkComboBox(editor, values=tipos)
+        combo_tipo.pack(fill="x", padx=20, pady=(5, 15))
+        combo_tipo.set(gasto.get('tipo', "Selecione o tipo"))
+
+        formas = self.formas_pagamento.copy()
+        if gasto.get('forma_pagamento') and gasto['forma_pagamento'] not in formas:
+            formas.append(gasto['forma_pagamento'])
+
+        ctk.CTkLabel(editor, text="Forma de Pagamento").pack(anchor="w", padx=20)
+        combo_pagamento = ctk.CTkComboBox(editor, values=formas)
+        combo_pagamento.pack(fill="x", padx=20, pady=(5, 15))
+        combo_pagamento.set(gasto.get('forma_pagamento', "Selecione a forma"))
+
+        ctk.CTkLabel(editor, text="Valor (R$)").pack(anchor="w", padx=20)
+        entry_valor = ctk.CTkEntry(editor)
+        entry_valor.pack(fill="x", padx=20, pady=(5, 20))
+        entry_valor.insert(0, f"{gasto.get('valor', 0):.2f}")
+
+        def salvar_edicao():
+            nova_data = entry_data.get().strip()
+            if not self.validar_data(nova_data):
+                messagebox.showerror("Erro", "Data invalida. Use o formato DD/MM/AAAA.")
+                return
+
+            novo_tipo = combo_tipo.get().strip()
+            if not novo_tipo or novo_tipo == "Selecione o tipo":
+                messagebox.showerror("Erro", "Escolha um tipo de despesa.")
+                return
+
+            novo_pagamento = combo_pagamento.get().strip()
+            if not novo_pagamento or novo_pagamento == "Selecione a forma":
+                messagebox.showerror("Erro", "Escolha uma forma de pagamento.")
+                return
+
+            novo_valor = self.validar_valor(entry_valor.get())
+            if novo_valor is None:
+                messagebox.showerror("Erro", "Valor invalido! Digite um numero maior que zero.")
+                return
+
+            gasto.update({
+                "data": nova_data,
+                "tipo": novo_tipo,
+                "forma_pagamento": novo_pagamento,
+                "valor": novo_valor
+            })
+
+            self.salvar_dados()
+            self.atualizar_stats()
+            self.renderizar_lista_gastos()
+            messagebox.showinfo("Sucesso", "Despesa atualizada com sucesso!")
+            editor.destroy()
+
+        ctk.CTkButton(
+            editor,
+            text="Salvar alteracoes",
+            command=salvar_edicao,
+            height=40
+        ).pack(fill="x", padx=20, pady=(0, 10))
+
+        ctk.CTkButton(
+            editor,
+            text="Cancelar",
+            command=editor.destroy,
+            fg_color="#95a5a6",
+            hover_color="#7f8c8d"
+        ).pack(fill="x", padx=20)
+
+    def excluir_gasto(self, indice):
+        """Remove gasto apos confirmacao"""
+        gasto = self.gastos[indice]
+        valor = gasto.get('valor', 0)
+        data = gasto.get('data', "--")
+        tipo = gasto.get('tipo', "--")
+
+        confirmar = messagebox.askyesno(
+            "Confirmar exclusao",
+            f"Deseja excluir a despesa de {data} ({tipo}) no valor de R$ {valor:,.2f}?"
+        )
+        if not confirmar:
+            return
+
+        del self.gastos[indice]
+        self.salvar_dados()
+        self.atualizar_stats()
+        self.renderizar_lista_gastos()
+        messagebox.showinfo("Sucesso", "Despesa removida com sucesso!")
 
     def carregar_dados(self):
         """Carrega dados do arquivo JSON"""
