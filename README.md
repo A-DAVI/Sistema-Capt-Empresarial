@@ -1,131 +1,140 @@
 # Sistema de Controle de Gastos Empresariais
 
-Este projeto foi desenvolvido com o objetivo de fornecer uma solução interna para registro, gestão e análise de despesas empresariais.  
-A aplicação permite centralizar lançamentos financeiros, gerar relatórios completos e exportar documentos em PDF com identificação da empresa.
+Este sistema foi desenvolvido com o objetivo de facilitar o registro, visualização e gerenciamento de despesas empresariais, oferecendo uma interface moderna, organizada e compatível com ambientes corporativos.
 
 ---
 
-## 1. Objetivo do Projeto
+## 📌 1. Objetivo
 
-Criar uma ferramenta simples, eficiente e visualmente organizada para:
+Fornecer uma ferramenta simples e eficiente para:
 
-- Registrar despesas com informações detalhadas.
-- Consultar e editar lançamentos já existentes.
-- Aplicar filtros por data, tipo, forma de pagamento e faixa de valor.
-- Gerar relatórios completos para análise administrativa.
-- Exportar relatórios em formato PDF para fins de documentação e envio.
+- Registrar despesas com data, tipo, forma de pagamento e valor.
+- Gerenciar lançamentos existentes (edição e exclusão).
+- Aplicar filtros rápidos por múltiplos critérios.
+- Obter resumo financeiro consolidado.
+- Gerar relatórios em PDF com layout profissional.
 
 ---
 
-## 2. Principais Funcionalidades
+## 📌 2. Funcionalidades Principais
 
-### **Registro de Despesas**
-- Data
-- Tipo de despesa
-- Forma de pagamento
-- Valor
-- Registro automático de horário (timestamp)
+### **Registro**
+- Inserção rápida de dados.
+- Campos padronizados para manter consistência.
+- Timestamp automático para auditoria.
 
-### **Gestão Completa**
-- Listagem de todas as despesas em ordem cronológica
-- Filtros simples e combinados
-- Edição de lançamentos
-- Exclusão de registros
-- Resumo geral (total e quantidade)
+### **Gestão**
+- Listagem ordenada por data.
+- Filtros por:
+  - Data
+  - Tipo
+  - Forma de pagamento
+  - Faixa de valor
+- Edição com validação
+- Exclusão segura com confirmação
 
 ### **Relatórios**
-- Relatório completo exibido em nova janela
-- Exportação em PDF com:
-  - Identificação da empresa
-  - Data de geração
-  - Resumo geral
-  - Tabela detalhada das despesas
-  - Layout profissional (título, colunas, alinhamento e formatação em BRL)
+- Visualização completa dentro do sistema.
+- Exportação em PDF contendo:
+  - Cabeçalho institucional
+  - Total e quantidade de despesas
+  - Tabela organizada
+  - Logo da empresa (opcional)
 
 ---
 
-## 3. Tecnologias Utilizadas
+## 📌 3. Tecnologias Utilizadas
 
 - **Python 3.10+**
-- **CustomTkinter** (interface gráfica moderna)
-- **ReportLab** (geração de PDF)
-- **JSON** para persistência local dos dados
-- Estrutura modular com diretórios:
-  - `app/ui/`
-  - `app/data/`
-  - `app/utils/`
+- **CustomTkinter** (UI)
+- **ReportLab** (PDF)
+- **JSON** (persistência local)
+- Arquitetura modular (UI / Dados / Utils)
 
 ---
 
-## 4. Estrutura do Projeto
+## 📌 4. Estrutura do Projeto
 
+```plaintext
 Sistema-Capt-Empresarial/
 │
 ├── app/
-│ ├── data/ # Armazenamento e manipulação dos dados
-│ ├── ui/ # Interface gráfica e telas do sistema
-│ ├── utils/ # Funções auxiliares (formatação, relatórios)
-│ └── ...
+│   ├── data/
+│   │   ├── store.py               # Leitura/gravação + mock dev
+│   │   └── ...
+│   │
+│   ├── ui/
+│   │   ├── app.py                 # Interface principal
+│   │   ├── widgets.py             # Componentes reutilizáveis
+│   │   └── ...
+│   │
+│   ├── utils/
+│   │   ├── formatting.py          # Formatação (BRL, datas, validações)
+│   │   ├── report.py              # Geração de PDF
+│   │   └── ...
 │
-├── relatorios/ # PDF gerados pelo sistema
-├── INTERFACE.py # Arquivo principal de inicialização
+├── relatorios/
+│   └── relatorio_despesas.pdf     # PDF gerado automaticamente
+│
+├── INTERFACE.py                   # Entry point do sistema
 └── README.md
-
-yaml
+📌 5. Como Executar
+Instalar dependências
+bash
 Copiar código
-
----
-
-## 5. Como Executar
-
-### Pré-requisitos
-Certifique-se de ter o Python instalado.
-
-### Instalar dependências
-```bash
 pip install -r requirements.txt
 Executar o sistema
 bash
 Copiar código
 python INTERFACE.py
-Modo desenvolvedor (opcional)
-Utiliza dados mockados em vez do arquivo real.
+📌 6. Modo Desenvolvedor (Mock de Dados)
+O projeto possui um modo especial que carrega dados fictícios para testes internos.
 
+Ativar
 bash
 Copiar código
-export APP_ENV=dev  # Linux / Git Bash
+# Windows Powershell
+$Env:APP_ENV = "dev"
+
+# Linux/Mac
+export APP_ENV=dev
+
 python INTERFACE.py
-6. Exportação de PDF
-O relatório em PDF é gerado automaticamente em:
+Resultado
+O sistema é carregado com uma lista de despesas simuladas.
+
+Útil para testes de UI, relatório e fluxo geral.
+
+📌 7. Relatório em PDF
+O PDF é gerado automaticamente em:
 
 bash
 Copiar código
-/relatorios/relatorio_despesas.pdf
-O documento contém:
+relatorios/relatorio_despesas.pdf
+O documento inclui:
+Nome da empresa
 
-Cabeçalho da empresa
+Data/hora de geração
 
-Data de emissão
+Resumo geral
 
-Resumo financeiro
+Tabela das despesas
 
-Tabela completa dos lançamentos
+Logo institucional (se existir logo_empresa.png)
 
-Formatação profissional
+📌 8. Roadmap (Melhorias Futuras)
+Exportação para Excel/CSV
 
-7. Próximas Melhorias (Roadmap)
-Exportação para CSV/Excel
+Dashboard com gráficos
 
-Dashboard com gráficos e indicadores
+Login e controle de usuários
 
-Controle multiusuário (login)
+Backup automático
 
-Backup automático de dados
+Integração com sistemas contábeis
 
-Integração direta com softwares contábeis
+📌 9. Autor
+Desenvolvido por:
 
-8. Autor
-Desenvolvido internamente por
 Davi Cassoli Lira
-Departamento de Automação / Sistemas
-2025
+Departamento de Automação • 2025
