@@ -137,4 +137,4 @@ Integração com sistemas contábeis
 Desenvolvido por:
 
 Davi Cassoli Lira
-Departamento de Automação • 2025
+DEPARTAMENTO DE TECNOLOGIA ESCRITÓRIO GRUPO14D• 2025
