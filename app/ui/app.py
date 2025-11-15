@@ -7,11 +7,15 @@ from datetime import datetime
 from typing import Any
 
 from app.utils.formatting import format_brl, validar_data, validar_valor
+from app.utils.report import generate_pdf_report
 from app.data.store import load_data, save_data
 from app.ui.widgets import ReadOnlyComboBox
 
+ctk.set_appearance_mode("light")
+ctk.set_default_color_theme("blue")
 
-USE_EMOJI = True
+
+USE_EMOJI = False
 
 
 def e(txt: str, emoji: str) -> str:
@@ -24,7 +28,7 @@ class ControleGastosApp(ctk.CTk):
         super().__init__()
 
         self.title("Controle de Gastos Empresariais")
-        self.geometry("700x650")
+        self.geometry("700x950")
         self.resizable(False, False)
 
         self.arquivo_dados = "gastos_empresa.json"
@@ -37,12 +41,13 @@ class ControleGastosApp(ctk.CTk):
         self.filtro_tipo_combo = None
         self.filtro_forma_combo = None
         self.filtro_valor_combo = None
+        self.logo_empresa = "logo_empresa.png"
 
         self.criar_widgets()
 
     def criar_widgets(self):
         main_frame = ctk.CTkFrame(self, corner_radius=15)
-        main_frame.pack(fill="both", expand=True, padx=20, pady=20)
+        main_frame.pack(fill="both", expand=True, padx=16, pady=16)
 
         ctk.CTkLabel(
             main_frame,
@@ -51,19 +56,19 @@ class ControleGastosApp(ctk.CTk):
         ).pack(pady=(20, 30))
 
         entrada_frame = ctk.CTkFrame(main_frame, corner_radius=10)
-        entrada_frame.pack(fill="x", padx=20, pady=(0, 20))
+        entrada_frame.pack(fill="x", padx=16, pady=(0, 12))
 
         # Data
         data_frame = ctk.CTkFrame(entrada_frame, fg_color="transparent")
-        data_frame.pack(fill="x", padx=20, pady=(20, 10))
+        data_frame.pack(fill="x", padx=16, pady=(12, 6))
         ctk.CTkLabel(data_frame, text=e("Data:", "📆"), font=ctk.CTkFont(size=14, weight="bold")).pack(anchor="w")
-        self.entry_data = ctk.CTkEntry(data_frame, placeholder_text="DD/MM/AAAA", height=35, font=ctk.CTkFont(size=13))
+        self.entry_data = ctk.CTkEntry(data_frame, placeholder_text="DD/MM/AAAA", height=32, font=ctk.CTkFont(size=13))
         self.entry_data.pack(fill="x", pady=(5, 0))
         self.entry_data.insert(0, datetime.now().strftime("%d/%m/%Y"))
 
         # Tipo
         tipo_frame = ctk.CTkFrame(entrada_frame, fg_color="transparent")
-        tipo_frame.pack(fill="x", padx=20, pady=10)
+        tipo_frame.pack(fill="x", padx=16, pady=6)
         ctk.CTkLabel(tipo_frame, text=e("Tipo de Despesa:", "🏷"), font=ctk.CTkFont(size=14, weight="bold")).pack(anchor="w")
         self.tipos_despesa = [
             "Salários e Encargos",
@@ -82,45 +87,76 @@ class ControleGastosApp(ctk.CTk):
             "Equipamentos",
             "Outros",
         ]
-        self.combo_tipo = ReadOnlyComboBox(tipo_frame, values=self.tipos_despesa, height=35, font=ctk.CTkFont(size=13), dropdown_font=ctk.CTkFont(size=12))
+        self.combo_tipo = ReadOnlyComboBox(tipo_frame, values=self.tipos_despesa, height=32, font=ctk.CTkFont(size=13), dropdown_font=ctk.CTkFont(size=12))
         self.combo_tipo.pack(fill="x", pady=(5, 0))
         self.combo_tipo.set("Selecione o tipo")
 
         # Forma de pagamento
         pagamento_frame = ctk.CTkFrame(entrada_frame, fg_color="transparent")
-        pagamento_frame.pack(fill="x", padx=20, pady=10)
+        pagamento_frame.pack(fill="x", padx=16, pady=6)
         ctk.CTkLabel(pagamento_frame, text=e("Forma de Pagamento:", "💳"), font=ctk.CTkFont(size=14, weight="bold")).pack(anchor="w")
         self.formas_pagamento = ["Dinheiro", "Cartão de Crédito", "Cartão de Débito", "PIX", "Transferência Bancária", "Boleto", "Cheque"]
-        self.combo_pagamento = ReadOnlyComboBox(pagamento_frame, values=self.formas_pagamento, height=35, font=ctk.CTkFont(size=13), dropdown_font=ctk.CTkFont(size=12))
+        self.combo_pagamento = ReadOnlyComboBox(pagamento_frame, values=self.formas_pagamento, height=32, font=ctk.CTkFont(size=13), dropdown_font=ctk.CTkFont(size=12))
         self.combo_pagamento.pack(fill="x", pady=(5, 0))
         self.combo_pagamento.set("Selecione a forma")
 
         # Valor
         valor_frame = ctk.CTkFrame(entrada_frame, fg_color="transparent")
-        valor_frame.pack(fill="x", padx=20, pady=(10, 20))
+        valor_frame.pack(fill="x", padx=16, pady=(8, 12))
         ctk.CTkLabel(valor_frame, text=e("Valor (R$):", "💰"), font=ctk.CTkFont(size=14, weight="bold")).pack(anchor="w")
-        self.entry_valor = ctk.CTkEntry(valor_frame, placeholder_text="0,00", height=35, font=ctk.CTkFont(size=13))
+        self.entry_valor = ctk.CTkEntry(valor_frame, placeholder_text="0,00", height=32, font=ctk.CTkFont(size=13))
         self.entry_valor.pack(fill="x", pady=(5, 0))
 
         # Botões
         botoes_frame = ctk.CTkFrame(main_frame, fg_color="transparent")
-        botoes_frame.pack(fill="x", padx=20, pady=(0, 20))
+        botoes_frame.pack(fill="x", padx=16, pady=(4, 16))
         ctk.CTkButton(botoes_frame, text=e("Salvar Despesa", "💾"), command=self.salvar_despesa, height=40, font=ctk.CTkFont(size=14, weight="bold"), fg_color="#2ecc71", hover_color="#27ae60").pack(side="left", expand=True, fill="x", padx=(0, 5))
         ctk.CTkButton(botoes_frame, text=e("Limpar Campos", "🧹"), command=self.limpar_campos, height=40, font=ctk.CTkFont(size=14, weight="bold"), fg_color="#95a5a6", hover_color="#7f8c8d").pack(side="left", expand=True, fill="x", padx=(5, 0))
         ctk.CTkButton(botoes_frame, text="Gerenciar Despesas", command=self.abrir_gestao_gastos, height=40, font=ctk.CTkFont(size=14, weight="bold"), fg_color="#8e44ad", hover_color="#71368a").pack(side="left", expand=True, fill="x", padx=(5, 0))
 
         # Resumo
         stats_frame = ctk.CTkFrame(main_frame, corner_radius=10)
-        stats_frame.pack(fill="x", padx=20, pady=(0, 20))
-        ctk.CTkLabel(stats_frame, text=e("Resumo", "📈"), font=ctk.CTkFont(size=16, weight="bold")).pack(pady=(15, 10))
-        self.label_total = ctk.CTkLabel(stats_frame, text="Total de Despesas: R$ 0,00", font=ctk.CTkFont(size=13))
-        self.label_total.pack(pady=5)
-        self.label_quantidade = ctk.CTkLabel(stats_frame, text="Quantidade de Registros: 0", font=ctk.CTkFont(size=13))
-        self.label_quantidade.pack(pady=(5, 15))
+        stats_frame.pack(fill="x", padx=16, pady=(0, 8))
+        ctk.CTkLabel(
+              stats_frame,
+              text="Resumo",
+              font=ctk.CTkFont(size=16, weight="bold"),
+          ).pack(pady=(10, 6))
+        self.label_total = ctk.CTkLabel(
+              stats_frame,
+              text="Total de Despesas: R$ 0,00",
+              font=ctk.CTkFont(size=13),
+          )
+        self.label_total.pack(pady=4)
+        self.label_quantidade = ctk.CTkLabel(
+              stats_frame,
+              text="Quantidade de Registros: 0",
+              font=ctk.CTkFont(size=13),
+          )
+        self.label_quantidade.pack(pady=(2, 10))
 
-        ctk.CTkButton(main_frame, text=e("Ver Relatório Completo", "📃"), command=self.mostrar_relatorio, height=40, font=ctk.CTkFont(size=14, weight="bold"), fg_color="#3498db", hover_color="#2980b9").pack(fill="x", padx=20, pady=(0, 20))
+          # Botões de relatório
+        botoes_relatorio_frame = ctk.CTkFrame(main_frame, fg_color="transparent")
+        botoes_relatorio_frame.pack(fill="x", padx=20, pady=(0, 20))
 
-        self.atualizar_stats()
+        ctk.CTkButton(
+              botoes_relatorio_frame,
+              text="Ver Relatório Completo",
+              command=self.mostrar_relatorio,
+              height=38,
+              font=ctk.CTkFont(size=13, weight="bold"),
+              fg_color="#3498db",
+              hover_color="#2980b9",
+          ).pack(side="left", expand=True, fill="x", padx=(0, 6))
+
+        ctk.CTkButton(
+              botoes_relatorio_frame,
+              text="Exportar Relatório em PDF",
+              command=self.exportar_relatorio_pdf,
+              height=38,
+              font=ctk.CTkFont(size=13, weight="bold"),
+        ).pack(side="left", expand=True, fill="x", padx=(6, 0))
+
 
     def salvar_despesa(self):
         data = (self.entry_data.get() or "").strip()
@@ -282,9 +318,9 @@ class ControleGastosApp(ctk.CTk):
             ctk.CTkLabel(detalhes, text=f"Registrado em {exibicao}", font=ctk.CTkFont(size=11), text_color="#bdc3c7").grid(row=1, column=0, sticky="w", pady=(2, 0))
 
             botoes_frame = ctk.CTkFrame(card, fg_color="transparent")
-            botoes_frame.pack(fill="x", padx=15, pady=(0, 12))
-            ctk.CTkButton(botoes_frame, text="Editar", width=90, command=lambda idx=indice: self.abrir_editor_gasto(idx)).pack(side="left", padx=(0, 6))
-            ctk.CTkButton(botoes_frame, text="Excluir", width=90, fg_color="#e74c3c", hover_color="#c0392b", command=lambda idx=indice: self.excluir_gasto(idx)).pack(side="left")
+            botoes_frame.pack(fill="x", padx=10, pady=(0, 8))
+            ctk.CTkButton(botoes_frame, text="Editar", width=80, command=lambda idx=indice: self.abrir_editor_gasto(idx)).pack(side="left", padx=(0, 6))
+            ctk.CTkButton(botoes_frame, text="Excluir", width=80, fg_color="#e74c3c", hover_color="#c0392b", command=lambda idx=indice: self.excluir_gasto(idx)).pack(side="left")
 
     def filtrar_gastos(self, gastos_ordenados):
         data_filtro = self.filtro_data_entry.get().strip() if self.filtro_data_entry else ""
@@ -326,29 +362,29 @@ class ControleGastosApp(ctk.CTk):
         gasto = self.gastos[indice]
         editor = ctk.CTkToplevel(self)
         editor.title("Editar Despesa")
-        editor.geometry("460x520")
+        editor.geometry("460x560")
         editor.resizable(False, False)
         editor.transient(self)
         editor.grab_set()
 
-        ctk.CTkLabel(editor, text="Editar registro selecionado", font=ctk.CTkFont(size=18, weight="bold")).pack(pady=(20, 10))
+        ctk.CTkLabel(editor, text="Editar registro selecionado", font=ctk.CTkFont(size=18, weight="bold")).pack(pady=(16, 8))
         destaque = ctk.CTkFrame(editor, corner_radius=12)
-        destaque.pack(fill="x", padx=20, pady=(0, 15))
+        destaque.pack(fill="x", padx=20, pady=(0, 10))
         ctk.CTkLabel(destaque, text=gasto.get("tipo", "--"), font=ctk.CTkFont(size=16, weight="bold")).pack(pady=(12, 2))
         ctk.CTkLabel(destaque, text=f"Valor atual: {format_brl(gasto.get('valor', 0))}", font=ctk.CTkFont(size=13)).pack(pady=(0, 12))
 
         form_frame = ctk.CTkFrame(editor, fg_color="transparent")
-        form_frame.pack(fill="x", padx=20, pady=(0, 10))
+        form_frame.pack(fill="x", padx=20, pady=(0, 6))
 
         def criar_campo(rotulo, widget_factory):
             bloco = ctk.CTkFrame(form_frame, fg_color="transparent")
-            bloco.pack(fill="x", pady=8)
+            bloco.pack(fill="x", pady=6)
             ctk.CTkLabel(bloco, text=rotulo, font=ctk.CTkFont(size=12, weight="bold")).pack(anchor="w")
             widget = widget_factory(bloco)
             widget.pack(fill="x", pady=(5, 0))
             return widget
 
-        entry_data = criar_campo("Data (DD/MM/AAAA)", lambda parent: ctk.CTkEntry(parent, height=36))
+        entry_data = criar_campo("Data (DD/MM/AAAA)", lambda parent: ctk.CTkEntry(parent, height=32))
         entry_data.insert(0, gasto.get("data", ""))
 
         tipos = self.tipos_despesa.copy()
@@ -363,7 +399,7 @@ class ControleGastosApp(ctk.CTk):
         combo_pagamento = criar_campo("Forma de Pagamento", lambda parent: ReadOnlyComboBox(parent, values=formas))
         combo_pagamento.set(gasto.get("forma_pagamento", "Selecione a forma"))
 
-        entry_valor = criar_campo("Valor (R$)", lambda parent: ctk.CTkEntry(parent, height=36))
+        entry_valor = criar_campo("Valor (R$)", lambda parent: ctk.CTkEntry(parent, height=32))
         entry_valor.insert(0, f"{float(gasto.get('valor', 0) or 0):.2f}".replace(".", ","))
 
         def salvar_edicao():
@@ -394,9 +430,23 @@ class ControleGastosApp(ctk.CTk):
             editor.destroy()
 
         botoes_modal = ctk.CTkFrame(editor, fg_color="transparent")
-        botoes_modal.pack(fill="x", padx=20, pady=(10, 0))
-        ctk.CTkButton(botoes_modal, text="Salvar alterações", command=salvar_edicao, height=40).pack(side="left", expand=True, fill="x", padx=(0, 5))
-        ctk.CTkButton(botoes_modal, text="Cancelar", command=editor.destroy, fg_color="#95a5a6", hover_color="#7f8c8d").pack(side="left", expand=True, fill="x", padx=(5, 0))
+        botoes_modal.pack(fill="x", padx=24, pady=(8, 8))
+        ctk.CTkButton(
+            botoes_modal,
+            text="Salvar alterações",
+            command=salvar_edicao,
+            height=38,
+            width=140,
+        ).pack(side="left", expand=True, padx=(0, 6))
+        ctk.CTkButton(
+            botoes_modal,
+            text="Cancelar",
+            command=editor.destroy,
+            height=38,
+            width=140,
+            fg_color="#95a5a6",
+            hover_color="#7f8c8d",
+        ).pack(side="left", expand=True, padx=(6, 0))
 
     def excluir_gasto(self, indice):
         gasto = self.gastos[indice]
@@ -439,7 +489,49 @@ class ControleGastosApp(ctk.CTk):
                 f"   Valor: {format_brl(gasto.get('valor', 0.0))}"
             )
             ctk.CTkLabel(gasto_frame, text=info_text, font=ctk.CTkFont(size=12), justify="left").pack(anchor="w", padx=15, pady=10)
-        ctk.CTkButton(relatorio_window, text="Fechar", command=relatorio_window.destroy, height=35).pack(pady=(0, 20))
+
+        botoes_frame = ctk.CTkFrame(relatorio_window, fg_color="transparent")
+        botoes_frame.pack(pady=(0, 20))
+        ctk.CTkButton(
+            botoes_frame,
+            text="Exportar PDF",
+            command=self.exportar_relatorio_pdf,
+            height=32,
+            width=140,
+        ).pack(side="left", padx=(0, 8))
+        ctk.CTkButton(
+            botoes_frame,
+            text="Fechar",
+            command=relatorio_window.destroy,
+            height=32,
+            width=100,
+        ).pack(side="left")
+
+    def exportar_relatorio_pdf(self):
+        if not self.gastos:
+            messagebox.showinfo("Info", "Nenhuma despesa registrada para exportar.")
+            return
+        try:
+            caminho = generate_pdf_report(
+                self.gastos,
+                "relatorios/relatorio_despesas.pdf",
+                company_name="Controle de Gastos Empresariais",
+                logo_path=self.logo_empresa,
+            )
+        except RuntimeError as exc:
+            messagebox.showerror(
+                "Erro ao gerar PDF",
+                f"{exc}\n\nInstale a dependência e tente novamente.",
+            )
+            return
+        except Exception as exc:  # noqa: BLE001
+            messagebox.showerror("Erro ao gerar PDF", f"Ocorreu um erro inesperado:\n{exc}")
+            return
+
+        messagebox.showinfo(
+            "Relatório gerado",
+            f"Relatório em PDF gerado com sucesso em:\n{caminho}",
+        )
 
 
 def main():
