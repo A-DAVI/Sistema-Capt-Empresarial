@@ -8,6 +8,7 @@ from typing import Any
 
 from app.utils.formatting import format_brl, validar_data, validar_valor
 from app.data.store import load_data, save_data
+from app.ui.widgets import ReadOnlyComboBox
 
 
 USE_EMOJI = True
@@ -16,23 +17,6 @@ USE_EMOJI = True
 def e(txt: str, emoji: str) -> str:
     return f"{emoji} {txt}" if USE_EMOJI and emoji else txt
 
-
-def make_combobox_readonly(cb: ctk.CTkComboBox):
-    """Prevents editing text in CTkComboBox (keep placeholder like 'Selecione ...')."""
-    try:
-        cb.configure(state="readonly")
-    except Exception:
-        pass
-
-    def _block(_evt=None):
-        return "break"
-
-    # Block common editing keys
-    for seq in ("<Key>", "<BackSpace>", "<Delete>", "<Control-v>", "<Control-V>", "<Control-x>", "<Control-X>"):
-        try:
-            cb.bind(seq, _block)
-        except Exception:
-            pass
 
 
 class ControleGastosApp(ctk.CTk):
@@ -98,20 +82,18 @@ class ControleGastosApp(ctk.CTk):
             "Equipamentos",
             "Outros",
         ]
-        self.combo_tipo = ctk.CTkComboBox(tipo_frame, values=self.tipos_despesa, height=35, font=ctk.CTkFont(size=13), dropdown_font=ctk.CTkFont(size=12))
+        self.combo_tipo = ReadOnlyComboBox(tipo_frame, values=self.tipos_despesa, height=35, font=ctk.CTkFont(size=13), dropdown_font=ctk.CTkFont(size=12))
         self.combo_tipo.pack(fill="x", pady=(5, 0))
         self.combo_tipo.set("Selecione o tipo")
-        make_combobox_readonly(self.combo_tipo)
 
         # Forma de pagamento
         pagamento_frame = ctk.CTkFrame(entrada_frame, fg_color="transparent")
         pagamento_frame.pack(fill="x", padx=20, pady=10)
         ctk.CTkLabel(pagamento_frame, text=e("Forma de Pagamento:", "💳"), font=ctk.CTkFont(size=14, weight="bold")).pack(anchor="w")
         self.formas_pagamento = ["Dinheiro", "Cartão de Crédito", "Cartão de Débito", "PIX", "Transferência Bancária", "Boleto", "Cheque"]
-        self.combo_pagamento = ctk.CTkComboBox(pagamento_frame, values=self.formas_pagamento, height=35, font=ctk.CTkFont(size=13), dropdown_font=ctk.CTkFont(size=12))
+        self.combo_pagamento = ReadOnlyComboBox(pagamento_frame, values=self.formas_pagamento, height=35, font=ctk.CTkFont(size=13), dropdown_font=ctk.CTkFont(size=12))
         self.combo_pagamento.pack(fill="x", pady=(5, 0))
         self.combo_pagamento.set("Selecione a forma")
-        make_combobox_readonly(self.combo_pagamento)
 
         # Valor
         valor_frame = ctk.CTkFrame(entrada_frame, fg_color="transparent")
@@ -211,23 +193,20 @@ class ControleGastosApp(ctk.CTk):
 
         ctk.CTkLabel(filtros_frame, text="Tipo").grid(row=0, column=1, sticky="w", padx=10, pady=(10, 2))
         tipos_filtro = ["Todos"] + sorted(self.tipos_despesa)
-        self.filtro_tipo_combo = ctk.CTkComboBox(filtros_frame, values=tipos_filtro, height=32)
+        self.filtro_tipo_combo = ReadOnlyComboBox(filtros_frame, values=tipos_filtro, height=32)
         self.filtro_tipo_combo.set("Todos")
         self.filtro_tipo_combo.grid(row=1, column=1, padx=10, pady=(0, 10), sticky="ew")
-        make_combobox_readonly(self.filtro_tipo_combo)
 
         ctk.CTkLabel(filtros_frame, text="Forma de Pagamento").grid(row=0, column=2, sticky="w", padx=10, pady=(10, 2))
         formas_filtro = ["Todos"] + sorted(self.formas_pagamento)
-        self.filtro_forma_combo = ctk.CTkComboBox(filtros_frame, values=formas_filtro, height=32)
+        self.filtro_forma_combo = ReadOnlyComboBox(filtros_frame, values=formas_filtro, height=32)
         self.filtro_forma_combo.set("Todos")
         self.filtro_forma_combo.grid(row=1, column=2, padx=10, pady=(0, 10), sticky="ew")
-        make_combobox_readonly(self.filtro_forma_combo)
 
         ctk.CTkLabel(filtros_frame, text="Valor").grid(row=0, column=3, sticky="w", padx=10, pady=(10, 2))
-        self.filtro_valor_combo = ctk.CTkComboBox(filtros_frame, values=["Todos", "Até 100", "100 a 500", "500 a 1000", "Acima de 1000"], height=32)
+        self.filtro_valor_combo = ReadOnlyComboBox(filtros_frame, values=["Todos", "Até 100", "100 a 500", "500 a 1000", "Acima de 1000"], height=32)
         self.filtro_valor_combo.set("Todos")
         self.filtro_valor_combo.grid(row=1, column=3, padx=10, pady=(0, 10), sticky="ew")
-        make_combobox_readonly(self.filtro_valor_combo)
 
         botoes_filtro = ctk.CTkFrame(filtros_frame, fg_color="transparent")
         botoes_filtro.grid(row=2, column=0, columnspan=4, pady=(0, 10), sticky="ew")
@@ -375,16 +354,14 @@ class ControleGastosApp(ctk.CTk):
         tipos = self.tipos_despesa.copy()
         if gasto.get("tipo") and gasto["tipo"] not in tipos:
             tipos.append(gasto["tipo"])
-        combo_tipo = criar_campo("Tipo de Despesa", lambda parent: ctk.CTkComboBox(parent, values=tipos))
+        combo_tipo = criar_campo("Tipo de Despesa", lambda parent: ReadOnlyComboBox(parent, values=tipos))
         combo_tipo.set(gasto.get("tipo", "Selecione o tipo"))
-        make_combobox_readonly(combo_tipo)
 
         formas = self.formas_pagamento.copy()
         if gasto.get("forma_pagamento") and gasto["forma_pagamento"] not in formas:
             formas.append(gasto["forma_pagamento"])
-        combo_pagamento = criar_campo("Forma de Pagamento", lambda parent: ctk.CTkComboBox(parent, values=formas))
+        combo_pagamento = criar_campo("Forma de Pagamento", lambda parent: ReadOnlyComboBox(parent, values=formas))
         combo_pagamento.set(gasto.get("forma_pagamento", "Selecione a forma"))
-        make_combobox_readonly(combo_pagamento)
 
         entry_valor = criar_campo("Valor (R$)", lambda parent: ctk.CTkEntry(parent, height=36))
         entry_valor.insert(0, f"{float(gasto.get('valor', 0) or 0):.2f}".replace(".", ","))
