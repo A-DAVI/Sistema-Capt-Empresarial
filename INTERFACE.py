@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import customtkinter as ctk
 from tkinter import messagebox
 from datetime import datetime
@@ -44,7 +45,7 @@ class ControleGastosApp(ctk.CTk):
         # Título
         titulo = ctk.CTkLabel(
             main_frame,
-            text="Registro de Despesas",
+            text="🧾 Registro de Despesas",
             font=ctk.CTkFont(size=24, weight="bold"),
         )
         titulo.pack(pady=(20, 30))
@@ -59,7 +60,7 @@ class ControleGastosApp(ctk.CTk):
 
         ctk.CTkLabel(
             data_frame,
-            text="Data:",
+            text="📅 Data:",
             font=ctk.CTkFont(size=14, weight="bold"),
         ).pack(anchor="w")
 
@@ -79,7 +80,7 @@ class ControleGastosApp(ctk.CTk):
 
         ctk.CTkLabel(
             tipo_frame,
-            text="Tipo de Despesa:",
+            text="🧾 Tipo de Despesa:",
             font=ctk.CTkFont(size=14, weight="bold"),
         ).pack(anchor="w")
 
@@ -117,7 +118,7 @@ class ControleGastosApp(ctk.CTk):
 
         ctk.CTkLabel(
             pagamento_frame,
-            text="Forma de Pagamento:",
+            text="💳 Forma de Pagamento:",
             font=ctk.CTkFont(size=14, weight="bold"),
         ).pack(anchor="w")
 
@@ -147,7 +148,7 @@ class ControleGastosApp(ctk.CTk):
 
         ctk.CTkLabel(
             valor_frame,
-            text="Valor (R$):",
+            text="💵 Valor (R$):",
             font=ctk.CTkFont(size=14, weight="bold"),
         ).pack(anchor="w")
 
@@ -166,7 +167,7 @@ class ControleGastosApp(ctk.CTk):
         # Botão Salvar
         self.btn_salvar = ctk.CTkButton(
             botoes_frame,
-            text="Salvar Despesa",
+            text="💾 Salvar Despesa",
             command=self.salvar_despesa,
             height=40,
             font=ctk.CTkFont(size=14, weight="bold"),
@@ -178,7 +179,7 @@ class ControleGastosApp(ctk.CTk):
         # Botão Limpar
         self.btn_limpar = ctk.CTkButton(
             botoes_frame,
-            text="Limpar Campos",
+            text="🧹 Limpar Campos",
             command=self.limpar_campos,
             height=40,
             font=ctk.CTkFont(size=14, weight="bold"),
@@ -193,7 +194,7 @@ class ControleGastosApp(ctk.CTk):
 
         ctk.CTkLabel(
             stats_frame,
-            text="Resumo",
+            text="📊 Resumo",
             font=ctk.CTkFont(size=16, weight="bold"),
         ).pack(pady=(15, 10))
 
@@ -215,7 +216,7 @@ class ControleGastosApp(ctk.CTk):
         # Botão Ver Relatório
         self.btn_relatorio = ctk.CTkButton(
             main_frame,
-            text="Ver Relatório Completo",
+            text="📄 Ver Relatório Completo",
             command=self.mostrar_relatorio,
             height=40,
             font=ctk.CTkFont(size=14, weight="bold"),
@@ -337,7 +338,7 @@ class ControleGastosApp(ctk.CTk):
         # Título
         ctk.CTkLabel(
             relatorio_window,
-            text="Relatório Completo de Despesas",
+            text="📊 Relatório Completo de Despesas",
             font=ctk.CTkFont(size=20, weight="bold"),
         ).pack(pady=20)
 
@@ -414,4 +415,3 @@ class ControleGastosApp(ctk.CTk):
 if __name__ == "__main__":
     app = ControleGastosApp()
     app.mainloop()
-
