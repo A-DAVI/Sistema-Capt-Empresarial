@@ -10,7 +10,7 @@ try:
     from reportlab.lib import colors
     from reportlab.lib.pagesizes import A4
     from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
-    from reportlab.lib.units import mm
+    from reportlab.lib.units import cm, mm
     from reportlab.pdfgen import canvas
     from reportlab.platypus import Paragraph
 except Exception:  # pragma: no cover
@@ -18,7 +18,7 @@ except Exception:  # pragma: no cover
     A4 = None  # type: ignore[assignment]
     ParagraphStyle = None  # type: ignore[assignment]
     getSampleStyleSheet = None  # type: ignore[assignment]
-    mm = 1  # type: ignore[assignment]
+    cm = mm = 1  # type: ignore[assignment]
     canvas = None  # type: ignore[assignment]
     Paragraph = None  # type: ignore[assignment]
 
@@ -51,10 +51,10 @@ def generate_pdf_report(
     output.parent.mkdir(parents=True, exist_ok=True)
 
     c = canvas.Canvas(str(output), pagesize=A4)
-    largura, altura = A4
+    width, height = A4
 
-    topo = altura - 30 * mm
-    margem_x = 25 * mm
+    top_margin = height - 2.5 * cm
+    x_margin = 2.5 * cm
 
     # Logo (opcional)
     if logo_path:
@@ -63,70 +63,70 @@ def generate_pdf_report(
             try:
                 c.drawImage(
                     str(logo_file),
-                    margem_x,
-                    topo,
+                    x_margin,
+                    top_margin,
                     width=30 * mm,
                     height=20 * mm,
                     preserveAspectRatio=True,
                     mask="auto",
                 )
-            except Exception:
+            except Exception:  # pragma: no cover
                 # Se der erro na imagem, apenas segue sem logo
                 pass
 
     # Cabeçalho textual
     c.setFont("Helvetica-Bold", 16)
 
-    c.drawString(margem_x, topo - 8 * mm, company_name)
+    c.drawString(x_margin, top_margin - 0.3 * cm, company_name)
     c.setFont("Helvetica", 10)
     c.drawString(
-        margem_x,
-        topo - 14 * mm,
+        x_margin,
+        top_margin - 0.9 * cm,
         f"Relatório de Despesas Empresariais",
     )
     c.drawString(
-        margem_x,
-        topo - 19 * mm,
+        x_margin,
+        top_margin - 1.4 * cm,
         f"Gerado em: {datetime.now().strftime('%d/%m/%Y %H:%M')}",
     )
 
     # Linha separadora
     c.setStrokeColorRGB(0.2, 0.2, 0.2)
     c.setLineWidth(0.5)
-    c.line(margem_x, topo - 22 * mm, largura - margem_x, topo - 22 * mm)
+    c.line(x_margin, top_margin - 1.7 * cm, width - x_margin, top_margin - 1.7 * cm)
 
     # Resumo
     c.setFont("Helvetica-Bold", 12)
-    c.drawString(margem_x, topo - 30 * mm, "Resumo Geral")
+    c.drawString(x_margin, top_margin - 2.5 * cm, "Resumo Geral")
 
     c.setFont("Helvetica", 11)
     c.drawString(
-        margem_x,
-        topo - 36 * mm,
+        x_margin,
+        top_margin - 3.1 * cm,
         f"Total de despesas: {format_brl(total)}",
     )
     c.drawString(
-        margem_x,
-        topo - 42 * mm,
+        x_margin,
+        top_margin - 3.7 * cm,
         f"Quantidade de lançamentos: {quantidade}",
     )
 
     # Espaço antes da lista
-    y = topo - 52 * mm
+    y = top_margin - 4.7 * cm
 
     # Título da seção de detalhes
     c.setFont("Helvetica-Bold", 12)
-    c.drawString(margem_x, y, "Detalhamento das Despesas")
+    c.drawString(x_margin, y, "Detalhamento das Despesas")
     y -= 8 * mm
 
     # Cabeçalho das colunas
     c.setFont("Helvetica-Bold", 10)
-    c.drawString(margem_x, y, "Data")
-    c.drawString(margem_x + 30 * mm, y, "Tipo")
-    c.drawString(margem_x + 100 * mm, y, "Forma")
-    c.drawRightString(largura - margem_x, y, "Valor (R$)")
+    c.drawString(x_margin, y, "Data")
+    c.drawString(x_margin + 3 * cm, y, "Tipo")
+    c.drawString(x_margin + 10 * cm, y, "Forma")
+    c.drawRightString(width - x_margin, y, "Valor (R$)")
     y -= 4 * mm
-    c.line(margem_x, y, largura - margem_x, y)
+    c.line(x_margin, y, width - x_margin, y)
     y -= 6 * mm
 
     c.setFont("Helvetica", 9)
@@ -135,17 +135,17 @@ def generate_pdf_report(
     def _parse_data(g: dict[str, Any]) -> datetime:
         try:
             return datetime.strptime(g.get("data", "01/01/1970"), "%d/%m/%Y")
-        except Exception:
+        except (ValueError, TypeError):
             return datetime(1970, 1, 1)
 
     gastos_ordenados = sorted(gastos_list, key=_parse_data, reverse=True)
 
     for gasto in gastos_ordenados:
-        if y < 40 * mm:
+        if y < 4 * cm:  # Margem inferior para evitar que o texto cole no fim da página
             c.showPage()
-            y = altura - 30 * mm
+            y = height - 3 * cm  # Reinicia o y no topo da nova página
             c.setFont("Helvetica-Bold", 10)
-            c.drawString(margem_x, y, "Continuação - Detalhamento das Despesas")
+            c.drawString(x_margin, y, "Continuação - Detalhamento das Despesas")
             y -= 10 * mm
             c.setFont("Helvetica", 9)
 
@@ -154,14 +154,13 @@ def generate_pdf_report(
         forma = str(gasto.get("forma_pagamento", ""))[:25]
         valor = format_brl(float(gasto.get("valor", 0) or 0))
 
-        c.drawString(margem_x, y, data)
-        c.drawString(margem_x + 30 * mm, y, tipo)
-        c.drawString(margem_x + 100 * mm, y, forma)
-        c.drawRightString(largura - margem_x, y, valor)
+        c.drawString(x_margin, y, data)
+        c.drawString(x_margin + 3 * cm, y, tipo)
+        c.drawString(x_margin + 10 * cm, y, forma)
+        c.drawRightString(width - x_margin, y, valor)
         y -= 6 * mm
 
     c.showPage()
     c.save()
 
     return str(output)
-
