@@ -2211,6 +2211,57 @@ class ControleGastosApp(ctk.CTk):
         if not self.gastos:
 
             messagebox.showinfo("Info", "Nenhuma despesa registrada ainda.")
+            return
+        relatorio_window = ctk.CTkToplevel(self)
+        relatorio_window.title("Relatório Completo de Despesas")
+        relatorio_window.geometry("1000x700")
+        relatorio_window.transient(self)
+        relatorio_window.grab_set()
+
+        ctk.CTkLabel(relatorio_window, text=e("Relatório Completo de Despesas", "📈"), font=ctk.CTkFont(size=20, weight="bold")).pack(pady=20)
+
+        scroll_frame = ctk.CTkScrollableFrame(relatorio_window)
+        scroll_frame.pack(fill="both", expand=True, padx=20, pady=(0, 20))
+
+        # Configuração das colunas da grade (spreadsheet-like)
+        scroll_frame.grid_columnconfigure(0, weight=2)  # Data
+        scroll_frame.grid_columnconfigure(1, weight=4)  # Tipo
+        scroll_frame.grid_columnconfigure(2, weight=3)  # Forma
+        scroll_frame.grid_columnconfigure(3, weight=2)  # Valor
+
+        # --- Cabeçalho da Tabela ---
+        header_font = ctk.CTkFont(size=13, weight="bold")
+        headers = ["Data", "Tipo de Despesa", "Forma de Pagamento", "Valor"]
+        for col, header_text in enumerate(headers):
+            header_label = ctk.CTkLabel(scroll_frame, text=header_text, font=header_font, text_color=("#3498db", "#5dade2"))
+            sticky = "e" if header_text == "Valor" else ""  # Centraliza os outros cabeçalhos
+            header_label.grid(row=0, column=col, padx=10, pady=(5, 10), sticky=sticky)
+
+        # Linha separadora do cabeçalho
+        separator = ctk.CTkFrame(scroll_frame, height=2, fg_color=("#bdc3c7", "#2c3e50"))
+        separator.grid(row=1, column=0, columnspan=4, sticky="ew", padx=5)
+
+        # --- Dados da Tabela ---
+        try:
+            gastos_ordenados = sorted(self.gastos, key=lambda x: datetime.strptime(x.get("data", "01/01/1970"), "%d/%m/%Y"), reverse=True)
+        except Exception:
+            gastos_ordenados = list(self.gastos)
+
+        row_font = ctk.CTkFont(size=12)
+        row_font_large = ctk.CTkFont(size=14)
+        for i, gasto in enumerate(gastos_ordenados, start=2): # Começa na linha 2, após o cabeçalho e separador
+            data_label = ctk.CTkLabel(scroll_frame, text=gasto.get("data", "--"), font=row_font_large)
+            tipo_label = ctk.CTkLabel(scroll_frame, text=gasto.get("tipo", "--"), font=row_font_large)
+            forma_label = ctk.CTkLabel(scroll_frame, text=gasto.get("forma_pagamento", "--"), font=row_font_large)
+            valor_label = ctk.CTkLabel(scroll_frame, text=format_brl(gasto.get("valor", 0.0)), font=row_font_large)
+
+            data_label.grid(row=i, column=0, padx=10, pady=8, sticky="") # Centralizado
+            tipo_label.grid(row=i, column=1, padx=10, pady=8, sticky="") # Centralizado
+            forma_label.grid(row=i, column=2, padx=10, pady=8, sticky="") # Centralizado
+            valor_label.grid(row=i, column=3, padx=10, pady=8, sticky="e")
+
+            row_separator = ctk.CTkFrame(scroll_frame, height=1, fg_color=("#ecf0f1", "#34495e"))
+            row_separator.grid(row=i + 1, column=0, columnspan=4, sticky="ew", padx=10)
 
             return
 

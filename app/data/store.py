@@ -4,7 +4,10 @@ from __future__ import annotations
 import json
 import os
 from datetime import datetime, timedelta
+from pathlib import Path
 from typing import Any
+
+from app.utils.security import checksum_is_valid, persist_checksum
 
 
 def _mock_gastos() -> list[dict[str, Any]]:
@@ -80,10 +83,14 @@ def load_data(path: str) -> list[dict[str, Any]]:
     if os.getenv("APP_ENV", "").lower() == "dev":
         return _mock_gastos()
 
-    if os.path.exists(path):
+    file_path = Path(path)
+    if file_path.exists():
+        if not checksum_is_valid(file_path):
+            return []
         try:
-            with open(path, "r", encoding="utf-8") as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 data = json.load(f)
+            persist_checksum(file_path)
             return data if isinstance(data, list) else []
         except Exception:
             return []
@@ -92,9 +99,16 @@ def load_data(path: str) -> list[dict[str, Any]]:
 
 def save_data(path: str, data: list[dict[str, Any]]) -> bool:
     try:
-        with open(path, "w", encoding="utf-8") as f:
+        file_path = Path(path)
+        with open(file_path, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2, ensure_ascii=False)
+        persist_checksum(file_path)
         return True
     except Exception:
         return False
+
+
+def get_default_data() -> list[dict[str, Any]]:
+    """Expõe a base padrão para restauração automática do JSON."""
+    return _mock_gastos()
 
