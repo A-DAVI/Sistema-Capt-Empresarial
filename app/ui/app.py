@@ -4,6 +4,7 @@ from __future__ import annotations
 
 
 from pathlib import Path
+import re
 
 import customtkinter as ctk
 from PIL import Image
@@ -47,7 +48,7 @@ def e(txt: str, emoji: str) -> str:
 
 class ControleGastosApp(ctk.CTk):
 
-    def __init__(self):
+    def __init__(self, arquivo_dados: str | None = None, empresa_nome: str | None = None, empresa_id: str | None = None):
 
         super().__init__()
 
@@ -63,7 +64,13 @@ class ControleGastosApp(ctk.CTk):
 
         self._icon_photo: tk.PhotoImage | None = None
 
-        self.arquivo_dados = "gastos_empresa.json"
+        self.arquivo_dados = arquivo_dados or "gastos_empresa.json"
+
+        self.empresa_nome = empresa_nome or "Empresa Corporativa"
+
+        self.empresa_id = empresa_id or "empresa"
+
+        self.empresa_slug = self._gerar_slug(self.empresa_nome or self.empresa_id)
 
         self.gastos: list[dict[str, Any]] = load_data(self.arquivo_dados)
 
@@ -361,6 +368,16 @@ class ControleGastosApp(ctk.CTk):
 
         return normalizados
 
+    def _gerar_slug(self, texto: str) -> str:
+
+        texto = texto.lower().strip()
+
+        texto = re.sub(r"[^a-z0-9]+", "-", texto)
+
+        texto = re.sub(r"-{2,}", "-", texto).strip("-")
+
+        return texto or "empresa"
+
     def _registro_atende_filtros(self, gasto: dict[str, Any], filtros: dict[str, Any]) -> bool:
 
         if not filtros:
@@ -611,7 +628,7 @@ class ControleGastosApp(ctk.CTk):
 
             botoes,
 
-            "Aplicar",
+            "Aplicar filtros",
 
             aplicar,
 
@@ -678,6 +695,38 @@ class ControleGastosApp(ctk.CTk):
         header_frame = ctk.CTkFrame(main_frame, fg_color='transparent')
 
         header_frame.pack(fill='x', pady=(10, 6))
+
+        top_actions = ctk.CTkFrame(header_frame, fg_color='transparent')
+
+        top_actions.pack(fill='x', pady=(0, 6))
+
+        ctk.CTkLabel(
+
+            top_actions,
+
+            text=f"Acesso: {self.empresa_nome}",
+
+            font=ctk.CTkFont(family=FONT_FAMILY, size=13),
+
+            text_color=BRAND_COLORS['text_secondary'],
+
+        ).pack(side='left', padx=(4, 0))
+
+        self._criar_botao(
+
+            top_actions,
+
+            "Mudar de empresa",
+
+            self._reiniciar_aplicacao,
+
+            fg_color=BRAND_COLORS['neutral'],
+
+            hover_color="#2C2C2C",
+
+            height=32,
+
+        ).pack(side='right')
 
         if self.logo_image:
 
@@ -1214,6 +1263,42 @@ class ControleGastosApp(ctk.CTk):
         self.relatorio_window = None
 
         self.relatorio_scroll_frame = None
+
+    def _reiniciar_aplicacao(self):
+
+        from app.ui.empresa_selector import selecionar_empresa
+
+        resposta = messagebox.askyesno(
+
+            "Mudar de empresa",
+
+            "Deseja voltar à seleção de empresas? Todos os dados visíveis serão recarregados.",
+
+        )
+
+        if not resposta:
+
+            return
+
+        info = selecionar_empresa()
+
+        if not info:
+
+            return
+
+        novo_app = ControleGastosApp(
+
+            arquivo_dados=info.get("arquivo"),
+
+            empresa_nome=info.get("empresa_nome"),
+
+            empresa_id=info.get("empresa_id"),
+
+        )
+
+        self.destroy()
+
+        novo_app.mainloop()
 
     def salvar_despesa(self):
 
@@ -2262,17 +2347,27 @@ class ControleGastosApp(ctk.CTk):
 
             return
 
+        destino = Path("relatorios")
+
+        destino.mkdir(parents=True, exist_ok=True)
+
+        nome_arquivo = f"relatorio_{self.empresa_slug}.pdf"
+
+        caminho_destino = destino / nome_arquivo
+
         try:
 
             logo_param = str(self.logo_path) if self.logo_path.exists() else None
+
+            company_label = f"{self.empresa_nome} — Captação de Despesas-14D"
 
             caminho = generate_pdf_report(
 
                 registros_validos,
 
-                "relatorios/relatorio_despesas.pdf",
+                str(caminho_destino),
 
-                company_name="Captação de Despesas-14D",
+                company_name=company_label,
 
                 logo_path=logo_param,
 
@@ -2310,7 +2405,23 @@ def main():
 
     ctk.set_default_color_theme("dark-blue")
 
-    app = ControleGastosApp()
+    from app.ui.empresa_selector import selecionar_empresa
+
+    empresa_info = selecionar_empresa()
+
+    if not empresa_info:
+
+        return
+
+    app = ControleGastosApp(
+
+        arquivo_dados=empresa_info.get("arquivo"),
+
+        empresa_nome=empresa_info.get("empresa_nome"),
+
+        empresa_id=empresa_info.get("empresa_id"),
+
+    )
 
     app.mainloop()
 
