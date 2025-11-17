@@ -1,5 +1,5 @@
 
-![Banner](https://raw.githubusercontent.com/A-DAVI/Sistema-Capt-Empresarial/logo_empresa.png)
+![Banner](https://github.com/A-DAVI/Sistema-Capt-Empresarial/blob/master/logo_empresa.png)
 
 # Sistema de Controle de Gastos Empresariais
 
