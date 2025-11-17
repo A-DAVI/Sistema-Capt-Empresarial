@@ -1,0 +1,15 @@
+{
+  "empresa": "Grupo14D",
+  "tema": "dark",
+  "logo": "logo_empresa.png",
+  "versao": "1.3.0",
+  "build_id": "34757677",
+  "paleta": {
+    "background": "#0f172a",
+    "surface": "#182338",
+    "accent": "#fbbf24",
+    "texto": "#f8fafc",
+    "borda": "#1e293b"
+  },
+  "rodape_texto": "Desenvolvido pelo Departamento de Tecnologia • Grupo14D"
+}
