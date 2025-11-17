@@ -1,7 +1,7 @@
 
 ![Banner](https://github.com/A-DAVI/Sistema-Capt-Empresarial/blob/master/logo_empresa.png)
 
-# Sistema de Controle de Gastos Empresariais
+# 💼 Sistema de Controle de Gastos Empresariais
 
 Este sistema foi desenvolvido com o objetivo de facilitar o registro, visualização e gerenciamento de despesas empresariais, oferecendo uma interface moderna, organizada e compatível com ambientes corporativos.
 
@@ -33,8 +33,8 @@ Fornecer uma ferramenta simples e eficiente para:
   - Tipo
   - Forma de pagamento
   - Faixa de valor
-- Edição com validação
-- Exclusão segura com confirmação
+- Edição com validação.
+- Exclusão segura com confirmação.
 
 ### **Relatórios**
 - Visualização completa dentro do sistema.
@@ -49,44 +49,49 @@ Fornecer uma ferramenta simples e eficiente para:
 ## 📌 3. Tecnologias Utilizadas
 
 - **Python 3.10+**
-- **CustomTkinter** (UI)
-- **ReportLab** (PDF)
-- **JSON** (persistência local)
-- Arquitetura modular (UI / Dados / Utils)
+- **CustomTkinter** — Interface moderna e responsiva.
+- **ReportLab** — Geração de relatórios em PDF.
+- **JSON** — Persistência de dados local.
+- Arquitetura **modular** (UI / Data / Utils).
 
 ---
 
 ## 📌 4. Estrutura do Projeto
 
-```plaintext
 Sistema-Capt-Empresarial/
 │
 ├── app/
-│   ├── data/
-│   │   ├── store.py               # Leitura/gravação + mock dev
-│   │   └── ...
-│   │
-│   ├── ui/
-│   │   ├── app.py                 # Interface principal
-│   │   ├── widgets.py             # Componentes reutilizáveis
-│   │   └── ...
-│   │
-│   ├── utils/
-│   │   ├── formatting.py          # Formatação (BRL, datas, validações)
-│   │   ├── report.py              # Geração de PDF
-│   │   └── ...
+│ ├── data/
+│ │ ├── store.py # Leitura/gravação + mock dev
+│ │ └── ...
+│ │
+│ ├── ui/
+│ │ ├── app.py # Interface principal
+│ │ ├── widgets.py # Componentes reutilizáveis
+│ │ └── ...
+│ │
+│ ├── utils/
+│ │ ├── formatting.py # Formatação (BRL, datas, validações)
+│ │ ├── report.py # Geração de PDF
+│ │ └── ...
 │
 ├── relatorios/
-│   └── relatorio_despesas.pdf     # PDF gerado automaticamente
+│ └── relatorio_despesas.pdf # PDF gerado automaticamente
 │
-├── INTERFACE.py                   # Entry point do sistema
+├── INTERFACE.py # Entry point do sistema
 └── README.md
-📌 5. Como Executar
-Instalar dependências
-bash
+
+yaml
 Copiar código
+
+---
+
+## 📌 5. Como Executar
+
+### 🧩 Instalar dependências
+```bash
 pip install -r requirements.txt
-Executar o sistema
+▶️ Executar o sistema
 bash
 Copiar código
 python INTERFACE.py
@@ -96,7 +101,7 @@ O projeto possui um modo especial que carrega dados fictícios para testes inter
 Ativar
 bash
 Copiar código
-# Windows Powershell
+# Windows PowerShell
 $Env:APP_ENV = "dev"
 
 # Linux/Mac
@@ -104,9 +109,7 @@ export APP_ENV=dev
 
 python INTERFACE.py
 Resultado
-O sistema é carregado com uma lista de despesas simuladas.
-
-Útil para testes de UI, relatório e fluxo geral.
+O sistema é carregado com uma lista de despesas simuladas — útil para testes de UI, relatório e fluxo geral.
 
 📌 7. Relatório em PDF
 O PDF é gerado automaticamente em:
@@ -126,18 +129,22 @@ Tabela das despesas
 Logo institucional (se existir logo_empresa.png)
 
 📌 8. Roadmap (Melhorias Futuras)
-Exportação para Excel/CSV
+ Exportação para Excel/CSV
 
-Dashboard com gráficos
+ Dashboard com gráficos
 
-Login e controle de usuários
+ Login e controle de usuários
 
-Backup automático
+ Backup automático
 
-Integração com sistemas contábeis
+ Integração com sistemas contábeis
 
 📌 9. Autor
 Desenvolvido por:
-
 Davi Cassoli Lira
-DEPARTAMENTO DE TECNOLOGIA ESCRITÓRIO GRUPO14D • 2025
+Departamento de Tecnologia — Escritório Grupo 14D • 2025
+
+🔗 GitHub: A-DAVI
+📧 Contato: tecnologiagrupo14d@gmail.com
+
+<p align="center"> <sub>© 2025 GRUPO 14D — Todos os direitos reservados.</sub> </p> ```
