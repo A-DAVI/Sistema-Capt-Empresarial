@@ -1,0 +1,16 @@
+[
+  {
+    "data": "16/11/2025",
+    "tipo": "Água",
+    "forma_pagamento": "PIX",
+    "valor": 240.0,
+    "timestamp": "2025-11-16T00:18:36.310512"
+  },
+  {
+    "data": "16/11/2025",
+    "tipo": "Água",
+    "forma_pagamento": "PIX",
+    "valor": 1000.0,
+    "timestamp": "2025-11-16T09:51:25.304862"
+  }
+]

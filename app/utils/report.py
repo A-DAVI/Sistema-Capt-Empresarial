@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from __future__ import annotations
 
 from datetime import datetime
@@ -21,6 +22,41 @@ except Exception:  # pragma: no cover
     cm = mm = 1  # type: ignore[assignment]
     canvas = None  # type: ignore[assignment]
     Paragraph = None  # type: ignore[assignment]
+
+
+if canvas is not None:
+    class NumberedCanvas(canvas.Canvas):
+        """Canvas que salva o estado das páginas para inserir rodapé e numeração."""
+
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            self._saved_page_states: list[dict[str, Any]] = []
+
+        def showPage(self):  # pragma: no cover - manipulação do reportlab
+            self._saved_page_states.append(dict(self.__dict__))
+            self._startPage()
+
+        def save(self):  # pragma: no cover - manipulação do reportlab
+            self._saved_page_states.append(dict(self.__dict__))
+            total_pages = len(self._saved_page_states)
+            for state in self._saved_page_states:
+                self.__dict__.update(state)
+                self._draw_footer(total_pages)
+                super().showPage()
+            super().save()
+
+        def _draw_footer(self, total_pages: int):
+            width, _ = self._pagesize
+            footer_y = 1.5 * cm
+            tagline = "Emitido automaticamente pelo Sistema CAPT Empresarial — Grupo 14D"
+            self.setFont("Helvetica-Oblique", 9)
+            self.drawCentredString(width / 2, footer_y, tagline)
+            self.setFont("Helvetica", 9)
+            self.drawCentredString(width / 2, footer_y - 0.45 * cm, f"{self._pageNumber}/{total_pages}")
+
+
+else:  # pragma: no cover
+    NumberedCanvas = None  # type: ignore[assignment]
 
 
 def generate_pdf_report(
@@ -50,9 +86,10 @@ def generate_pdf_report(
     output = Path(output_path)
     output.parent.mkdir(parents=True, exist_ok=True)
 
-    c = canvas.Canvas(str(output), pagesize=A4)
-    width, height = A4
+    canvas_class = NumberedCanvas or canvas.Canvas
+    c = canvas_class(str(output), pagesize=A4)
 
+    width, height = A4
     top_margin = height - 2.5 * cm
     x_margin = 2.5 * cm
 
@@ -76,13 +113,13 @@ def generate_pdf_report(
 
     # Cabeçalho textual
     c.setFont("Helvetica-Bold", 16)
-
     c.drawString(x_margin, top_margin - 0.3 * cm, company_name)
+
     c.setFont("Helvetica", 10)
     c.drawString(
         x_margin,
         top_margin - 0.9 * cm,
-        f"Relatório de Despesas Empresariais",
+        "Relatórios e Indicadores Financeiros",
     )
     c.drawString(
         x_margin,
@@ -111,25 +148,22 @@ def generate_pdf_report(
         f"Quantidade de lançamentos: {quantidade}",
     )
 
-    # Espaço antes da lista
-    y = top_margin - 4.7 * cm
+    def desenhar_cabecalho_tabela(y_pos: float, titulo: str) -> float:
+        c.setFont("Helvetica-Bold", 12)
+        c.drawString(x_margin, y_pos, titulo)
+        y_pos -= 8 * mm
+        c.setFont("Helvetica-Bold", 10)
+        c.drawString(x_margin, y_pos, "Data")
+        c.drawString(x_margin + 3 * cm, y_pos, "Tipo")
+        c.drawString(x_margin + 10 * cm, y_pos, "Forma")
+        c.drawRightString(width - x_margin, y_pos, "Valor (R$)")
+        y_pos -= 4 * mm
+        c.line(x_margin, y_pos, width - x_margin, y_pos)
+        y_pos -= 6 * mm
+        c.setFont("Helvetica", 9)
+        return y_pos
 
-    # Título da seção de detalhes
-    c.setFont("Helvetica-Bold", 12)
-    c.drawString(x_margin, y, "Detalhamento das Despesas")
-    y -= 8 * mm
-
-    # Cabeçalho das colunas
-    c.setFont("Helvetica-Bold", 10)
-    c.drawString(x_margin, y, "Data")
-    c.drawString(x_margin + 3 * cm, y, "Tipo")
-    c.drawString(x_margin + 10 * cm, y, "Forma")
-    c.drawRightString(width - x_margin, y, "Valor (R$)")
-    y -= 4 * mm
-    c.line(x_margin, y, width - x_margin, y)
-    y -= 6 * mm
-
-    c.setFont("Helvetica", 9)
+    y = desenhar_cabecalho_tabela(top_margin - 4.7 * cm, "Detalhamento das Despesas")
 
     # Ordena por data desc se possível
     def _parse_data(g: dict[str, Any]) -> datetime:
@@ -141,13 +175,9 @@ def generate_pdf_report(
     gastos_ordenados = sorted(gastos_list, key=_parse_data, reverse=True)
 
     for gasto in gastos_ordenados:
-        if y < 4 * cm:  # Margem inferior para evitar que o texto cole no fim da página
+        if y < 4 * cm:  # mantém margem inferior confortável
             c.showPage()
-            y = height - 3 * cm  # Reinicia o y no topo da nova página
-            c.setFont("Helvetica-Bold", 10)
-            c.drawString(x_margin, y, "Continuação - Detalhamento das Despesas")
-            y -= 10 * mm
-            c.setFont("Helvetica", 9)
+            y = desenhar_cabecalho_tabela(height - 3 * cm, "Continuação - Detalhamento das Despesas")
 
         data = gasto.get("data", "")
         tipo = str(gasto.get("tipo", ""))[:40]
@@ -160,7 +190,5 @@ def generate_pdf_report(
         c.drawRightString(width - x_margin, y, valor)
         y -= 6 * mm
 
-    c.showPage()
     c.save()
-
     return str(output)
