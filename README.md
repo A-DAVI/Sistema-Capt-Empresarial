@@ -1,3 +1,6 @@
+
+![Banner](https://raw.githubusercontent.com/A-DAVI/Sistema-Capt-Empresarial/logo_empresa.png)
+
 # Sistema de Controle de Gastos Empresariais
 
 Este sistema foi desenvolvido com o objetivo de facilitar o registro, visualização e gerenciamento de despesas empresariais, oferecendo uma interface moderna, organizada e compatível com ambientes corporativos.
