@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
-from pathlib import Path
 import logging
+from pathlib import Path
 
 import customtkinter as ctk
 from PIL import Image
@@ -15,7 +15,6 @@ from app.config import (
     LOGO_PATH,
 )
 from app.data.repository import JsonDataRepository
-
 from app.ui.widgets import ReadOnlyComboBox
 
 logger = logging.getLogger("app.empresa_selector")
@@ -43,7 +42,7 @@ class EmpresaSelector(ctk.CTk):
         self.selected_info: dict[str, str] | None = None
 
         self.empresas = EMPRESAS_PRE_CONFIGURADAS.copy()
-        self.empresas_map = {item["nome"]: item["id"] for item in self.empresas}
+        self.empresas_map = {item["nome_fantasia"]: item for item in self.empresas}
         self.repository = JsonDataRepository()
 
         self._construir_layout()
@@ -98,7 +97,7 @@ class EmpresaSelector(ctk.CTk):
         )
         self.combo_empresas.pack(fill="x", padx=40, pady=(0, 20))
         if self.empresas:
-            self.combo_empresas.set(self.empresas[0]["nome"])
+            self.combo_empresas.set(self.empresas[0]["nome_fantasia"])
 
         botoes = ctk.CTkFrame(container, fg_color="transparent")
         botoes.pack(fill="x", padx=40, pady=(10, 0))
@@ -143,11 +142,12 @@ class EmpresaSelector(ctk.CTk):
 
     def _entrar(self) -> None:
         nome_display = self.combo_empresas.get().strip()
-        empresa_id = self.empresas_map.get(nome_display)
-        if not empresa_id:
+        empresa_info = self.empresas_map.get(nome_display)
+        if not empresa_info:
             messagebox.showerror("Seleção inválida", "Escolha uma empresa antes de continuar.")
             return
 
+        empresa_id = empresa_info["id"]
         try:
             arquivo = self.repository.ensure_company_file(empresa_id)
         except Exception as exc:
@@ -159,6 +159,7 @@ class EmpresaSelector(ctk.CTk):
             "arquivo": str(arquivo),
             "empresa_id": empresa_id,
             "empresa_nome": nome_display,
+            "empresa_razao": empresa_info.get("razao_social", nome_display),
         }
         logger.info("Empresa selecionada: %s (%s)", nome_display, arquivo)
         self.destroy()

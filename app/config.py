@@ -14,9 +14,21 @@ LOGO_PATH = PROJECT_ROOT / "logo_empresa.png"
 LOGO_ICON_CANDIDATES = ["logo_icon.ico", "logo_icon.png", "logo_icon.gif"]
 
 EMPRESAS_PRE_CONFIGURADAS = [
-    {"id": "empresa_1", "nome": "Empresa 01"},
-    {"id": "empresa_2", "nome": "Empresa 02"},
-    {"id": "empresa_3", "nome": "Empresa 03"},
+    {
+        "id": "empresa_1",
+        "razao_social": "E. G. FONSECA",
+        "nome_fantasia": "MERCEARIA BELLA VISTA",
+    },
+    {
+        "id": "empresa_2",
+        "razao_social": "R. G. FONSECA & CIA. LTDA",
+        "nome_fantasia": "SUPERPAO",
+    },
+    {
+        "id": "empresa_3",
+        "razao_social": "M X FONSECA CAPELLO",
+        "nome_fantasia": "SP FOODS",
+    },
 ]
 
 BRAND_COLORS = {
@@ -34,4 +46,3 @@ BRAND_COLORS = {
 }
 
 FONT_FAMILY = "Segoe UI"
-

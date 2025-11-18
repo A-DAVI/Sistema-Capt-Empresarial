@@ -50,6 +50,7 @@ class ControleGastosApp(ctk.CTk):
         empresa_nome: str | None = None,
         empresa_id: str | None = None,
         repository: JsonDataRepository | None = None,
+        empresa_razao: str | None = None,
     ):
 
         super().__init__()
@@ -70,9 +71,11 @@ class ControleGastosApp(ctk.CTk):
 
         self.empresa_nome = empresa_nome or "Empresa Corporativa"
 
+        self.empresa_razao = empresa_razao or self.empresa_nome
+
         self.empresa_id = empresa_id or "empresa"
 
-        self.empresa_slug = self._gerar_slug(self.empresa_nome or self.empresa_id)
+        self.empresa_slug = self._gerar_slug(self.empresa_razao or self.empresa_nome or self.empresa_id)
 
         if arquivo_dados:
 
@@ -2285,15 +2288,11 @@ def main():
     while empresa_info:
 
         app = ControleGastosApp(
-
             arquivo_dados=empresa_info.get("arquivo"),
-
             empresa_nome=empresa_info.get("empresa_nome"),
-
             empresa_id=empresa_info.get("empresa_id"),
-
             repository=repository,
-
+            empresa_razao=empresa_info.get("empresa_razao"),
         )
 
         app.mainloop()
