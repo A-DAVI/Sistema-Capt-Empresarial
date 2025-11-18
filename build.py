@@ -30,7 +30,7 @@ def _run_pyinstaller() -> None:
         OUTPUT_NAME,
         "--hidden-import",
         "customtkinter",
-        f"--icon={PROJECT_ROOT / 'Logo_icon.png'}",
+        f"--icon={PROJECT_ROOT / 'Logo.ico'}",
     ]
     subprocess.run(command, check=True)
 
