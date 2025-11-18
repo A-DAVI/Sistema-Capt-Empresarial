@@ -48,7 +48,7 @@ def e(txt: str, emoji: str) -> str:
 
 class ControleGastosApp(ctk.CTk):
 
-    def __init__(self, arquivo_dados: str | None = None, empresa_nome: str | None = None, empresa_id: str | None = None):
+    def __init__(self, arquivo_dados: str | None = None, empresa_nome: str | None = None, empresa_id: str | None = None, empresa_razao: str | None = None):
 
         super().__init__()
 
@@ -68,9 +68,11 @@ class ControleGastosApp(ctk.CTk):
 
         self.empresa_nome = empresa_nome or "Empresa Corporativa"
 
+        self.empresa_razao = empresa_razao or self.empresa_nome
+
         self.empresa_id = empresa_id or "empresa"
 
-        self.empresa_slug = self._gerar_slug(self.empresa_nome or self.empresa_id)
+        self.empresa_slug = self._gerar_slug(self.empresa_razao or self.empresa_nome or self.empresa_id)
 
         self.gastos: list[dict[str, Any]] = load_data(self.arquivo_dados)
 
@@ -1257,6 +1259,8 @@ class ControleGastosApp(ctk.CTk):
 
             return
 
+        self.destroy()
+
         novo_app = ControleGastosApp(
 
             arquivo_dados=info.get("arquivo"),
@@ -1265,9 +1269,9 @@ class ControleGastosApp(ctk.CTk):
 
             empresa_id=info.get("empresa_id"),
 
-        )
+            empresa_razao=info.get("empresa_razao"),
 
-        self.after(50, self.destroy)
+        )
 
         novo_app.mainloop()
 
@@ -2330,7 +2334,7 @@ class ControleGastosApp(ctk.CTk):
 
             logo_param = str(self.logo_path) if self.logo_path.exists() else None
 
-            company_label = f"{self.empresa_nome} — Captação de Despesas-14D"
+            company_label = f"{self.empresa_razao} — Captação de Despesas-14D"
 
             caminho = generate_pdf_report(
 
@@ -2392,7 +2396,10 @@ def main():
 
         empresa_id=empresa_info.get("empresa_id"),
 
+        empresa_razao=empresa_info.get("empresa_razao"),
+
     )
 
     app.mainloop()
+
 

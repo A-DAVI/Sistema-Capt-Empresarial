@@ -24,9 +24,21 @@ BRAND_COLORS = {
 FONT_FAMILY = "Segoe UI"
 
 EMPRESAS_PRE_CONFIGURADAS = [
-    {"id": "empresa_1", "nome": "MERCEARIA BELLA VISTA"},
-    {"id": "empresa_2", "nome": "SUPERPAO"},
-    {"id": "empresa_3", "nome": "SP FOODS"},
+    {
+        "id": "empresa_1",
+        "razao_social": "E. G. FONSECA",
+        "nome_fantasia": "MERCEARIA BELLA VISTA",
+    },
+    {
+        "id": "empresa_2",
+        "razao_social": "R. G. FONSECA & CIA. LTDA",
+        "nome_fantasia": "SUPERPAO",
+    },
+    {
+        "id": "empresa_3",
+        "razao_social": "M X FONSECA CAPELLO",
+        "nome_fantasia": "SP FOODS",
+    },
 ]
 
 logger = logging.getLogger("app.empresa_selector")
@@ -56,7 +68,7 @@ class EmpresaSelector(ctk.CTk):
         self.selected_info: dict[str, str] | None = None
 
         self.empresas = EMPRESAS_PRE_CONFIGURADAS.copy()
-        self.empresas_map = {item["nome"]: item["id"] for item in self.empresas}
+        self.empresas_map = {item["nome_fantasia"]: item for item in self.empresas}
 
         self._construir_layout()
         self._priorizar()
@@ -110,7 +122,7 @@ class EmpresaSelector(ctk.CTk):
         )
         self.combo_empresas.pack(fill="x", padx=40, pady=(0, 20))
         if self.empresas:
-            self.combo_empresas.set(self.empresas[0]["nome"])
+            self.combo_empresas.set(self.empresas[0]["nome_fantasia"])
 
         botoes = ctk.CTkFrame(container, fg_color="transparent")
         botoes.pack(fill="x", padx=40, pady=(10, 0))
@@ -155,11 +167,12 @@ class EmpresaSelector(ctk.CTk):
 
     def _entrar(self) -> None:
         nome_display = self.combo_empresas.get().strip()
-        empresa_id = self.empresas_map.get(nome_display)
-        if not empresa_id:
+        empresa_info = self.empresas_map.get(nome_display)
+        if not empresa_info:
             messagebox.showerror("Seleção inválida", "Escolha uma empresa antes de continuar.")
             return
 
+        empresa_id = empresa_info["id"]
         arquivo = self.data_dir / f"{empresa_id}.json"
         try:
             arquivo.parent.mkdir(parents=True, exist_ok=True)
@@ -175,6 +188,7 @@ class EmpresaSelector(ctk.CTk):
             "arquivo": str(arquivo),
             "empresa_id": empresa_id,
             "empresa_nome": nome_display,
+            "empresa_razao": empresa_info.get("razao_social", nome_display),
         }
         logger.info("Empresa selecionada: %s (%s)", nome_display, arquivo)
         self.destroy()
