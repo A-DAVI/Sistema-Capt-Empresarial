@@ -3,7 +3,7 @@ name: Build Windows Installer
 on:
   push:
     tags:
-      - 'v*'     # roda quando você criar uma nova tag de versão
+      - 'v*'
   workflow_dispatch:
 
 jobs:
@@ -26,7 +26,7 @@ jobs:
 
       - name: Build EXE
         run: |
-          pyinstaller --onefile --windowed INTERFACE.py --name SistemaCaptEmpresarial
+          pyinstaller --onefile --windowed INTERFACE.py --name CaptacaoEmpresarial14D
 
       - name: Install Inno Setup
         run: choco install innosetup --no-progress -y
@@ -35,11 +35,11 @@ jobs:
         run: |
           "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" installer.iss
 
-      - name: Upload installer to Release
+      - name: Upload to Release
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            dist/SistemaCaptEmpresarial.exe
-            installer/Instalador-Sistema-Capt.exe
+            dist/CaptacaoEmpresarial14D.exe
+            installer/Instalador-CaptacaoEmpresarial.exe
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
