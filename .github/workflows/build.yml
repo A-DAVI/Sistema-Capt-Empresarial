@@ -1,0 +1,45 @@
+name: Build Windows Installer
+
+on:
+  push:
+    tags:
+      - 'v*'     # roda quando você criar uma nova tag de versão
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install pyinstaller
+
+      - name: Build EXE
+        run: |
+          pyinstaller --onefile --windowed INTERFACE.py --name SistemaCaptEmpresarial
+
+      - name: Install Inno Setup
+        run: choco install innosetup --no-progress -y
+
+      - name: Build Installer
+        run: |
+          "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" installer.iss
+
+      - name: Upload installer to Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            dist/SistemaCaptEmpresarial.exe
+            installer/Instalador-Sistema-Capt.exe
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
