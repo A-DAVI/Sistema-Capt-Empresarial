@@ -40,6 +40,6 @@ jobs:
         with:
           files: |
             dist/CaptacaoEmpresarial14D.exe
-            installer/Instalador-CaptacaoEmpresarial.exe
+            installer/Instalador-CaptacaoEmpresarial14D.exe
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
