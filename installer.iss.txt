@@ -14,7 +14,7 @@ OutputDir=installer
 OutputBaseFilename=Instalador-CaptacaoEmpresarial
 Compression=lzma
 SolidCompression=yes
-SetupIconFile=logo.ico
+SetupIconFile=Sistema-Capt-Empresarial\logo.ico
 WizardStyle=modern
 PrivilegesRequired=admin
 
