@@ -30,7 +30,7 @@ jobs:
       - name: Build EXE
         run: |
           pyinstaller --onefile --windowed --noconsole --clean --hidden-import customtkinter --name CaptacaoEmpresarial14D --icon Logo.ico INTERFACE.py
-
+          
       - name: Install Inno Setup
         run: choco install innosetup --no-progress -y
 
