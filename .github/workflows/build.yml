@@ -25,11 +25,23 @@ jobs:
       - name: Install dependencies
         run: |
           pip install -r requirements.txt
-          pip install pyinstaller
+          pip install pyinstaller customtkinter CTkMessagebox
 
       - name: Build EXE
         run: |
-          pyinstaller --onefile --windowed --noconsole --clean --hidden-import customtkinter --name CaptacaoEmpresarial14D --icon Logo.ico INTERFACE.py
+          pyinstaller ^
+            --onefile ^
+            --windowed ^
+            --noconsole ^
+            --clean ^
+            --hidden-import customtkinter ^
+            --hidden-import CTkMessagebox ^
+            --icon=logo.ico ^
+            --name CaptacaoEmpresarial14D ^
+            INTERFACE.py
+
+      - name: Ensure installer directory exists
+        run: mkdir installer
 
       - name: Install Inno Setup
         run: choco install innosetup --no-progress -y
