@@ -15,7 +15,7 @@ except ImportError:  # pragma: no cover
     msvcrt = None
 
 try:
-    import fcntl  # type: ignore[attr-defined]
+    import fcntl  # type: ignore[import-not-found]
 except ImportError:  # pragma: no cover
     fcntl = None
 
@@ -131,7 +131,7 @@ class InstanceLock:
             if os.name == "nt" and msvcrt:
                 msvcrt.locking(handle.fileno(), msvcrt.LK_NBLCK, 1)
             elif fcntl:
-                fcntl.flock(handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+                fcntl.flock(handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)  # type: ignore[attr-defined]
             else:
                 raise RuntimeError("Plataforma sem suporte de lock refinado.")
             handle.seek(0)
@@ -152,7 +152,7 @@ class InstanceLock:
             if os.name == "nt" and msvcrt:
                 msvcrt.locking(self._handle.fileno(), msvcrt.LK_UNLCK, 1)
             elif fcntl:
-                fcntl.flock(self._handle.fileno(), fcntl.LOCK_UN)
+                fcntl.flock(self._handle.fileno(), fcntl.LOCK_UN)  # type: ignore[attr-defined]
         finally:
             self._handle.close()
             self._handle = None

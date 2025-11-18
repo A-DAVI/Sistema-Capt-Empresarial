@@ -1267,7 +1267,7 @@ class ControleGastosApp(ctk.CTk):
 
         )
 
-        self.destroy()
+        self.after(50, self.destroy)
 
         novo_app.mainloop()
 
