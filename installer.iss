@@ -5,28 +5,28 @@
 ; ================================
 
 [Setup]
-AppName=Sistema de Controle de Gastos Empresariais
+AppName=Captação Empresarial - Escritório 14D
 AppVersion=1.0.0
 AppPublisher=Grupo 14D
-DefaultDirName={pf}\Grupo 14D\Sistema Capt Empresarial
+DefaultDirName={pf}\Grupo14D\CaptacaoEmpresarial14D
 DisableDirPage=no
 DisableProgramGroupPage=no
 OutputDir=installer
-OutputBaseFilename=Instalador-Sistema-Capt-14D
+OutputBaseFilename=Instalador-CaptacaoEmpresarial14D
 Compression=lzma
 SolidCompression=yes
-SetupIconFile=Logo-Icon
+SetupIconFile=logo.ico
 WizardStyle=modern
 
 [Files]
-Source: "dist\SistemaCaptEmpresarial.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "dist\CaptacaoEmpresarial14D.exe"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
-Name: "{autoprograms}\Sistema de Controle de Gastos Empresariais"; Filename: "{app}\SistemaCaptEmpresarial.exe"
-Name: "{autodesktop}\Sistema de Controle de Gastos Empresariais"; Filename: "{app}\SistemaCaptEmpresarial.exe"; Tasks: desktopicon
+Name: "{autoprograms}\Captação Empresarial 14D"; Filename: "{app}\CaptacaoEmpresarial14D.exe"
+Name: "{autodesktop}\Captação Empresarial 14D"; Filename: "{app}\CaptacaoEmpresarial14D.exe"; Tasks: desktopicon
 
 [Tasks]
 Name: "desktopicon"; Description: "Criar atalho na área de trabalho"; GroupDescription: "Atalhos adicionais:"
 
 [Run]
-Filename: "{app}\SistemaCaptEmpresarial.exe"; Description: "Executar o sistema após concluir"; Flags: nowait postinstall skipifsilent
+Filename: "{app}\CaptacaoEmpresarial14D.exe"; Description: "Executar o sistema após concluir"; Flags: nowait postinstall skipifsilent

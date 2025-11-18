@@ -11,7 +11,7 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).parent
 DIST_DIR = PROJECT_ROOT / "dist"
 BUILD_DIR = PROJECT_ROOT / "build"
-OUTPUT_NAME = "CAPT Empresarial"
+OUTPUT_NAME = "CaptacaoEmpresarial14D"
 
 
 def _run_pyinstaller() -> None:
@@ -28,7 +28,7 @@ def _run_pyinstaller() -> None:
         "--clean",
         "--name",
         OUTPUT_NAME,
-        f"--icon={PROJECT_ROOT / 'logo_empresa.png'}",
+        f"--icon={PROJECT_ROOT / 'Logo_icon.png'}",
     ]
     subprocess.run(command, check=True)
 

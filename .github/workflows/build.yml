@@ -6,6 +6,9 @@ on:
       - 'v*'
   workflow_dispatch:
 
+permissions:
+  contents: write
+  
 jobs:
   build-windows:
     runs-on: windows-latest
@@ -33,13 +36,13 @@ jobs:
 
       - name: Build Installer
         run: |
-          "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" installer.iss
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" "installer.iss"
 
       - name: Upload to Release
         uses: softprops/action-gh-release@v1
         with:
           files: |
             dist/CaptacaoEmpresarial14D.exe
-            installer/Instalador-CaptacaoEmpresarial.exe
+            installer/Instalador-CaptacaoEmpresarial14D.exe
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
