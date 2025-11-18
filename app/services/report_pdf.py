@@ -53,13 +53,9 @@ if canvas is not None:
             self.drawCentredString(width / 2, footer_y, tagline)
             self.setFont("Helvetica", 9)
             self.drawCentredString(
-
                 width / 2,
-
                 footer_y - 0.45 * cm,
-
                 f"{self._pageNumber}/{total_pages}",  # type: ignore[attr-defined]
-
             )
 
 
@@ -83,8 +79,7 @@ def generate_pdf_report(
     """
     if canvas is None or A4 is None:
         raise RuntimeError(
-            "Biblioteca 'reportlab' não encontrada. "
-            "Instale com: pip install reportlab"
+            "Biblioteca 'reportlab' não encontrada. " "Instale com: pip install reportlab"
         )
 
     gastos_list = list(gastos)
@@ -101,7 +96,6 @@ def generate_pdf_report(
     top_margin = height - 2.5 * cm
     x_margin = 2.5 * cm
 
-    # Logo (opcional)
     if logo_path:
         logo_file = Path(logo_path)
         if logo_file.exists():
@@ -116,10 +110,8 @@ def generate_pdf_report(
                     mask="auto",
                 )
             except Exception:  # pragma: no cover
-                # Se der erro na imagem, apenas segue sem logo
                 pass
 
-    # Cabeçalho textual
     c.setFont("Helvetica-Bold", 16)
     c.drawString(x_margin, top_margin - 0.3 * cm, company_name)
 
@@ -135,12 +127,10 @@ def generate_pdf_report(
         f"Gerado em: {datetime.now().strftime('%d/%m/%Y %H:%M')}",
     )
 
-    # Linha separadora
     c.setStrokeColorRGB(0.2, 0.2, 0.2)
     c.setLineWidth(0.5)
     c.line(x_margin, top_margin - 1.7 * cm, width - x_margin, top_margin - 1.7 * cm)
 
-    # Resumo
     c.setFont("Helvetica-Bold", 12)
     c.drawString(x_margin, top_margin - 2.5 * cm, "Resumo Geral")
 
@@ -173,7 +163,6 @@ def generate_pdf_report(
 
     y = desenhar_cabecalho_tabela(top_margin - 4.7 * cm, "Detalhamento das Despesas")
 
-    # Ordena por data desc se possível
     def _parse_data(g: dict[str, Any]) -> datetime:
         try:
             return datetime.strptime(g.get("data", "01/01/1970"), "%d/%m/%Y")
@@ -183,7 +172,7 @@ def generate_pdf_report(
     gastos_ordenados = sorted(gastos_list, key=_parse_data, reverse=True)
 
     for gasto in gastos_ordenados:
-        if y < 4 * cm:  # mantém margem inferior confortável
+        if y < 4 * cm:
             c.showPage()
             y = desenhar_cabecalho_tabela(height - 3 * cm, "Continuação - Detalhamento das Despesas")
 
@@ -200,3 +189,4 @@ def generate_pdf_report(
 
     c.save()
     return str(output)
+

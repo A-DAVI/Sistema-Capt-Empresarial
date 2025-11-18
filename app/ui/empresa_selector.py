@@ -8,26 +8,15 @@ import customtkinter as ctk
 from PIL import Image
 from tkinter import messagebox
 
+from app.config import (
+    BRAND_COLORS,
+    EMPRESAS_PRE_CONFIGURADAS,
+    FONT_FAMILY,
+    LOGO_PATH,
+)
+from app.data.repository import JsonDataRepository
+
 from app.ui.widgets import ReadOnlyComboBox
-
-
-BRAND_COLORS = {
-    "background": "#0B0B0B",
-    "surface": "#121212",
-    "panel": "#1A1A1A",
-    "accent": "#007BFF",
-    "accent_hover": "#0056B3",
-    "neutral": "#1F1F1F",
-    "text_primary": "#FFFFFF",
-    "text_secondary": "#CCCCCC",
-}
-FONT_FAMILY = "Segoe UI"
-
-EMPRESAS_PRE_CONFIGURADAS = [
-    {"id": "empresa_1", "nome": "MERCEARIA BELLA VISTA"},
-    {"id": "empresa_2", "nome": "SUPERPAO"},
-    {"id": "empresa_3", "nome": "SP FOODS"},
-]
 
 logger = logging.getLogger("app.empresa_selector")
 if not logger.handlers:
@@ -48,15 +37,14 @@ class EmpresaSelector(ctk.CTk):
         self.resizable(False, False)
         self.configure(fg_color=BRAND_COLORS["background"])
 
-        raiz = Path(__file__).resolve().parents[1]
-        self.data_dir = raiz / "data"
-        self.logo_path = raiz / "logo_empresa.png"
+        self.logo_path = LOGO_PATH
 
         self.logo_image = self._carregar_logo(self.logo_path)
         self.selected_info: dict[str, str] | None = None
 
         self.empresas = EMPRESAS_PRE_CONFIGURADAS.copy()
         self.empresas_map = {item["nome"]: item["id"] for item in self.empresas}
+        self.repository = JsonDataRepository()
 
         self._construir_layout()
         self._priorizar()
@@ -160,12 +148,8 @@ class EmpresaSelector(ctk.CTk):
             messagebox.showerror("Seleção inválida", "Escolha uma empresa antes de continuar.")
             return
 
-        arquivo = self.data_dir / f"{empresa_id}.json"
         try:
-            arquivo.parent.mkdir(parents=True, exist_ok=True)
-            if not arquivo.exists():
-                arquivo.write_text("[]", encoding="utf-8")
-                logger.info("Arquivo de empresa criado: %s", arquivo)
+            arquivo = self.repository.ensure_company_file(empresa_id)
         except Exception as exc:
             logger.error("Falha ao preparar arquivo da empresa %s: %s", empresa_id, exc)
             messagebox.showerror("Erro", "Não foi possível preparar o arquivo da empresa selecionada.")

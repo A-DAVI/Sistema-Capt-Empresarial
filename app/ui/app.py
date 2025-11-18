@@ -13,32 +13,28 @@ import tkinter as tk
 from tkinter import messagebox
 from typing import Any, Iterable
 
+from app.config import (
+    BRAND_COLORS,
+    FONT_FAMILY,
+    LOGO_ICON_CANDIDATES,
+    LOGO_PATH,
+    REPORTS_DIR,
+)
+from app.data.repository import JsonDataRepository
+from app.services.filters import (
+    calcular_resumo,
+    filtrar_registros,
+    normalizar_filtros,
+    parse_data_str,
+    registro_atende_filtros,
+)
 from app.utils.formatting import format_brl, validar_data, validar_valor
-
-from app.utils.report import generate_pdf_report
-
-from app.data.store import load_data, save_data
-
+from app.services.report_pdf import generate_pdf_report
 from app.ui.widgets import ReadOnlyComboBox
 
 ctk.set_appearance_mode("dark")
 
 ctk.set_default_color_theme("dark-blue")
-
-BRAND_COLORS = {
-    "background": "#0B0B0B",
-    "surface": "#121212",
-    "panel": "#1A1A1A",
-    "accent": "#007BFF",
-    "accent_hover": "#0056B3",
-    "neutral": "#1F1F1F",
-    "text_primary": "#FFFFFF",
-    "text_secondary": "#CCCCCC",
-    "text_muted": "#8A8A8A",
-    "success": "#1ABC9C",
-    "danger": "#C0392B",
-}
-FONT_FAMILY = "Segoe UI"
 
 USE_EMOJI = False
 
@@ -48,7 +44,13 @@ def e(txt: str, emoji: str) -> str:
 
 class ControleGastosApp(ctk.CTk):
 
-    def __init__(self, arquivo_dados: str | None = None, empresa_nome: str | None = None, empresa_id: str | None = None):
+    def __init__(
+        self,
+        arquivo_dados: str | None = None,
+        empresa_nome: str | None = None,
+        empresa_id: str | None = None,
+        repository: JsonDataRepository | None = None,
+    ):
 
         super().__init__()
 
@@ -64,7 +66,7 @@ class ControleGastosApp(ctk.CTk):
 
         self._icon_photo: tk.PhotoImage | None = None
 
-        self.arquivo_dados = arquivo_dados or "gastos_empresa.json"
+        self.repository = repository or JsonDataRepository()
 
         self.empresa_nome = empresa_nome or "Empresa Corporativa"
 
@@ -72,7 +74,15 @@ class ControleGastosApp(ctk.CTk):
 
         self.empresa_slug = self._gerar_slug(self.empresa_nome or self.empresa_id)
 
-        self.gastos: list[dict[str, Any]] = load_data(self.arquivo_dados)
+        if arquivo_dados:
+
+            self.company_file = Path(arquivo_dados)
+
+        else:
+
+            self.company_file = self.repository.ensure_company_file(self.empresa_id)
+
+        self.gastos: list[dict[str, Any]] = self.repository.load(self.company_file)
 
         # Estado janela de gestão (lista com filtros por campos simples)
 
@@ -102,11 +112,9 @@ class ControleGastosApp(ctk.CTk):
 
         self.relatorio_scroll_frame: ctk.CTkScrollableFrame | None = None
 
-        raiz = Path(__file__).resolve().parents[2]
+        self.logo_path = LOGO_PATH
 
-        self.logo_path = raiz / "logo_empresa.png"
-
-        self.logo_icon_path = self._encontrar_logo_icon(raiz)
+        self.logo_icon_path = self._encontrar_logo_icon(Path(LOGO_PATH).parent)
 
         self.logo_image = self._carregar_logo(self.logo_path)
 
@@ -136,13 +144,11 @@ class ControleGastosApp(ctk.CTk):
 
         self._aplicar_icone_janela()
 
-    def _encontrar_logo_icon(self, raiz: Path) -> Path | None:
+    def _encontrar_logo_icon(self, pasta_base: Path) -> Path | None:
 
-        candidatos = ["logo_icon.ico", "logo_icon.png", "logo_icon.gif"]
+        for nome in LOGO_ICON_CANDIDATES:
 
-        for nome in candidatos:
-
-            caminho = raiz / nome
+            caminho = pasta_base / nome
 
             if caminho.exists():
 
@@ -320,54 +326,6 @@ class ControleGastosApp(ctk.CTk):
 
             pass
 
-    def _parse_data_str(self, valor: str | None) -> datetime | None:
-
-        if not valor:
-
-            return None
-
-        try:
-
-            return datetime.strptime(valor, "%d/%m/%Y")
-
-        except (ValueError, TypeError):
-
-            return None
-
-    def _normalizar_filtros(self, filtros: dict[str, str] | None) -> dict[str, Any]:
-
-        if not filtros:
-
-            return {}
-
-        normalizados: dict[str, Any] = {}
-
-        data_inicio = self._parse_data_str(filtros.get("data_inicio"))
-
-        data_fim = self._parse_data_str(filtros.get("data_fim"))
-
-        if data_inicio:
-
-            normalizados["data_inicio"] = data_inicio
-
-        if data_fim:
-
-            normalizados["data_fim"] = data_fim
-
-        tipo = (filtros.get("tipo") or "").strip()
-
-        if tipo and tipo != "Todos":
-
-            normalizados["tipo"] = tipo
-
-        forma = (filtros.get("forma") or "").strip()
-
-        if forma and forma != "Todos":
-
-            normalizados["forma"] = forma
-
-        return normalizados
-
     def _gerar_slug(self, texto: str) -> str:
 
         texto = texto.lower().strip()
@@ -377,58 +335,6 @@ class ControleGastosApp(ctk.CTk):
         texto = re.sub(r"-{2,}", "-", texto).strip("-")
 
         return texto or "empresa"
-
-    def _registro_atende_filtros(self, gasto: dict[str, Any], filtros: dict[str, Any]) -> bool:
-
-        if not filtros:
-
-            return True
-
-        data_gasto = self._parse_data_str(str(gasto.get("data", "")))
-
-        data_inicio = filtros.get("data_inicio")
-
-        data_fim = filtros.get("data_fim")
-
-        if data_inicio and (not data_gasto or data_gasto < data_inicio):
-
-            return False
-
-        if data_fim and (not data_gasto or data_gasto > data_fim):
-
-            return False
-
-        tipo = filtros.get("tipo")
-
-        if tipo and gasto.get("tipo") != tipo:
-
-            return False
-
-        forma = filtros.get("forma")
-
-        if forma and gasto.get("forma_pagamento") != forma:
-
-            return False
-
-        return True
-
-    def _filtrar_registros(self, registros: Iterable[dict[str, Any]], filtros: dict[str, str] | None) -> list[dict[str, Any]]:
-
-        filtros_norm = self._normalizar_filtros(filtros)
-
-        if not filtros_norm:
-
-            return list(registros)
-
-        filtrados: list[dict[str, Any]] = []
-
-        for registro in registros:
-
-            if self._registro_atende_filtros(registro, filtros_norm):
-
-                filtrados.append(registro)
-
-        return filtrados
 
     def _abrir_modal_filtros(
 
@@ -582,9 +488,9 @@ class ControleGastosApp(ctk.CTk):
 
                 return
 
-            dt_inicio = self._parse_data_str(inicio_val)
+            dt_inicio = parse_data_str(inicio_val)
 
-            dt_fim = self._parse_data_str(fim_val)
+            dt_fim = parse_data_str(fim_val)
 
             if dt_inicio and dt_fim and dt_inicio > dt_fim:
 
@@ -1119,7 +1025,7 @@ class ControleGastosApp(ctk.CTk):
 
             child.destroy()
 
-        registros = self._filtrar_registros(self.gastos, self.relatorio_filtros)
+        registros = filtrar_registros(self.gastos, self.relatorio_filtros)
 
         def _parse_data(g: dict[str, Any]) -> datetime:
 
@@ -1221,7 +1127,7 @@ class ControleGastosApp(ctk.CTk):
 
     def _exportar_pdf_relatorio_filtrado(self):
 
-        registros = self.relatorio_dados_visiveis or self._filtrar_registros(self.gastos, self.relatorio_filtros)
+        registros = self.relatorio_dados_visiveis or filtrar_registros(self.gastos, self.relatorio_filtros)
 
         self.exportar_relatorio_pdf(registros)
 
@@ -1311,7 +1217,7 @@ class ControleGastosApp(ctk.CTk):
 
         self.gastos.append(registro)
 
-        if not save_data(self.arquivo_dados, self.gastos):
+        if not self.repository.save(self.company_file, self.gastos):
 
             messagebox.showerror("Erro", "Não foi possível salvar os dados em disco.")
 
@@ -1343,15 +1249,9 @@ class ControleGastosApp(ctk.CTk):
 
     def atualizar_stats(self):
 
-        registros = []
+        registros = filtrar_registros(self.gastos, self.resumo_filtros) if isinstance(self.gastos, list) else []
 
-        if isinstance(self.gastos, list):
-
-            registros = self._filtrar_registros(self.gastos, self.resumo_filtros)
-
-        total = sum((g.get("valor", 0.0) if isinstance(g, dict) else 0.0) for g in registros)
-
-        quantidade = len(registros)
+        total, quantidade = calcular_resumo(registros)
 
         if self.total_card_value:
 
@@ -1825,7 +1725,7 @@ class ControleGastosApp(ctk.CTk):
 
         valor_filtro = self.filtro_valor_combo.get() if self.filtro_valor_combo else "Todos"
 
-        filtros_norm = self._normalizar_filtros(filtros_basicos)
+        filtros_norm = normalizar_filtros(filtros_basicos)
 
         def corresponde_valor(valor, criterio):
 
@@ -1855,7 +1755,7 @@ class ControleGastosApp(ctk.CTk):
 
         for indice, gasto in gastos_ordenados:
 
-            if filtros_norm and not self._registro_atende_filtros(gasto, filtros_norm):
+            if filtros_norm and not registro_atende_filtros(gasto, filtros_norm):
 
                 continue
 
@@ -2103,7 +2003,7 @@ class ControleGastosApp(ctk.CTk):
 
             )
 
-            save_ok = save_data(self.arquivo_dados, self.gastos)
+            save_ok = self.repository.save(self.company_file, self.gastos)
 
             self.atualizar_stats()
 
@@ -2163,7 +2063,7 @@ class ControleGastosApp(ctk.CTk):
 
         del self.gastos[indice]
 
-        save_ok = save_data(self.arquivo_dados, self.gastos)
+        save_ok = self.repository.save(self.company_file, self.gastos)
 
         self.atualizar_stats()
 
@@ -2318,7 +2218,7 @@ class ControleGastosApp(ctk.CTk):
 
             return
 
-        destino = Path("relatorios")
+        destino = REPORTS_DIR
 
         destino.mkdir(parents=True, exist_ok=True)
 
@@ -2378,21 +2278,25 @@ def main():
 
     from app.ui.empresa_selector import selecionar_empresa
 
+    repository = JsonDataRepository()
+
     empresa_info = selecionar_empresa()
 
-    if not empresa_info:
+    while empresa_info:
 
-        return
+        app = ControleGastosApp(
 
-    app = ControleGastosApp(
+            arquivo_dados=empresa_info.get("arquivo"),
 
-        arquivo_dados=empresa_info.get("arquivo"),
+            empresa_nome=empresa_info.get("empresa_nome"),
 
-        empresa_nome=empresa_info.get("empresa_nome"),
+            empresa_id=empresa_info.get("empresa_id"),
 
-        empresa_id=empresa_info.get("empresa_id"),
+            repository=repository,
 
-    )
+        )
 
-    app.mainloop()
+        app.mainloop()
+
+        empresa_info = app.reiniciar_info
 
