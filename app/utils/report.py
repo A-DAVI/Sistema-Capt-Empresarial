@@ -34,7 +34,7 @@ if canvas is not None:
 
         def showPage(self):  # pragma: no cover - manipulação do reportlab
             self._saved_page_states.append(dict(self.__dict__))
-            self._startPage()
+            self._startPage()  # type: ignore[attr-defined]
 
         def save(self):  # pragma: no cover - manipulação do reportlab
             self._saved_page_states.append(dict(self.__dict__))
@@ -46,13 +46,21 @@ if canvas is not None:
             super().save()
 
         def _draw_footer(self, total_pages: int):
-            width, _ = self._pagesize
+            width, _ = self._pagesize  # type: ignore[attr-defined]
             footer_y = 1.5 * cm
             tagline = "Emitido automaticamente pelo Sistema CAPT Empresarial — Grupo 14D"
             self.setFont("Helvetica-Oblique", 9)
             self.drawCentredString(width / 2, footer_y, tagline)
             self.setFont("Helvetica", 9)
-            self.drawCentredString(width / 2, footer_y - 0.45 * cm, f"{self._pageNumber}/{total_pages}")
+            self.drawCentredString(
+
+                width / 2,
+
+                footer_y - 0.45 * cm,
+
+                f"{self._pageNumber}/{total_pages}",  # type: ignore[attr-defined]
+
+            )
 
 
 else:  # pragma: no cover
