@@ -827,37 +827,21 @@ class ControleGastosApp(ctk.CTk):
         self.entry_data.insert(0, datetime.now().strftime('%d/%m/%Y'))
 
         self.tipos_despesa = [
-
-            'Salários e Encargos',
-
-            'Aluguel',
-
-            'Energia Elétrica',
-
-            'Água',
-
-            'Internet/Telefone',
-
-            'Material de Escritório',
-
-            'Manutenção',
-
-            'Combustível',
-
-            'Alimentação',
-
-            'Marketing',
-
-            'Impostos',
-
-            'Consultoria',
-
-            'Software/Licenças',
-
-            'Equipamentos',
-
-            'Outros',
-
+            "Água e esgoto",
+            "Energia Elétrica",
+            "Telefone",
+            "Correios e Malotes",
+            "FGTS",
+            "DARF INSS",
+            "ICMS",
+            "Impostos Fiscais (PIS, Cofins, IRP e CSLL)",
+            "Simples Nacional",
+            "Salários (Funcionários)",
+            "Férias (Funcionários)",
+            "Rescisão (Funcionários)",
+            "13º Salário (Funcionários)",
+            "Pro-labore (Sócios)",
+            "Aluguel",
         ]
 
         self.combo_tipo = self._criar_input_group(
@@ -885,21 +869,8 @@ class ControleGastosApp(ctk.CTk):
         self.combo_tipo.set('Selecione o tipo')
 
         self.formas_pagamento = [
-
-            'Dinheiro',
-
-            'Cartão de Crédito',
-
-            'Cartão de Débito',
-
-            'PIX',
-
-            'Transferência Bancária',
-
-            'Boleto',
-
-            'Cheque',
-
+            "Banco",
+            "Dinheiro",
         ]
 
         self.combo_pagamento = self._criar_input_group(
