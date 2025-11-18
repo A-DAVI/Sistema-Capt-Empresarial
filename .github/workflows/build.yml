@@ -29,16 +29,7 @@ jobs:
 
       - name: Build EXE
         run: |
-          pyinstaller ^
-            --onefile ^
-            --windowed ^
-            --noconsole ^
-            --clean ^
-            --hidden-import customtkinter ^
-            --hidden-import CTkMessagebox ^
-            --icon=logo.ico ^
-            --name CaptacaoEmpresarial14D ^
-            INTERFACE.py
+          pyinstaller --onefile --windowed --noconsole --clean --hidden-import customtkinter --hidden-import CTkMessagebox --icon=logo.ico --name CaptacaoEmpresarial14D INTERFACE.py
 
       - name: Ensure installer directory exists
         run: mkdir installer
