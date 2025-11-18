@@ -24,9 +24,9 @@ BRAND_COLORS = {
 FONT_FAMILY = "Segoe UI"
 
 EMPRESAS_PRE_CONFIGURADAS = [
-    {"id": "empresa_1", "nome": "E. G. FONSECA (MERCEARIA BELLA VISTA)"},
-    {"id": "empresa_2", "nome": "R. G. FONSECA & CIA. LTDA (SUPERPAO)"},
-    {"id": "empresa_3", "nome": "M X FONSECA CAPELLO (SP FOODS)"},
+    {"id": "empresa_1", "nome": "MERCEARIA BELLA VISTA"},
+    {"id": "empresa_2", "nome": "SUPERPAO"},
+    {"id": "empresa_3", "nome": "SP FOODS"},
 ]
 
 logger = logging.getLogger("app.empresa_selector")
