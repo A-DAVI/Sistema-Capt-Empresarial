@@ -4,6 +4,8 @@ import shutil
 import subprocess
 from pathlib import Path
 
+from app.utils.paths import ensure_workspace_dir
+
 GITHUB_REPO = "A-DAVI/Sistema-Capt-Empresarial"
 CURRENT_VERSION = "1.0.0"
 FILENAME = "CaptacaoEmpresarial14D.exe"
@@ -31,8 +33,7 @@ def check_update():
     return None
 
 def download(url):
-    update_path = Path("update")
-    update_path.mkdir(exist_ok=True)
+    update_path = ensure_workspace_dir("update")
     exe_path = update_path / FILENAME
 
     with requests.get(url, stream=True) as r:
@@ -43,7 +44,7 @@ def download(url):
     return exe_path
 
 def install_and_restart(new_exe):
-    current_exe = Path(sys.argv[0])
+    current_exe = Path(sys.argv[0]).resolve()
     backup = current_exe.with_suffix(".old.exe")
 
     if backup.exists():

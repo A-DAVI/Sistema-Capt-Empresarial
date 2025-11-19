@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
-from pathlib import Path
 import logging
 
 import customtkinter as ctk
@@ -9,6 +8,7 @@ from PIL import Image
 from tkinter import messagebox
 
 from app.ui.widgets import ReadOnlyComboBox
+from app.utils.paths import runtime_path, workspace_path
 
 
 BRAND_COLORS = {
@@ -60,9 +60,10 @@ class EmpresaSelector(ctk.CTk):
         self.resizable(False, False)
         self.configure(fg_color=BRAND_COLORS["background"])
 
-        raiz = Path(__file__).resolve().parents[1]
-        self.data_dir = raiz / "data"
-        self.logo_path = raiz / "logo_empresa.png"
+        self.data_dir = workspace_path("app", "data")
+        workspace_logo = workspace_path("logo_empresa.png")
+        runtime_logo = runtime_path("logo_empresa.png")
+        self.logo_path = workspace_logo if workspace_logo.exists() else runtime_logo
 
         self.logo_image = self._carregar_logo(self.logo_path)
         self.selected_info: dict[str, str] | None = None

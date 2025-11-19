@@ -20,6 +20,7 @@ from app.utils.report import generate_pdf_report
 from app.data.store import load_data, save_data
 
 from app.ui.widgets import ReadOnlyComboBox
+from app.utils.paths import runtime_path, workspace_path
 
 ctk.set_appearance_mode("dark")
 
@@ -64,7 +65,8 @@ class ControleGastosApp(ctk.CTk):
 
         self._icon_photo: tk.PhotoImage | None = None
 
-        self.arquivo_dados = arquivo_dados or "gastos_empresa.json"
+        dados_path = Path(arquivo_dados) if arquivo_dados else workspace_path("gastos_empresa.json")
+        self.arquivo_dados = str(dados_path)
 
         self.empresa_nome = empresa_nome or "Empresa Corporativa"
 
@@ -104,11 +106,9 @@ class ControleGastosApp(ctk.CTk):
 
         self.relatorio_scroll_frame: ctk.CTkScrollableFrame | None = None
 
-        raiz = Path(__file__).resolve().parents[2]
+        self.logo_path = self._resolver_recurso("logo_empresa.png")
 
-        self.logo_path = raiz / "logo_empresa.png"
-
-        self.logo_icon_path = self._encontrar_logo_icon(raiz)
+        self.logo_icon_path = self._encontrar_logo_icon()
 
         self.logo_image = self._carregar_logo(self.logo_path)
 
@@ -138,18 +138,21 @@ class ControleGastosApp(ctk.CTk):
 
         self._aplicar_icone_janela()
 
-    def _encontrar_logo_icon(self, raiz: Path) -> Path | None:
+    def _resolver_recurso(self, nome: str) -> Path | None:
+        workspace_candidate = workspace_path(nome)
+        if workspace_candidate.exists():
+            return workspace_candidate
+        runtime_candidate = runtime_path(nome)
+        if runtime_candidate.exists():
+            return runtime_candidate
+        return None
 
+    def _encontrar_logo_icon(self) -> Path | None:
         candidatos = ["logo_icon.ico", "logo_icon.png", "logo_icon.gif"]
-
         for nome in candidatos:
-
-            caminho = raiz / nome
-
-            if caminho.exists():
-
+            caminho = self._resolver_recurso(nome)
+            if caminho:
                 return caminho
-
         return None
 
     def _aplicar_icone_janela(self):
@@ -174,9 +177,9 @@ class ControleGastosApp(ctk.CTk):
 
             pass
 
-    def _carregar_logo(self, caminho: Path, max_size: tuple[int, int] = (260, 120)) -> ctk.CTkImage | None:
+    def _carregar_logo(self, caminho: Path | None, max_size: tuple[int, int] = (260, 120)) -> ctk.CTkImage | None:
 
-        if not caminho.exists():
+        if not caminho or not caminho.exists():
 
             return None
 
@@ -2676,7 +2679,7 @@ class ControleGastosApp(ctk.CTk):
 
             return
 
-        destino = Path("relatorios")
+        destino = workspace_path("relatorios")
 
         destino.mkdir(parents=True, exist_ok=True)
 
@@ -2686,7 +2689,7 @@ class ControleGastosApp(ctk.CTk):
 
         try:
 
-            logo_param = str(self.logo_path) if self.logo_path.exists() else None
+            logo_param = str(self.logo_path) if self.logo_path and self.logo_path.exists() else None
 
             company_label = f"{self.empresa_razao} — Captação de Despesas-14D"
 

@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any, Iterable
 
 from app.utils.formatting import format_brl
+from app.utils.paths import runtime_path, workspace_path
 
 try:
     from reportlab.lib import colors
@@ -48,7 +49,7 @@ if canvas is not None:
         def _draw_footer(self, total_pages: int):
             width, _ = self._pagesize  # type: ignore[attr-defined]
             footer_y = 1.5 * cm
-            tagline = "Emitido automaticamente pelo Sistema CAPT Empresarial — Grupo 14D"
+            tagline = "Emitido automaticamente pelo Sistema CAPT Empresarial - Grupo 14D"
             self.setFont("Helvetica-Oblique", 9)
             self.drawCentredString(width / 2, footer_y, tagline)
             self.setFont("Helvetica", 9)
@@ -92,6 +93,8 @@ def generate_pdf_report(
     quantidade = len(gastos_list)
 
     output = Path(output_path)
+    if not output.is_absolute():
+        output = workspace_path(output)
     output.parent.mkdir(parents=True, exist_ok=True)
 
     canvas_class = NumberedCanvas or canvas.Canvas
@@ -103,11 +106,18 @@ def generate_pdf_report(
 
     # Logo (opcional)
     if logo_path:
-        logo_file = Path(logo_path)
-        if logo_file.exists():
+        logo_candidate = Path(logo_path)
+        if not logo_candidate.is_absolute():
+            workspace_logo = workspace_path(logo_candidate)
+            runtime_logo = runtime_path(logo_candidate)
+            if workspace_logo.exists():
+                logo_candidate = workspace_logo
+            elif runtime_logo.exists():
+                logo_candidate = runtime_logo
+        if logo_candidate.exists():
             try:
                 c.drawImage(
-                    str(logo_file),
+                    str(logo_candidate),
                     x_margin,
                     top_margin,
                     width=30 * mm,
@@ -116,7 +126,6 @@ def generate_pdf_report(
                     mask="auto",
                 )
             except Exception:  # pragma: no cover
-                # Se der erro na imagem, apenas segue sem logo
                 pass
 
     # Cabeçalho textual
