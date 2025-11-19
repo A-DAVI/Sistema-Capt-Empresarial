@@ -4,10 +4,11 @@ from __future__ import annotations
 
 import logging
 from logging.handlers import RotatingFileHandler
-from pathlib import Path
 from typing import Dict
 
-LOG_DIR = Path("logs")
+from app.utils.paths import workspace_path
+
+LOG_DIR = workspace_path("logs")
 LOG_FILE = LOG_DIR / "app.log"
 _MAX_BYTES = 512 * 1024
 _BACKUP_COUNT = 5

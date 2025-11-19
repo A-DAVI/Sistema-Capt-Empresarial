@@ -7,8 +7,9 @@ from pathlib import Path
 from typing import Any, Dict
 
 from app.utils.logger import get_logger
+from app.utils.paths import runtime_path, workspace_path
 
-CONFIG_PATH = Path("config.json")
+CONFIG_PATH = workspace_path("config.json")
 
 DEFAULT_CONFIG: Dict[str, Any] = {
     "empresa": "Grupo14D",
@@ -85,7 +86,14 @@ class ConfigManager:
 
     @property
     def logo_path(self) -> Path:
-        return Path(self._data.get("logo", "logo_empresa.png"))
+        raw_logo = str(self._data.get("logo", "logo_empresa.png"))
+        candidate = Path(raw_logo)
+        if candidate.is_absolute():
+            return candidate
+        workspace_logo = workspace_path(raw_logo)
+        if workspace_logo.exists():
+            return workspace_logo
+        return runtime_path(raw_logo)
 
     @property
     def version(self) -> str:

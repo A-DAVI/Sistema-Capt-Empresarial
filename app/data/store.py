@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from app.utils.security import checksum_is_valid, persist_checksum
+from app.utils.paths import workspace_path
 
 
 def _mock_gastos() -> list[dict[str, Any]]:
@@ -78,12 +79,19 @@ def _mock_gastos() -> list[dict[str, Any]]:
     ]
 
 
-def load_data(path: str) -> list[dict[str, Any]]:
+def _resolve_data_path(path: str | Path) -> Path:
+    target = Path(path)
+    if not target.is_absolute():
+        target = workspace_path(target)
+    return target
+
+
+def load_data(path: str | Path) -> list[dict[str, Any]]:
     """Carrega os dados do JSON; em ambiente de dev sempre usa mock."""
     if os.getenv("APP_ENV", "").lower() == "dev":
         return _mock_gastos()
 
-    file_path = Path(path)
+    file_path = _resolve_data_path(path)
     if file_path.exists():
         if not checksum_is_valid(file_path):
             return []
@@ -97,9 +105,10 @@ def load_data(path: str) -> list[dict[str, Any]]:
     return []
 
 
-def save_data(path: str, data: list[dict[str, Any]]) -> bool:
+def save_data(path: str | Path, data: list[dict[str, Any]]) -> bool:
     try:
-        file_path = Path(path)
+        file_path = _resolve_data_path(path)
+        file_path.parent.mkdir(parents=True, exist_ok=True)
         with open(file_path, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2, ensure_ascii=False)
         persist_checksum(file_path)

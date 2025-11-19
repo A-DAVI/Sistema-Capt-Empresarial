@@ -7,6 +7,7 @@ from pathlib import Path
 from app.data import store
 from app.utils.config import ConfigManager
 from app.utils.logger import get_logger
+from app.utils.paths import workspace_path
 from app.utils.security import (
     InstanceLock,
     ensure_json_integrity,
@@ -46,10 +47,10 @@ def _default_data_factory():
 def bootstrap_application(data_file: Path | None = None) -> BootstrapContext:
     """Executa todas as verificações antes de criar a UI."""
     LOGGER.info("Inicializando camada de segurança.")
-    validate_environment([Path("dist"), Path("build")])
+    validate_environment([workspace_path("dist"), workspace_path("build")])
 
     config = ConfigManager()
-    data_target = data_file or Path("gastos_empresa.json")
+    data_target = Path(data_file) if data_file else workspace_path("gastos_empresa.json")
     ensure_json_integrity(data_target, _default_data_factory)
 
     lock = InstanceLock("capt_empresarial")

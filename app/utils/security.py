@@ -20,15 +20,16 @@ except ImportError:  # pragma: no cover
     fcntl = None
 
 from app.utils.logger import get_logger
+from app.utils.paths import workspace_path
 
 logger = get_logger("capt.security")
 
 _CHECKSUM_SUFFIX = ".sha256"
 _BACKUP_SUFFIX = ".bak"
 _CRITICAL_FOLDERS: Sequence[Path] = (
-    Path("app/data"),
-    Path("relatorios"),
-    Path("logs"),
+    workspace_path("app", "data"),
+    workspace_path("relatorios"),
+    workspace_path("logs"),
 )
 
 
