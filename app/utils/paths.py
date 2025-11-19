@@ -9,7 +9,11 @@ import sys
 _SOURCE_ROOT = Path(__file__).resolve().parents[2]
 _IS_FROZEN = bool(getattr(sys, "frozen", False))
 _MEIPASS_ROOT = Path(getattr(sys, "_MEIPASS", _SOURCE_ROOT))
-_EXEC_ROOT = Path(sys.executable).resolve().parent if _IS_FROZEN else _SOURCE_ROOT
+
+if _IS_FROZEN:
+    _EXEC_ROOT = Path(sys.argv[0]).resolve().parent
+else:
+    _EXEC_ROOT = _SOURCE_ROOT
 
 
 def runtime_path(*parts: str | Path) -> Path:
