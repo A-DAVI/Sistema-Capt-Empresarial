@@ -25,17 +25,17 @@ FONT_FAMILY = "Segoe UI"
 
 EMPRESAS_PRE_CONFIGURADAS = [
     {
-        "id": "empresa_1",
+        "id": "MERCEARIA BELLA VISTA",
         "razao_social": "E. G. FONSECA",
         "nome_fantasia": "MERCEARIA BELLA VISTA",
     },
     {
-        "id": "empresa_2",
+        "id": "SUPERPAO",
         "razao_social": "R. G. FONSECA & CIA. LTDA",
         "nome_fantasia": "SUPERPAO",
     },
     {
-        "id": "empresa_3",
+        "id": "SP FOODS",
         "razao_social": "M X FONSECA CAPELLO",
         "nome_fantasia": "SP FOODS",
     },

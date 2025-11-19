@@ -305,7 +305,313 @@ class ControleGastosApp(ctk.CTk):
             text_color=BRAND_COLORS["text_primary"],
 
         )
-    
+
+    def _atualizar_listas_categorias(self):
+
+        if hasattr(self, "tipos_despesa"):
+
+            self.tipos_despesa = sorted(self.tipos_despesa, key=lambda valor: valor.lower())
+
+        combo_principal = getattr(self, "combo_tipo", None)
+
+        if combo_principal:
+
+            combo_principal.configure(values=self.tipos_despesa)
+
+        filtro_combo = getattr(self, "filtro_tipo_combo", None)
+
+        if filtro_combo:
+
+            valores = ["Todos"] + sorted(self.tipos_despesa, key=lambda valor: valor.lower())
+
+            selecionado = filtro_combo.get()
+
+            filtro_combo.configure(values=valores)
+
+            if selecionado not in valores:
+
+                filtro_combo.set("Todos")
+
+    def abrir_modal_nova_categoria(self):
+
+        if not hasattr(self, "tipos_despesa"):
+
+            self.tipos_despesa = []
+
+        modal = ctk.CTkToplevel(self)
+
+        modal.title("Adicionar nova categoria")
+
+        modal.geometry("420x220")
+
+        modal.resizable(False, False)
+
+        modal.configure(fg_color=BRAND_COLORS["surface"])
+
+        modal.transient(self)
+
+        modal.grab_set()
+
+        self._priorizar_janela(modal)
+
+        corpo = ctk.CTkFrame(
+
+            modal,
+
+            corner_radius=16,
+
+            fg_color=BRAND_COLORS["panel"],
+
+            border_color=BRAND_COLORS["neutral"],
+
+            border_width=1,
+
+        )
+
+        corpo.pack(fill="both", expand=True, padx=20, pady=20)
+
+        ctk.CTkLabel(
+
+            corpo,
+
+            text="Informe o nome da nova categoria de despesa",
+
+            font=self.fonts["subtitle"],
+
+            text_color=BRAND_COLORS["text_secondary"],
+
+        ).pack(anchor="w", padx=12, pady=(12, 6))
+
+        entry_nome = ctk.CTkEntry(corpo, height=40, font=self.fonts["label"])
+
+        entry_nome.pack(fill="x", padx=12)
+
+        botoes = ctk.CTkFrame(corpo, fg_color="transparent")
+
+        botoes.pack(fill="x", padx=12, pady=(18, 6))
+
+        def adicionar():
+
+            nome = entry_nome.get().strip()
+
+            if not nome:
+
+                messagebox.showerror("Erro", "Informe um nome para a categoria.")
+
+                return
+
+            if any(nome.lower() == existente.lower() for existente in self.tipos_despesa):
+
+                messagebox.showinfo("Aviso", "Esta categoria ja esta cadastrada.")
+
+                return
+
+            self.tipos_despesa.append(nome)
+
+            self._atualizar_listas_categorias()
+
+            messagebox.showinfo("Sucesso", f'Categoria "{nome}" adicionada.')
+
+            modal.destroy()
+
+        self._criar_botao(
+
+            botoes,
+
+            "Adicionar categoria",
+
+            adicionar,
+
+            height=40,
+
+        ).pack(side="left", expand=True, fill="x", padx=(0, 6))
+
+        self._criar_botao(
+
+            botoes,
+
+            "Cancelar",
+
+            modal.destroy,
+
+            fg_color=BRAND_COLORS["neutral"],
+
+            hover_color="#2C2C2C",
+
+            height=40,
+
+        ).pack(side="left", expand=True, fill="x", padx=(6, 0))
+
+    def abrir_modal_editar_categoria(self):
+
+        if not getattr(self, "tipos_despesa", None):
+
+            messagebox.showinfo("Aviso", "Nenhuma categoria cadastrada para editar.")
+
+            return
+
+        categorias_ordenadas = sorted(self.tipos_despesa, key=lambda valor: valor.lower())
+
+        modal = ctk.CTkToplevel(self)
+
+        modal.title("Editar categoria")
+
+        modal.geometry("460x260")
+
+        modal.resizable(False, False)
+
+        modal.configure(fg_color=BRAND_COLORS["surface"])
+
+        modal.transient(self)
+
+        modal.grab_set()
+
+        self._priorizar_janela(modal)
+
+        corpo = ctk.CTkFrame(
+
+            modal,
+
+            corner_radius=16,
+
+            fg_color=BRAND_COLORS["panel"],
+
+            border_color=BRAND_COLORS["neutral"],
+
+            border_width=1,
+
+        )
+
+        corpo.pack(fill="both", expand=True, padx=20, pady=20)
+
+        ctk.CTkLabel(
+
+            corpo,
+
+            text="Selecione a categoria e informe o novo nome",
+
+            font=self.fonts["subtitle"],
+
+            text_color=BRAND_COLORS["text_secondary"],
+
+        ).pack(anchor="w", padx=12, pady=(12, 4))
+
+        combo = ReadOnlyComboBox(
+
+            corpo,
+
+            values=categorias_ordenadas,
+
+            height=38,
+
+            font=self.fonts["label"],
+
+            dropdown_font=self.fonts["dropdown"],
+
+        )
+
+        combo.pack(fill="x", padx=12)
+
+        entry_nome = ctk.CTkEntry(corpo, height=40, font=self.fonts["label"])
+
+        entry_nome.pack(fill="x", padx=12, pady=(12, 0))
+
+        valor_inicial = categorias_ordenadas[0]
+
+        combo.set(valor_inicial)
+
+        entry_nome.insert(0, valor_inicial)
+
+        def atualizar_entry(valor: str):
+
+            entry_nome.delete(0, tk.END)
+
+            entry_nome.insert(0, valor)
+
+        combo.configure(command=atualizar_entry)
+
+        botoes = ctk.CTkFrame(corpo, fg_color="transparent")
+
+        botoes.pack(fill="x", padx=12, pady=(18, 6))
+
+        def salvar():
+
+            antigo = combo.get().strip()
+
+            novo = entry_nome.get().strip()
+
+            if not antigo:
+
+                messagebox.showerror("Erro", "Selecione uma categoria.")
+
+                return
+
+            if not novo:
+
+                messagebox.showerror("Erro", "Informe o novo nome da categoria.")
+
+                return
+
+            if novo.lower() != antigo.lower() and any(novo.lower() == existente.lower() for existente in self.tipos_despesa):
+
+                messagebox.showerror("Erro", "Ja existe uma categoria com este nome.")
+
+                return
+
+            for idx, valor in enumerate(self.tipos_despesa):
+
+                if valor.lower() == antigo.lower():
+
+                    self.tipos_despesa[idx] = novo
+
+                    break
+
+            combo_principal = getattr(self, "combo_tipo", None)
+
+            if combo_principal and combo_principal.get().strip().lower() == antigo.lower():
+
+                combo_principal.set(novo)
+
+            combo_filtro = getattr(self, "filtro_tipo_combo", None)
+
+            if combo_filtro and combo_filtro.get().strip().lower() == antigo.lower():
+
+                combo_filtro.set(novo)
+
+            self._atualizar_listas_categorias()
+
+            messagebox.showinfo("Sucesso", "Categoria atualizada com sucesso.")
+
+            modal.destroy()
+
+        self._criar_botao(
+
+            botoes,
+
+            "Salvar",
+
+            salvar,
+
+            height=40,
+
+        ).pack(side="left", expand=True, fill="x", padx=(0, 6))
+
+        self._criar_botao(
+
+            botoes,
+
+            "Cancelar",
+
+            modal.destroy,
+
+            fg_color=BRAND_COLORS["neutral"],
+
+            hover_color="#2C2C2C",
+
+            height=40,
+
+        ).pack(side="left", expand=True, fill="x", padx=(6, 0))
+
     def _priorizar_janela(self, janela: ctk.CTkToplevel):
 
         try:
@@ -805,6 +1111,54 @@ class ControleGastosApp(ctk.CTk):
         )
 
         formulario_frame.pack(fill='x', padx=12, pady=(0, 16))
+
+        categorias_header = ctk.CTkFrame(formulario_frame, fg_color='transparent')
+
+        categorias_header.pack(fill='x', padx=12, pady=(12, 0))
+
+        ctk.CTkLabel(
+
+            categorias_header,
+
+            text='Categorias personalizadas',
+
+            font=self.fonts['subtitle'],
+
+            text_color=BRAND_COLORS['text_secondary'],
+
+        ).pack(side='left')
+
+        botoes_categoria = ctk.CTkFrame(categorias_header, fg_color='transparent')
+
+        botoes_categoria.pack(side='right')
+
+        self._criar_botao(
+
+            botoes_categoria,
+
+            'Editar categoria',
+
+            self.abrir_modal_editar_categoria,
+
+            height=36,
+
+            fg_color=BRAND_COLORS['neutral'],
+
+            hover_color="#2C2C2C",
+
+        ).pack(side='right', padx=(8, 0))
+
+        self._criar_botao(
+
+            botoes_categoria,
+
+            'Adicionar categoria',
+
+            self.abrir_modal_nova_categoria,
+
+            height=36,
+
+        ).pack(side='right')
 
         self.entry_data = self._criar_input_group(
 

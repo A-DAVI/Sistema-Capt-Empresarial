@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+﻿# -*- coding: utf-8 -*-
 import sys
 from pathlib import Path
 
@@ -11,5 +11,5 @@ from app.utils.updater import auto_update
 
 
 if __name__ == "__main__":
-    main()
     auto_update() 
+    main() 
