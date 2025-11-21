@@ -3,14 +3,16 @@
 from __future__ import annotations
 
 
-from pathlib import Path
 import re
+import os
+from pathlib import Path
+import shutil
 
 import customtkinter as ctk
 from PIL import Image
 from datetime import datetime
 import tkinter as tk
-from tkinter import messagebox
+from tkinter import messagebox, filedialog
 from typing import Any, Iterable
 
 from app.utils.formatting import format_brl, validar_data, validar_valor
@@ -1386,7 +1388,7 @@ class ControleGastosApp(ctk.CTk):
 
             botoes_relatorios,
 
-            'Histórico detalhado',
+            'Historico detalhado',
 
             self.mostrar_relatorio,
 
@@ -1400,11 +1402,28 @@ class ControleGastosApp(ctk.CTk):
 
             botoes_relatorios,
 
-            'Exportar relatório em PDF',
+            'Exportar relatorio em PDF',
 
             self.exportar_relatorio_pdf,
 
         ).pack(side='left', expand=True, fill='x', padx=(8, 0))
+
+        self._criar_botao(
+
+            botoes_relatorios,
+
+            'Central de relatorios',
+
+            self.abrir_central_relatorios,
+
+            fg_color=BRAND_COLORS['neutral'],
+
+            hover_color='#2C2C2C',
+
+            height=40,
+
+        ).pack(side='right', expand=False, padx=(8, 0))
+
 
         ctk.CTkLabel(
 
@@ -1418,7 +1437,146 @@ class ControleGastosApp(ctk.CTk):
 
         ).pack(pady=(8, 0))
 
-        self.atualizar_stats()
+    def _abrir_arquivo(self, caminho: Path) -> None:
+
+        try:
+
+            if os.name == "nt":
+
+                os.startfile(caminho)  # type: ignore[attr-defined]
+
+            else:
+
+                import webbrowser
+
+                webbrowser.open(caminho.as_uri())
+
+        except Exception as exc:  # noqa: BLE001
+
+            messagebox.showerror("Erro", f"Não foi possível abrir o arquivo:\n{exc}")
+
+    def _copiar_arquivo_para(self, origem: Path) -> None:
+
+        destino_dir = filedialog.askdirectory(title="Escolha a pasta de destino")
+
+        if not destino_dir:
+
+            return
+
+        destino_dir_path = Path(destino_dir)
+
+        try:
+
+            destino_dir_path.mkdir(parents=True, exist_ok=True)
+
+            destino_final = destino_dir_path / origem.name
+
+            shutil.copy2(origem, destino_final)
+
+            messagebox.showinfo("Sucesso", f"Relatório copiado para:\n{destino_final}")
+
+        except Exception as exc:  # noqa: BLE001
+
+            messagebox.showerror("Erro", f"Falha ao copiar o relatório:\n{exc}")
+
+    def abrir_central_relatorios(self):
+
+        origem = workspace_path("relatorios")
+        arquivos = sorted(
+            [p for p in origem.glob(f"relatorio_{self.empresa_slug}*.pdf") if p.is_file()],
+            key=lambda p: p.stat().st_mtime,
+            reverse=True,
+        )
+        if not arquivos:
+            messagebox.showinfo("Info", "Nenhum relatorio gerado para esta empresa.")
+            return
+
+        modal = ctk.CTkToplevel(self)
+        modal.title("Central de relatorios gerados")
+        modal.geometry("640x420")
+        modal.resizable(False, False)
+        modal.configure(fg_color=BRAND_COLORS["surface"])
+        modal.transient(self)
+        modal.grab_set()
+        self._priorizar_janela(modal)
+
+        wrapper = ctk.CTkFrame(
+            modal,
+            fg_color=BRAND_COLORS["panel"],
+            corner_radius=16,
+            border_color=BRAND_COLORS["neutral"],
+            border_width=1,
+        )
+        wrapper.pack(fill="both", expand=True, padx=16, pady=16)
+
+        header = ctk.CTkLabel(
+            wrapper,
+            text=f"Relatorios da empresa: {self.empresa_nome}",
+            font=self.fonts["section"],
+            text_color=BRAND_COLORS["text_primary"],
+        )
+        header.pack(anchor="w", padx=12, pady=(12, 8))
+
+        lista = ctk.CTkScrollableFrame(wrapper, fg_color=BRAND_COLORS["panel"])
+        lista.pack(fill="both", expand=True, padx=12, pady=(0, 12))
+
+        for arq in arquivos:
+            linha = ctk.CTkFrame(
+                lista,
+                fg_color=BRAND_COLORS["surface"],
+                corner_radius=12,
+                border_color=BRAND_COLORS["neutral"],
+                border_width=1,
+            )
+            linha.pack(fill="x", pady=6, padx=4)
+
+            display_nome = f"Relatorio {self.empresa_nome}"
+            info = ctk.CTkLabel(
+                linha,
+                text=f"{display_nome} - {datetime.fromtimestamp(arq.stat().st_mtime).strftime('%d/%m/%Y %H:%M')}",
+                font=self.fonts["label"],
+                text_color=BRAND_COLORS["text_primary"],
+            )
+            info.pack(side="left", padx=12, pady=10)
+
+            botoes = ctk.CTkFrame(linha, fg_color="transparent")
+            botoes.pack(side="right", padx=12, pady=6)
+
+            self._criar_botao(
+                botoes,
+                "Abrir",
+                lambda p=arq: self._abrir_arquivo(p),
+                fg_color=BRAND_COLORS["neutral"],
+                hover_color="#2C2C2C",
+                height=32,
+            ).pack(side="left", padx=4)
+
+            self._criar_botao(
+                botoes,
+                "Copiar para...",
+                lambda p=arq: self._copiar_arquivo_para(p),
+                fg_color=BRAND_COLORS["neutral"],
+                hover_color="#2C2C2C",
+                height=32,
+            ).pack(side="left", padx=4)
+
+            def remover(p: Path, linha_ref=linha):
+                if not messagebox.askyesno("Confirmar exclusao", f"Deseja remover o relatorio\n{p.stem}?"):
+                    return
+                try:
+                    p.unlink(missing_ok=True)
+                    linha_ref.destroy()
+                except Exception as exc:  # noqa: BLE001
+                    messagebox.showerror("Erro", f"Nao foi possivel remover o relatorio:\n{exc}")
+
+            self._criar_botao(
+                botoes,
+                "Excluir",
+                lambda p=arq, ref=linha: remover(p, ref),
+                fg_color=BRAND_COLORS["danger"],
+                hover_color="#962d22",
+                height=32,
+            ).pack(side="left", padx=4)
 
     def abrir_modal_filtro_resumo(self):
 
@@ -1610,13 +1768,27 @@ class ControleGastosApp(ctk.CTk):
 
             return
 
+        empresa_atual = {
+            "arquivo_dados": self.arquivo_dados,
+            "empresa_nome": self.empresa_nome,
+            "empresa_id": self.empresa_id,
+            "empresa_razao": self.empresa_razao,
+        }
+
+        # encerra antes de abrir novo seletor para evitar múltiplas instâncias do Tk
+        self.destroy()
+
         info = selecionar_empresa()
 
         if not info:
-
+            retorno = ControleGastosApp(
+                arquivo_dados=empresa_atual["arquivo_dados"],
+                empresa_nome=empresa_atual["empresa_nome"],
+                empresa_id=empresa_atual["empresa_id"],
+                empresa_razao=empresa_atual["empresa_razao"],
+            )
+            retorno.mainloop()
             return
-
-        self.destroy()
 
         novo_app = ControleGastosApp(
 
@@ -1631,7 +1803,6 @@ class ControleGastosApp(ctk.CTk):
         )
 
         novo_app.mainloop()
-
     def salvar_despesa(self):
 
         data = (self.entry_data.get() or "").strip()
@@ -2758,5 +2929,8 @@ def main():
     )
 
     app.mainloop()
+
+
+
 
 

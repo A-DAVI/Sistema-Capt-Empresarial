@@ -20,16 +20,19 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.13'
+          python-version: '3.10'
 
       - name: Install dependencies
         run: |
           pip install -r requirements.txt
-          pip install pyinstaller customtkinter CTkMessagebox
+          pip install pyinstaller
 
       - name: Build EXE
         run: |
-          pyinstaller --onefile --windowed --noconsole --clean --hidden-import customtkinter --hidden-import requests --hidden-import CTkMessagebox --icon=logo.ico --name CaptacaoEmpresarial14D INTERFACE.py
+          pyinstaller --clean --noconfirm INTERFACE.spec
+          if (Test-Path dist/INTERFACE/INTERFACE.exe) {
+            Copy-Item dist/INTERFACE/INTERFACE.exe dist/CaptacaoEmpresarial14D.exe -Force
+          }
 
       - name: Ensure installer directory exists
         run: mkdir installer
