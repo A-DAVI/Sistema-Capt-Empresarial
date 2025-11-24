@@ -1,5 +1,8 @@
 requests
 customtkinter
 CTkMessagebox
+reportlab
+Pillow
+os
 
 
