@@ -19,9 +19,10 @@ a = Analysis(
         'PIL',
         'PIL.Image',
         'PIL.ImageTk',
+        'PIL._imaging',              # >>> IMPORTANTE
+        'PIL._tkinter_finder',       # >>> IMPORTANTE
         'CTkMessagebox',
         'reportlab'
-        'os'
     ],
     hookspath=[],
     hooksconfig={},
@@ -38,12 +39,12 @@ exe = EXE(
     a.scripts,
     [],
     exclude_binaries=True,
-    name='Captação de Despesas',
+    name='INTERFACE',          # <<< sem acento!
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
     upx=True,
-    console=False,
+    console=False,             # janela oculta
     disable_windowed_traceback=False,
     argv_emulation=False,
     target_arch=None,
