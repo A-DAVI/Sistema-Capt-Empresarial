@@ -1,0 +1,16 @@
+[
+  {
+    "data": "21/11/2025",
+    "tipo": "FGTS",
+    "forma_pagamento": "Dinheiro",
+    "valor": 2000000.0,
+    "timestamp": "2025-11-21T18:02:16.279608"
+  },
+  {
+    "data": "21/11/2025",
+    "tipo": "FGTS",
+    "forma_pagamento": "Banco",
+    "valor": 200000.0,
+    "timestamp": "2025-11-21T18:39:04.127202"
+  }
+]
