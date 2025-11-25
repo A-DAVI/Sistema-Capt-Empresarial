@@ -1,2 +1,0 @@
-"""UI layer using CustomTkinter."""
-
