@@ -1,4 +1,4 @@
-import sys
+﻿import sys
 from pathlib import Path
 
 
@@ -22,16 +22,16 @@ from app.utils.updater import auto_update
 
 if __name__ == "__main__":
     # Executa auto-update apenas no binario empacotado
-    if getattr(sys, "frozen", False):
-        try:
-            auto_update()
-        except Exception:
-            pass
+    #if getattr(sys, "frozen", False):
+        #try:
+            #auto_update()
+        #except Exception:
+            #pass
 
     # Inicializa bootstrap e lock para evitar multiplas instancias
     bootstrap_ctx = bootstrap_application()
     try:
-        main()
+        main(theme_mode=bootstrap_ctx.config.theme, config_path=str(bootstrap_ctx.config.path))
     finally:
         # Libera o lock ao sair
         bootstrap_ctx.instance_lock.release()

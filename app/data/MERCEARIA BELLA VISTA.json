@@ -1,1 +1,16 @@
-[]
+[
+  {
+    "data": "24/11/2025",
+    "tipo": "ICMS",
+    "forma_pagamento": "Banco",
+    "valor": 200.0,
+    "timestamp": "2025-11-24T11:53:14.159257"
+  },
+  {
+    "data": "24/11/2025",
+    "tipo": "Energia Elétrica",
+    "forma_pagamento": "Banco",
+    "valor": 2000.0,
+    "timestamp": "2025-11-24T17:09:24.203129"
+  }
+]

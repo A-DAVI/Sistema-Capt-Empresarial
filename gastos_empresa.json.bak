@@ -1,0 +1,58 @@
+[
+  {
+    "data": "24/11/2025",
+    "tipo": "Salários e Encargos",
+    "forma_pagamento": "Transferência Bancária",
+    "valor": 18500.0,
+    "timestamp": "2025-11-24T11:19:58.767500"
+  },
+  {
+    "data": "23/11/2025",
+    "tipo": "Aluguel",
+    "forma_pagamento": "PIX",
+    "valor": 8200.0,
+    "timestamp": "2025-11-22T22:00:00"
+  },
+  {
+    "data": "22/11/2025",
+    "tipo": "Energia Elétrica",
+    "forma_pagamento": "Boleto",
+    "valor": 1450.75,
+    "timestamp": "2025-11-21T23:00:00"
+  },
+  {
+    "data": "21/11/2025",
+    "tipo": "Internet/Telefone",
+    "forma_pagamento": "Cartão de Crédito",
+    "valor": 650.4,
+    "timestamp": "2025-11-20T21:00:00"
+  },
+  {
+    "data": "20/11/2025",
+    "tipo": "Combustível",
+    "forma_pagamento": "Cartão de Débito",
+    "valor": 980.0,
+    "timestamp": "2025-11-19T20:00:00"
+  },
+  {
+    "data": "19/11/2025",
+    "tipo": "Marketing",
+    "forma_pagamento": "Cartão de Crédito",
+    "valor": 3200.0,
+    "timestamp": "2025-11-18T23:00:00"
+  },
+  {
+    "data": "18/11/2025",
+    "tipo": "Software/Licenças",
+    "forma_pagamento": "Cartão de Crédito",
+    "valor": 1250.0,
+    "timestamp": "2025-11-17T22:00:00"
+  },
+  {
+    "data": "17/11/2025",
+    "tipo": "Outros",
+    "forma_pagamento": "Dinheiro",
+    "valor": 430.0,
+    "timestamp": "2025-11-16T19:00:00"
+  }
+]

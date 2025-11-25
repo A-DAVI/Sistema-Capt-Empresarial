@@ -146,18 +146,27 @@ class InstanceLock:
             return False
 
     def release(self) -> None:
-        """Libera o lock caso ele esteja ativo."""
-        if not self._handle:
-            return
-        try:
-            if os.name == "nt" and msvcrt:
+     """Libera o lock caso ele esteja ativo."""
+     if not self._handle:
+        return
+    
+     try:
+        if os.name == "nt" and msvcrt:
+            try:
                 msvcrt.locking(self._handle.fileno(), msvcrt.LK_UNLCK, 1)
-            elif fcntl:
-                fcntl.flock(self._handle.fileno(), fcntl.LOCK_UN)  # type: ignore[attr-defined]
-        finally:
+            except PermissionError:
+                pass  # <<< IGNORA ERRO DE PERMISSÃO
+        elif fcntl:
+            try:
+                fcntl.flock(self._handle.fileno(), fcntl.LOCK_UN)
+            except OSError:
+                pass  # <<< IGNORA ERRO
+     finally:
+        try:
             self._handle.close()
-            self._handle = None
-
+        except:
+            pass
+        self._handle = None
 
 def install_global_exception_hook(
     notify_user: Callable[[BaseException], None] | None = None,

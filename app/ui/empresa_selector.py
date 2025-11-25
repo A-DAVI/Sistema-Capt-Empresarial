@@ -10,9 +10,10 @@ from tkinter import messagebox
 
 from app.ui.widgets import ReadOnlyComboBox
 from app.utils.paths import runtime_path, workspace_path
+import json
 
 
-BRAND_COLORS = {
+DARK_COLORS = {
     "background": "#0B0B0B",
     "surface": "#121212",
     "panel": "#1A1A1A",
@@ -22,6 +23,18 @@ BRAND_COLORS = {
     "text_primary": "#FFFFFF",
     "text_secondary": "#CCCCCC",
 }
+
+LIGHT_COLORS = {
+    "background": "#F5F7FA",
+    "surface": "#FFFFFF",
+    "panel": "#F0F2F5",
+    "accent": "#0D6EFD",
+    "accent_hover": "#0B5ED7",
+    "neutral": "#E5E7EB",
+    "text_primary": "#111827",
+    "text_secondary": "#4B5563",
+}
+BRAND_COLORS = DARK_COLORS.copy()
 FONT_FAMILY = "Segoe UI"
 
 EMPRESAS_PRE_CONFIGURADAS = [
@@ -56,7 +69,9 @@ class EmpresaSelector(ctk.CTk):
 
     def __init__(self) -> None:
         super().__init__()
-        self.title("CAPT Empresarial — Seleção de Empresa")
+
+        self._aplicar_tema_preferido()
+        self.title("CAPT Empresarial - Selecao de Empresa")
         self.geometry("520x420")
         self.resizable(False, False)
         self.configure(fg_color=BRAND_COLORS["background"])
@@ -74,6 +89,28 @@ class EmpresaSelector(ctk.CTk):
 
         self._construir_layout()
         self._priorizar()
+        self._centralizar_janela(self)
+
+    def _aplicar_tema_preferido(self) -> None:
+        tema = "dark"
+        try:
+            cfg_path = workspace_path("config.json")
+            if cfg_path.exists():
+                data = json.loads(cfg_path.read_text(encoding="utf-8"))
+                tema = str(data.get("tema", "dark")).lower()
+        except Exception:
+            tema = "dark"
+
+        if tema not in ("dark", "light"):
+            tema = "dark"
+
+        palette = DARK_COLORS if tema == "dark" else LIGHT_COLORS
+        BRAND_COLORS.clear()
+        BRAND_COLORS.update(palette)
+        try:
+            ctk.set_appearance_mode("dark" if tema == "dark" else "light")
+        except Exception:
+            pass
 
     def _priorizar(self) -> None:
         try:
@@ -81,6 +118,23 @@ class EmpresaSelector(ctk.CTk):
             self.focus_force()
             self.attributes("-topmost", True)
             self.after(250, lambda: self.attributes("-topmost", False))
+        except Exception:
+            pass
+        self._centralizar_janela(self)
+
+    def _centralizar_janela(self, win):
+        """Centraliza a janela passada (root ou modal)."""
+        if not win:
+            return
+        try:
+            win.update_idletasks()
+            w = win.winfo_width()
+            h = win.winfo_height()
+            sw = win.winfo_screenwidth()
+            sh = win.winfo_screenheight()
+            x = max(0, int((sw - w) / 2))
+            y = max(0, int((sh - h) / 2))
+            win.geometry(f"{w}x{h}+{x}+{y}")
         except Exception:
             pass
 
@@ -103,7 +157,7 @@ class EmpresaSelector(ctk.CTk):
 
         ctk.CTkLabel(
             container,
-            text="CAPT Empresarial — Grupo 14D",
+            text="CAPT Empresarial - Grupo 14D",
             font=ctk.CTkFont(family=FONT_FAMILY, size=22, weight="bold"),
             text_color=BRAND_COLORS["text_primary"],
         ).pack(pady=(6, 2))
@@ -146,8 +200,9 @@ class EmpresaSelector(ctk.CTk):
             command=self._cancelar,
             height=40,
             corner_radius=12,
-            fg_color=BRAND_COLORS["neutral"],
-            hover_color="#2C2C2C",
+            fg_color="#E1E3E8",
+            hover_color="#C5C9D0",
+            text_color=BRAND_COLORS["text_primary"],
             font=ctk.CTkFont(family=FONT_FAMILY, size=14),
         ).pack(fill="x")
 
@@ -171,11 +226,11 @@ class EmpresaSelector(ctk.CTk):
         nome_display = self.combo_empresas.get().strip()
         empresa_info = self.empresas_map.get(nome_display)
         if not empresa_info:
-            messagebox.showerror("Seleção inválida", "Escolha uma empresa antes de continuar.")
+            messagebox.showerror('Selecao invalida', 'Escolha uma empresa antes de continuar.')
             return
 
-        empresa_id = empresa_info["id"]
-        arquivo = self.data_dir / f"{empresa_id}.json"
+        empresa_id = empresa_info['id']
+        arquivo = self.data_dir / f'{empresa_id}.json'
         try:
             arquivo.parent.mkdir(parents=True, exist_ok=True)
             if not arquivo.exists():
@@ -196,7 +251,7 @@ class EmpresaSelector(ctk.CTk):
         self.destroy()
 
     def _cancelar(self) -> None:
-        logger.info("Seleção de empresa cancelada pelo usuário.")
+        logger.info('Selecao de empresa cancelada pelo usuario.')
         self.selected_info = None
         self.destroy()
 

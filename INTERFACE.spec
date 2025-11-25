@@ -39,7 +39,7 @@ exe = EXE(
     a.scripts,
     [],
     exclude_binaries=True,
-    name='INTERFACE',          # <<< sem acento!
+    name='CaptacaoEmpresarial',          # <<< sem acento!
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
