@@ -1,0 +1,12 @@
+# Build artifacts
+build/
+dist/
+Sistema-GRUPO14D/dist/
+venv-build/
+*.exe
+*.zip
+*.pyc
+__pycache__/
+*.pyd
+*.dll
+*.so

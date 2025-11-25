@@ -1,5 +1,8 @@
 requests
 customtkinter
 CTkMessagebox
-pillow
-darkdetect
+reportlab
+Pillow
+os
+
+

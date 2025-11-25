@@ -1,0 +1,137 @@
+2025-11-24 11:19:58,745 | INFO | capt.bootstrap | Inicializando camada de segurança.
+2025-11-24 11:19:58,767 | WARNING | capt.security | Checksum inválido para D:\TESTE\gastos_empresa.json. Executando restauração.
+2025-11-24 11:19:58,799 | INFO | capt.bootstrap | Bootstrap concluído. Versão 1.3.0 (34757677)
+2025-11-24 11:24:19,306 | ERROR | capt.security | Exceção não tratada
+Traceback (most recent call last):
+  File "d:\TESTE\INTERFACE.py", line 34, in <module>
+    main()
+  File "D:\TESTE\app\ui\app.py", line 2991, in main
+    app.mainloop()
+  File "D:\TESTE\venv-build\lib\site-packages\customtkinter\windows\ctk_tk.py", line 165, in mainloop
+    super().mainloop(*args, **kwargs)
+  File "C:\Users\Davi\AppData\Local\Programs\Python\Python310\lib\tkinter\__init__.py", line 1458, in mainloop
+    self.tk.mainloop(n)
+KeyboardInterrupt
+2025-11-24 11:24:37,036 | INFO | capt.bootstrap | Inicializando camada de segurança.
+2025-11-24 11:24:37,108 | INFO | capt.bootstrap | Bootstrap concluído. Versão 1.3.0 (34757677)
+2025-11-24 11:32:04,304 | INFO | capt.bootstrap | Inicializando camada de segurança.
+2025-11-24 11:32:04,365 | INFO | capt.bootstrap | Bootstrap concluído. Versão 1.3.0 (34757677)
+2025-11-24 11:38:33,292 | INFO | capt.bootstrap | Inicializando camada de segurança.
+2025-11-24 11:38:33,300 | INFO | capt.bootstrap | Bootstrap concluído. Versão 1.3.0 (34757677)
+2025-11-24 11:41:52,095 | ERROR | capt.security | Exceção não tratada
+Traceback (most recent call last):
+  File "d:\TESTE\INTERFACE.py", line 34, in <module>
+    main()
+  File "D:\TESTE\app\ui\app.py", line 3035, in main
+  File "D:\TESTE\venv-build\lib\site-packages\customtkinter\windows\ctk_tk.py", line 165, in mainloop
+    super().mainloop(*args, **kwargs)
+  File "C:\Users\Davi\AppData\Local\Programs\Python\Python310\lib\tkinter\__init__.py", line 1458, in mainloop
+    self.tk.mainloop(n)
+KeyboardInterrupt
+2025-11-24 11:42:06,151 | INFO | capt.bootstrap | Inicializando camada de segurança.
+2025-11-24 11:42:06,161 | INFO | capt.bootstrap | Bootstrap concluído. Versão 1.3.0 (34757677)
+2025-11-24 11:44:10,805 | INFO | capt.bootstrap | Inicializando camada de segurança.
+2025-11-24 11:44:10,840 | INFO | capt.bootstrap | Bootstrap concluído. Versão 1.3.0 (34757677)
+2025-11-24 11:48:34,101 | ERROR | capt.security | Exceção não tratada
+Traceback (most recent call last):
+  File "d:\TESTE\INTERFACE.py", line 34, in <module>
+    main()
+  File "D:\TESTE\app\ui\app.py", line 3052, in main
+    app = ControleGastosApp(
+  File "D:\TESTE\venv-build\lib\site-packages\customtkinter\windows\ctk_tk.py", line 165, in mainloop
+    super().mainloop(*args, **kwargs)
+  File "C:\Users\Davi\AppData\Local\Programs\Python\Python310\lib\tkinter\__init__.py", line 1458, in mainloop
+    self.tk.mainloop(n)
+KeyboardInterrupt
+2025-11-24 11:48:45,469 | INFO | capt.bootstrap | Inicializando camada de segurança.
+2025-11-24 11:48:45,509 | INFO | capt.bootstrap | Bootstrap concluído. Versão 1.3.0 (34757677)
+2025-11-24 11:52:46,080 | INFO | capt.bootstrap | Inicializando camada de segurança.
+2025-11-24 11:52:46,097 | INFO | capt.bootstrap | Bootstrap concluído. Versão 1.3.0 (34757677)
+2025-11-24 12:04:29,017 | INFO | capt.bootstrap | Inicializando camada de segurança.
+2025-11-24 12:04:29,049 | INFO | capt.bootstrap | Bootstrap concluído. Versão 1.3.0 (34757677)
+2025-11-24 12:04:29,055 | ERROR | capt.security | Exceção não tratada
+Traceback (most recent call last):
+  File "d:\TESTE\INTERFACE.py", line 34, in <module>
+    main(theme_mode=bootstrap_ctx.config.theme, config_path=str(bootstrap_ctx.config.path))
+  File "D:\TESTE\app\ui\app.py", line 3073, in main
+    from app.ui.empresa_selector import selecionar_empresa
+  File "D:\TESTE\app\ui\empresa_selector.py", line 221
+    selector.mainloop()
+                       ^
+IndentationError: unindent does not match any outer indentation level
+2025-11-24 12:06:05,868 | INFO | capt.bootstrap | Inicializando camada de segurança.
+2025-11-24 12:06:05,895 | INFO | capt.bootstrap | Bootstrap concluído. Versão 1.3.0 (34757677)
+2025-11-24 12:06:06,140 | ERROR | capt.security | Exceção não tratada
+Traceback (most recent call last):
+  File "d:\TESTE\INTERFACE.py", line 34, in <module>
+    main(theme_mode=bootstrap_ctx.config.theme, config_path=str(bootstrap_ctx.config.path))
+  File "D:\TESTE\app\ui\app.py", line 3075, in main
+    empresa_info = selecionar_empresa()
+  File "D:\TESTE\app\ui\empresa_selector.py", line 220, in selecionar_empresa
+    selector = EmpresaSelector()
+  File "D:\TESTE\app\ui\empresa_selector.py", line 73, in __init__
+    self._aplicar_tema_preferido()
+  File "C:\Users\Davi\AppData\Local\Programs\Python\Python310\lib\tkinter\__init__.py", line 2383, in __getattr__
+    return getattr(self.tk, attr)
+AttributeError: '_tkinter.tkapp' object has no attribute '_aplicar_tema_preferido'
+2025-11-24 12:11:20,911 | INFO | capt.bootstrap | Inicializando camada de segurança.
+2025-11-24 12:11:20,943 | INFO | capt.bootstrap | Bootstrap concluído. Versão 1.3.0 (34757677)
+2025-11-24 13:26:10,720 | INFO | capt.bootstrap | Inicializando camada de segurança.
+2025-11-24 13:26:10,734 | INFO | capt.bootstrap | Bootstrap concluído. Versão 1.3.0 (34757677)
+2025-11-24 13:33:07,760 | INFO | capt.bootstrap | Inicializando camada de segurança.
+2025-11-24 13:33:07,876 | INFO | capt.bootstrap | Bootstrap concluído. Versão 1.3.0 (34757677)
+2025-11-24 13:33:08,729 | ERROR | capt.security | Exceção não tratada
+Traceback (most recent call last):
+  File "d:\TESTE\INTERFACE.py", line 34, in <module>
+    main(theme_mode=bootstrap_ctx.config.theme, config_path=str(bootstrap_ctx.config.path))
+  File "D:\TESTE\app\ui\app.py", line 3149, in main
+    empresa_info = selecionar_empresa()
+  File "D:\TESTE\app\ui\empresa_selector.py", line 242, in selecionar_empresa
+    selector = EmpresaSelector()
+  File "D:\TESTE\app\ui\empresa_selector.py", line 92, in __init__
+    self._centralizar_janela(self)
+  File "C:\Users\Davi\AppData\Local\Programs\Python\Python310\lib\tkinter\__init__.py", line 2383, in __getattr__
+    return getattr(self.tk, attr)
+AttributeError: '_tkinter.tkapp' object has no attribute '_centralizar_janela'
+2025-11-24 13:35:27,068 | INFO | capt.bootstrap | Inicializando camada de segurança.
+2025-11-24 13:35:27,100 | INFO | capt.bootstrap | Bootstrap concluído. Versão 1.3.0 (34757677)
+2025-11-24 15:33:23,563 | INFO | capt.bootstrap | Inicializando camada de segurança.
+2025-11-24 15:33:23,588 | INFO | capt.bootstrap | Bootstrap concluído. Versão 1.3.0 (34757677)
+2025-11-24 15:38:03,876 | INFO | capt.bootstrap | Inicializando camada de segurança.
+2025-11-24 15:38:03,889 | INFO | capt.bootstrap | Bootstrap concluído. Versão 1.3.0 (34757677)
+2025-11-24 16:16:23,637 | INFO | capt.bootstrap | Inicializando camada de segurança.
+2025-11-24 16:16:23,653 | INFO | capt.bootstrap | Bootstrap concluído. Versão 1.3.0 (34757677)
+2025-11-24 16:19:17,894 | INFO | capt.bootstrap | Inicializando camada de segurança.
+2025-11-24 16:19:17,926 | INFO | capt.bootstrap | Bootstrap concluído. Versão 1.3.0 (34757677)
+2025-11-24 16:22:36,586 | ERROR | capt.security | Exceção não tratada
+Traceback (most recent call last):
+  File "d:\TESTE\INTERFACE.py", line 34, in <module>
+    main(theme_mode=bootstrap_ctx.config.theme, config_path=str(bootstrap_ctx.config.path))
+  File "D:\TESTE\app\ui\app.py", line 3167, in main
+    app.mainloop()
+  File "D:\TESTE\venv-build\lib\site-packages\customtkinter\windows\ctk_tk.py", line 165, in mainloop
+    super().mainloop(*args, **kwargs)
+  File "C:\Users\Davi\AppData\Local\Programs\Python\Python310\lib\tkinter\__init__.py", line 1458, in mainloop
+    self.tk.mainloop(n)
+KeyboardInterrupt
+2025-11-24 16:22:45,130 | INFO | capt.bootstrap | Inicializando camada de segurança.
+2025-11-24 16:22:45,155 | INFO | capt.bootstrap | Bootstrap concluído. Versão 1.3.0 (34757677)
+2025-11-24 16:26:30,569 | INFO | capt.bootstrap | Inicializando camada de segurança.
+2025-11-24 16:26:30,598 | INFO | capt.bootstrap | Bootstrap concluído. Versão 1.3.0 (34757677)
+2025-11-24 16:40:37,888 | ERROR | capt.security | Exceção não tratada
+Traceback (most recent call last):
+  File "d:\TESTE\INTERFACE.py", line 34, in <module>
+    main(theme_mode=bootstrap_ctx.config.theme, config_path=str(bootstrap_ctx.config.path))
+  File "D:\TESTE\app\ui\app.py", line 3167, in main
+    app.mainloop()
+  File "D:\TESTE\venv-build\lib\site-packages\customtkinter\windows\ctk_tk.py", line 165, in mainloop
+    super().mainloop(*args, **kwargs)
+  File "C:\Users\Davi\AppData\Local\Programs\Python\Python310\lib\tkinter\__init__.py", line 1458, in mainloop
+    self.tk.mainloop(n)
+KeyboardInterrupt
+2025-11-24 16:43:59,207 | INFO | capt.bootstrap | Inicializando camada de segurança.
+2025-11-24 16:43:59,238 | INFO | capt.bootstrap | Bootstrap concluído. Versão 1.3.0 (34757677)
+2025-11-24 16:55:05,680 | INFO | capt.bootstrap | Inicializando camada de segurança.
+2025-11-24 16:55:05,707 | INFO | capt.bootstrap | Bootstrap concluído. Versão 1.3.0 (34757677)
+2025-11-24 17:07:44,337 | INFO | capt.bootstrap | Inicializando camada de segurança.
+2025-11-24 17:07:44,346 | INFO | capt.bootstrap | Bootstrap concluído. Versão 1.3.0 (34757677)

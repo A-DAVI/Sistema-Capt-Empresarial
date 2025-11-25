@@ -1,16 +1,18 @@
-﻿# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 
 from __future__ import annotations
 
 
-from pathlib import Path
 import re
+import os
+from pathlib import Path
+import shutil
 
 import customtkinter as ctk
 from PIL import Image
 from datetime import datetime
 import tkinter as tk
-from tkinter import messagebox
+from tkinter import messagebox, filedialog
 from typing import Any, Iterable
 
 from app.utils.formatting import format_brl, validar_data, validar_valor
@@ -22,11 +24,7 @@ from app.data.store import load_data, save_data
 from app.ui.widgets import ReadOnlyComboBox
 from app.utils.paths import runtime_path, workspace_path
 
-ctk.set_appearance_mode("dark")
-
-ctk.set_default_color_theme("dark-blue")
-
-BRAND_COLORS = {
+DARK_COLORS = {
     "background": "#0B0B0B",
     "surface": "#121212",
     "panel": "#1A1A1A",
@@ -39,6 +37,24 @@ BRAND_COLORS = {
     "success": "#1ABC9C",
     "danger": "#C0392B",
 }
+
+LIGHT_COLORS = {
+    "background": "#F5F7FA",
+    "surface": "#FFFFFF",
+    "panel": "#F0F2F5",
+    "accent": "#0D6EFD",
+    "accent_hover": "#0B5ED7",
+    "neutral": "#E5E7EB",
+    "text_primary": "#111827",
+    "text_secondary": "#4B5563",
+    "text_muted": "#6B7280",
+    "success": "#0F9D58",
+    "danger": "#B91C1C",
+}
+
+BRAND_COLORS: dict[str, str] = {}
+
+ctk.set_default_color_theme("dark-blue")
 FONT_FAMILY = "Segoe UI"
 
 USE_EMOJI = False
@@ -49,11 +65,16 @@ def e(txt: str, emoji: str) -> str:
 
 class ControleGastosApp(ctk.CTk):
 
-    def __init__(self, arquivo_dados: str | None = None, empresa_nome: str | None = None, empresa_id: str | None = None, empresa_razao: str | None = None):
+    def __init__(self, arquivo_dados: str | None = None, empresa_nome: str | None = None, empresa_id: str | None = None, empresa_razao: str | None = None, *, theme_mode: str = "dark", config_path: str | None = None):
 
         super().__init__()
 
-        self.title("Sistema CAPT Empresarial — Grupo 14D")
+        # tema inicial
+        self.theme_mode = theme_mode if theme_mode in ("dark", "light") else "dark"
+        self.config_path = config_path
+        self._apply_theme(self.theme_mode)
+
+        self.title("Sistema CAPT Empresarial - Grupo 14D")
 
         self.geometry("860x1000")
 
@@ -309,6 +330,126 @@ class ControleGastosApp(ctk.CTk):
 
         )
 
+    def _apply_theme(self, mode: str):
+
+        palette = DARK_COLORS if mode == "dark" else LIGHT_COLORS
+
+        BRAND_COLORS.clear()
+
+        BRAND_COLORS.update(palette)
+
+        ctk.set_appearance_mode("dark" if mode == "dark" else "light")
+
+        try:
+
+            self.configure(fg_color=BRAND_COLORS["background"])
+
+        except Exception:
+
+            pass
+
+    def _theme_label(self) -> str:
+
+        return "Tema claro" if self.theme_mode == "dark" else "Tema escuro"
+
+    def _toggle_theme(self):
+
+        self.theme_mode = "light" if self.theme_mode == "dark" else "dark"
+
+        self._apply_theme(self.theme_mode)
+
+        # fecha janelas secundarias antes de redesenhar para evitar "quadros" antigos
+        self._fechar_janelas_secundarias()
+
+        # recria interface com nova paleta
+        self._reset_ui()
+
+        self.criar_widgets()
+
+        self._aplicar_icone_janela()
+
+        try:
+            self.btn_theme.configure(text=self._theme_label())
+        except Exception:
+            pass
+
+        self.update_idletasks()
+        try:
+            if self.scroll_container and hasattr(self.scroll_container, "_parent_canvas"):
+                self.scroll_container._parent_canvas.yview_moveto(0)  # type: ignore[attr-defined]
+        except Exception:
+            pass
+
+        self._persistir_tema()
+
+    def _fechar_janelas_secundarias(self):
+
+        try:
+
+            self._fechar_relatorio_window()
+
+        except Exception:
+
+            pass
+
+        if self.janela_gestao and self.janela_gestao.winfo_exists():
+
+            try:
+
+                self.janela_gestao.destroy()
+
+            except Exception:
+
+                pass
+
+        self.janela_gestao = None
+        self.relatorio_window = None
+        self.relatorio_scroll_frame = None
+
+    def _reset_ui(self):
+        """Remove todos os filhos visuais para recriar a interface do zero."""
+        for child in list(self.winfo_children()):
+            try:
+                child.destroy()
+            except Exception:
+                pass
+        self.scroll_container = None
+
+    def _centralizar_janela(self, win: ctk.CTkToplevel | ctk.CTk | None):
+        if not win:
+            return
+        try:
+            win.update_idletasks()
+            w = win.winfo_width()
+            h = win.winfo_height()
+            sw = win.winfo_screenwidth()
+            sh = win.winfo_screenheight()
+            x = max(0, int((sw - w) / 2))
+            y = max(0, int((sh - h) / 2))
+            win.geometry(f"{w}x{h}+{x}+{y}")
+        except Exception:
+            pass
+
+    def _persistir_tema(self):
+        """Salva a preferência de tema no config.json para uso em próximas execuções."""
+        if not self.config_path:
+            target = workspace_path("config.json")
+        else:
+            target = Path(self.config_path)
+
+        try:
+            import json
+
+            data = {}
+            if target.exists():
+                data = json.loads(target.read_text(encoding="utf-8"))
+            if not isinstance(data, dict):
+                data = {}
+            data["tema"] = self.theme_mode
+            target.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+        except Exception:
+            pass
+
     def _atualizar_listas_categorias(self):
 
         if hasattr(self, "tipos_despesa"):
@@ -356,6 +497,7 @@ class ControleGastosApp(ctk.CTk):
         modal.grab_set()
 
         self._priorizar_janela(modal)
+        self._centralizar_janela(modal)
 
         corpo = ctk.CTkFrame(
 
@@ -439,7 +581,7 @@ class ControleGastosApp(ctk.CTk):
 
             fg_color=BRAND_COLORS["neutral"],
 
-            hover_color="#2C2C2C",
+            hover_color="#3B3B3B",
 
             height=40,
 
@@ -470,6 +612,7 @@ class ControleGastosApp(ctk.CTk):
         modal.grab_set()
 
         self._priorizar_janela(modal)
+        self._centralizar_janela(modal)
 
         corpo = ctk.CTkFrame(
 
@@ -609,7 +752,7 @@ class ControleGastosApp(ctk.CTk):
 
             fg_color=BRAND_COLORS["neutral"],
 
-            hover_color="#2C2C2C",
+            hover_color="#3B3B3B",
 
             height=40,
 
@@ -776,6 +919,7 @@ class ControleGastosApp(ctk.CTk):
         modal.grab_set()
 
         self._priorizar_janela(modal)
+        self._centralizar_janela(modal)
 
         conteudo = ctk.CTkFrame(
 
@@ -957,7 +1101,7 @@ class ControleGastosApp(ctk.CTk):
 
             fg_color=BRAND_COLORS["neutral"],
 
-            hover_color="#2C2C2C",
+            hover_color="#3B3B3B",
 
             height=42,
 
@@ -975,7 +1119,7 @@ class ControleGastosApp(ctk.CTk):
 
                 fg_color=BRAND_COLORS["neutral"],
 
-                hover_color="#2C2C2C",
+                hover_color="#3B3B3B",
 
                 height=40,
 
@@ -987,6 +1131,11 @@ class ControleGastosApp(ctk.CTk):
 
             self.scroll_container.destroy()
 
+        try:
+            self.configure(fg_color=BRAND_COLORS['background'])
+        except Exception:
+            pass
+
         self.scroll_container = ctk.CTkScrollableFrame(
 
             self,
@@ -997,11 +1146,28 @@ class ControleGastosApp(ctk.CTk):
 
         )
 
+        # ajusta cores internas do canvas/scrollbar para evitar faixas pretas
+        try:
+            canvas = self.scroll_container._parent_canvas  # type: ignore[attr-defined]
+            canvas.configure(bg=BRAND_COLORS["background"], highlightthickness=0, bd=0)
+            if hasattr(self.scroll_container, "_scrollbar"):
+                sb = self.scroll_container._scrollbar  # type: ignore[attr-defined]
+                sb.configure(
+                    background=BRAND_COLORS["neutral"],
+                    troughcolor=BRAND_COLORS["panel"],
+                    borderwidth=0,
+                    relief="flat",
+                    fg_color=BRAND_COLORS["neutral"],
+                )
+        except Exception:
+            pass
+
         self.scroll_container.pack(fill='both', expand=True, padx=12, pady=12)
 
         main_frame = ctk.CTkFrame(self.scroll_container, corner_radius=24, fg_color=BRAND_COLORS['surface'])
 
-        main_frame.pack(fill='both', expand=True, padx=12, pady=12)
+        # ancorar no topo para evitar área vazia
+        main_frame.pack(fill='both', expand=False, padx=12, pady=12, anchor="n")
 
         header_frame = ctk.CTkFrame(main_frame, fg_color='transparent')
 
@@ -1033,11 +1199,29 @@ class ControleGastosApp(ctk.CTk):
 
             fg_color=BRAND_COLORS['neutral'],
 
-            hover_color="#2C2C2C",
+            hover_color="#3B3B3B",
 
             height=32,
 
         ).pack(side='right')
+
+        self.btn_theme = self._criar_botao(
+
+            top_actions,
+
+            self._theme_label(),
+
+            self._toggle_theme,
+
+            fg_color=BRAND_COLORS['neutral'],
+
+            hover_color="#3B3B3B",
+
+            height=32,
+
+        )
+
+        self.btn_theme.pack(side='right', padx=(0, 8))
 
         if self.logo_image:
 
@@ -1067,7 +1251,7 @@ class ControleGastosApp(ctk.CTk):
 
             header_frame,
 
-            text='Captação de Despesas-14D',
+            text='Captacao de Despesas-14D',
 
             font=self.fonts['title'],
 
@@ -1079,7 +1263,7 @@ class ControleGastosApp(ctk.CTk):
 
             header_frame,
 
-            text='Controle de Gastos e Relatórios Empresariais',
+            text='Controle de Gastos e Relatorios Empresariais',
 
             font=self.fonts['subtitle'],
 
@@ -1147,7 +1331,7 @@ class ControleGastosApp(ctk.CTk):
 
             fg_color=BRAND_COLORS['neutral'],
 
-            hover_color="#2C2C2C",
+            hover_color="#3B3B3B",
 
         ).pack(side='right', padx=(8, 0))
 
@@ -1304,7 +1488,7 @@ class ControleGastosApp(ctk.CTk):
 
             fg_color=BRAND_COLORS['neutral'],
 
-            hover_color='#2C2C2C',
+            hover_color='#3B3B3B',
 
         ).pack(side='left', expand=True, fill='x', padx=8)
 
@@ -1322,7 +1506,7 @@ class ControleGastosApp(ctk.CTk):
 
             main_frame,
 
-            text='Relatórios e Indicadores Financeiros',
+            text='Relatorios e Indicadores Financeiros',
 
             font=self.fonts['section'],
 
@@ -1378,7 +1562,7 @@ class ControleGastosApp(ctk.CTk):
 
             fg_color=BRAND_COLORS['neutral'],
 
-            hover_color='#2C2C2C',
+            hover_color='#3B3B3B',
 
         ).pack(side='left', expand=True, fill='x', padx=(0, 8))
 
@@ -1386,13 +1570,13 @@ class ControleGastosApp(ctk.CTk):
 
             botoes_relatorios,
 
-            'Histórico detalhado',
+            'Historico detalhado',
 
             self.mostrar_relatorio,
 
             fg_color=BRAND_COLORS['neutral'],
 
-            hover_color='#2C2C2C',
+            hover_color='#3B3B3B',
 
         ).pack(side='left', expand=True, fill='x', padx=8)
 
@@ -1400,17 +1584,34 @@ class ControleGastosApp(ctk.CTk):
 
             botoes_relatorios,
 
-            'Exportar relatório em PDF',
+            'Exportar relatorio',
 
-            self.exportar_relatorio_pdf,
+            self.abrir_modal_exportar_relatorio,
 
         ).pack(side='left', expand=True, fill='x', padx=(8, 0))
+
+        self._criar_botao(
+
+            botoes_relatorios,
+
+            'Central de relatorios',
+
+            self.abrir_central_relatorios,
+
+            fg_color=BRAND_COLORS['neutral'],
+
+            hover_color='#3B3B3B',
+
+            height=40,
+
+        ).pack(side='right', expand=False, padx=(8, 0))
+
 
         ctk.CTkLabel(
 
             main_frame,
 
-            text='Desenvolvido pelo Departamento de Tecnologia — GRUPO 14D • 2025',
+            text='Desenvolvido pelo Departamento de Tecnologia - GRUPO 14D - 2025',
 
             font=ctk.CTkFont(family=FONT_FAMILY, size=11),
 
@@ -1418,7 +1619,151 @@ class ControleGastosApp(ctk.CTk):
 
         ).pack(pady=(8, 0))
 
+        # atualiza cards/resumo ao finalizar criacao
+
         self.atualizar_stats()
+
+    def _abrir_arquivo(self, caminho: Path) -> None:
+
+        try:
+
+            if os.name == "nt":
+
+                os.startfile(caminho)  # type: ignore[attr-defined]
+
+            else:
+
+                import webbrowser
+
+                webbrowser.open(caminho.as_uri())
+
+        except Exception as exc:  # noqa: BLE001
+
+            messagebox.showerror("Erro", f"Não foi possível abrir o arquivo:\n{exc}")
+
+    def _copiar_arquivo_para(self, origem: Path) -> None:
+
+        destino_dir = filedialog.askdirectory(title="Escolha a pasta de destino")
+
+        if not destino_dir:
+
+            return
+
+        destino_dir_path = Path(destino_dir)
+
+        try:
+
+            destino_dir_path.mkdir(parents=True, exist_ok=True)
+
+            destino_final = destino_dir_path / origem.name
+
+            shutil.copy2(origem, destino_final)
+
+            messagebox.showinfo("Sucesso", f"Relatorio copiado para:\n{destino_final}")
+
+        except Exception as exc:  # noqa: BLE001
+
+            messagebox.showerror("Erro", f"Falha ao copiar o relatório:\n{exc}")
+
+    def abrir_central_relatorios(self):
+
+        origem = workspace_path("relatorios")
+        arquivos = sorted(
+            [p for p in origem.glob(f"relatorio_{self.empresa_slug}*.pdf") if p.is_file()],
+            key=lambda p: p.stat().st_mtime,
+            reverse=True,
+        )
+        if not arquivos:
+            messagebox.showinfo("Info", "Nenhum relatorio gerado para esta empresa.")
+            return
+
+        modal = ctk.CTkToplevel(self)
+        modal.title("Central de relatorios gerados")
+        modal.geometry("640x420")
+        modal.resizable(False, False)
+        modal.configure(fg_color=BRAND_COLORS["surface"])
+        modal.transient(self)
+        modal.grab_set()
+        self._priorizar_janela(modal)
+        self._centralizar_janela(modal)
+
+        wrapper = ctk.CTkFrame(
+            modal,
+            fg_color=BRAND_COLORS["panel"],
+            corner_radius=16,
+            border_color=BRAND_COLORS["neutral"],
+            border_width=1,
+        )
+        wrapper.pack(fill="both", expand=True, padx=16, pady=16)
+
+        header = ctk.CTkLabel(
+            wrapper,
+            text=f"Relatorios da empresa: {self.empresa_nome}",
+            font=self.fonts["section"],
+            text_color=BRAND_COLORS["text_primary"],
+        )
+        header.pack(anchor="w", padx=12, pady=(12, 8))
+
+        lista = ctk.CTkScrollableFrame(wrapper, fg_color=BRAND_COLORS["panel"])
+        lista.pack(fill="both", expand=True, padx=12, pady=(0, 12))
+
+        for arq in arquivos:
+            linha = ctk.CTkFrame(
+                lista,
+                fg_color=BRAND_COLORS["surface"],
+                corner_radius=12,
+                border_color=BRAND_COLORS["neutral"],
+                border_width=1,
+            )
+            linha.pack(fill="x", pady=6, padx=4)
+
+            display_nome = f"Relatorio {self.empresa_nome}"
+            info = ctk.CTkLabel(
+                linha,
+                text=f"{display_nome} - {datetime.fromtimestamp(arq.stat().st_mtime).strftime('%d/%m/%Y %H:%M')}",
+                font=self.fonts["label"],
+                text_color=BRAND_COLORS["text_primary"],
+            )
+            info.pack(side="left", padx=12, pady=10)
+
+            botoes = ctk.CTkFrame(linha, fg_color="transparent")
+            botoes.pack(side="right", padx=12, pady=6)
+
+            self._criar_botao(
+                botoes,
+                "Abrir",
+                lambda p=arq: self._abrir_arquivo(p),
+                fg_color=BRAND_COLORS["neutral"],
+                hover_color="#3B3B3B",
+                height=32,
+            ).pack(side="left", padx=4)
+
+            self._criar_botao(
+                botoes,
+                "Download",
+                lambda p=arq: self._copiar_arquivo_para(p),
+                fg_color=BRAND_COLORS["neutral"],
+                hover_color="#3B3B3B",
+                height=32,
+            ).pack(side="left", padx=6)
+
+            def remover(p: Path, linha_ref=linha):
+                if not messagebox.askyesno("Confirmar exclusao", f"Deseja remover o relatorio\n{p.stem}?"):
+                    return
+                try:
+                    p.unlink(missing_ok=True)
+                    linha_ref.destroy()
+                except Exception as exc:  # noqa: BLE001
+                    messagebox.showerror("Erro", f"Nao foi possivel remover o relatorio:\n{exc}")
+
+            self._criar_botao(
+                botoes,
+                "Excluir",
+                lambda p=arq, ref=linha: remover(p, ref),
+                fg_color=BRAND_COLORS["danger"],
+                hover_color="#962d22",
+                height=32,
+            ).pack(side="left", padx=4)
 
     def abrir_modal_filtro_resumo(self):
 
@@ -1450,7 +1795,7 @@ class ControleGastosApp(ctk.CTk):
 
         self._abrir_modal_filtros(
 
-            "Filtros do Relatório Completo",
+            "Filtros do Relatorio Completo",
 
             self.relatorio_filtros,
 
@@ -1610,13 +1955,27 @@ class ControleGastosApp(ctk.CTk):
 
             return
 
+        empresa_atual = {
+            "arquivo_dados": self.arquivo_dados,
+            "empresa_nome": self.empresa_nome,
+            "empresa_id": self.empresa_id,
+            "empresa_razao": self.empresa_razao,
+        }
+
+        # encerra antes de abrir novo seletor para evitar múltiplas instâncias do Tk
+        self.destroy()
+
         info = selecionar_empresa()
 
         if not info:
-
+            retorno = ControleGastosApp(
+                arquivo_dados=empresa_atual["arquivo_dados"],
+                empresa_nome=empresa_atual["empresa_nome"],
+                empresa_id=empresa_atual["empresa_id"],
+                empresa_razao=empresa_atual["empresa_razao"],
+            )
+            retorno.mainloop()
             return
-
-        self.destroy()
 
         novo_app = ControleGastosApp(
 
@@ -1631,7 +1990,6 @@ class ControleGastosApp(ctk.CTk):
         )
 
         novo_app.mainloop()
-
     def salvar_despesa(self):
 
         data = (self.entry_data.get() or "").strip()
@@ -1744,7 +2102,7 @@ class ControleGastosApp(ctk.CTk):
 
         self.janela_gestao = ctk.CTkToplevel(self)
 
-        self.janela_gestao.title('Captação de Despesas-14D — Gestão de Despesas')
+        self.janela_gestao.title('Captacao de Despesas-14D - Gestão de Despesas')
 
         self.janela_gestao.geometry('940x620')
 
@@ -1922,7 +2280,7 @@ class ControleGastosApp(ctk.CTk):
 
             fg_color=BRAND_COLORS['neutral'],
 
-            hover_color='#2C2C2C',
+            hover_color='#3B3B3B',
 
         ).pack(side='left', expand=True, fill='x', padx=(6, 0))
 
@@ -2500,7 +2858,7 @@ class ControleGastosApp(ctk.CTk):
 
             fg_color=BRAND_COLORS["neutral"],
 
-            hover_color="#2C2C2C",
+            hover_color="#3B3B3B",
 
             height=42,
 
@@ -2556,7 +2914,7 @@ class ControleGastosApp(ctk.CTk):
 
         self.relatorio_window = ctk.CTkToplevel(self)
 
-        self.relatorio_window.title("Relatórios e Indicadores Financeiros — Grupo 14D")
+        self.relatorio_window.title("Relatorios e Indicadores Financeiros - Grupo 14D")
 
         self.relatorio_window.geometry("1050x720")
 
@@ -2598,7 +2956,7 @@ class ControleGastosApp(ctk.CTk):
 
             fg_color=BRAND_COLORS["neutral"],
 
-            hover_color="#2C2C2C",
+            hover_color="#3B3B3B",
 
             height=38,
 
@@ -2614,7 +2972,7 @@ class ControleGastosApp(ctk.CTk):
 
             fg_color=BRAND_COLORS["neutral"],
 
-            hover_color="#2C2C2C",
+            hover_color="#3B3B3B",
 
             height=38,
 
@@ -2650,7 +3008,7 @@ class ControleGastosApp(ctk.CTk):
 
             fg_color=BRAND_COLORS["neutral"],
 
-            hover_color="#2C2C2C",
+            hover_color="#3B3B3B",
 
             height=40,
 
@@ -2663,100 +3021,150 @@ class ControleGastosApp(ctk.CTk):
 
     def exportar_relatorio_pdf(self, registros: Iterable[dict[str, Any]] | None = None):
 
-        registros_validos: list[dict[str, Any]] = []
-
-        if registros is not None:
-
-            registros_validos = list(registros)
-
-        elif isinstance(self.gastos, list):
-
-            registros_validos = list(self.gastos)
-
-        if not registros_validos:
-
-            messagebox.showinfo("Info", "Nenhuma despesa registrada para exportar.")
-
+        registros_validos = self._obter_registros_exportacao(registros)
+        if registros_validos is None:
             return
 
         destino = workspace_path("relatorios")
-
         destino.mkdir(parents=True, exist_ok=True)
 
         nome_arquivo = f"relatorio_{self.empresa_slug}.pdf"
-
         caminho_destino = destino / nome_arquivo
 
         try:
-
             logo_param = str(self.logo_path) if self.logo_path and self.logo_path.exists() else None
-
-            company_label = f"{self.empresa_razao} — Captação de Despesas-14D"
-
+            company_label = f"{self.empresa_razao} - Captacao de Despesas-14D"
             caminho = generate_pdf_report(
-
                 registros_validos,
-
                 str(caminho_destino),
-
                 company_name=company_label,
-
                 logo_path=logo_param,
-
             )
-
         except RuntimeError as exc:
-
             messagebox.showerror(
-
                 "Erro ao gerar PDF",
-
-                f"{exc}\n\nInstale a dependência e tente novamente.",
-
+                f"{exc}\n\nInstale a dependencia e tente novamente.",
             )
-
             return
-
         except Exception as exc:  # noqa: BLE001
-
             messagebox.showerror("Erro ao gerar PDF", f"Ocorreu um erro inesperado:\n{exc}")
-
             return
 
         messagebox.showinfo(
-
-            "Relatório gerado",
-
-            f"Relatório em PDF gerado com sucesso em:\n{caminho}",
-
+            "Relatorio gerado",
+            f"Relatorio em PDF gerado com sucesso em:\n{caminho}",
         )
 
-def main():
+    def _obter_registros_exportacao(self, registros: Iterable[dict[str, Any]] | None = None) -> list[dict[str, Any]] | None:
+        registros_validos: list[dict[str, Any]] = []
+        if registros is not None:
+            registros_validos = list(registros)
+        elif isinstance(self.gastos, list):
+            registros_validos = list(self.gastos)
+        if not registros_validos:
+            messagebox.showinfo("Info", "Nenhuma despesa registrada para exportar.")
+            return None
+        return registros_validos
 
-    ctk.set_appearance_mode("dark")
+    def exportar_relatorio_csv(self, registros: Iterable[dict[str, Any]] | None = None):
+        registros_validos = self._obter_registros_exportacao(registros)
+        if registros_validos is None:
+            return
+        destino = workspace_path("relatorios")
+        destino.mkdir(parents=True, exist_ok=True)
+        nome_arquivo = f"relatorio_{self.empresa_slug}.csv"
+        caminho_destino = destino / nome_arquivo
+        try:
+            import csv
+            with open(caminho_destino, "w", encoding="utf-8", newline="") as csvfile:
+                writer = csv.writer(csvfile, delimiter=";")
+                writer.writerow(["Data", "Tipo", "Forma", "Valor"])
+                for gasto in registros_validos:
+                    writer.writerow([
+                        gasto.get("data", ""),
+                        gasto.get("tipo", ""),
+                        gasto.get("forma_pagamento", ""),
+                        f"{float(gasto.get('valor', 0) or 0):.2f}".replace(".", ","),
+                    ])
+            messagebox.showinfo("Relatorio gerado", f"CSV salvo em: {caminho_destino}")
+        except Exception as exc:  # noqa: BLE001
+            messagebox.showerror("Erro", f"Falha ao gerar CSV: {exc}")
 
-    ctk.set_default_color_theme("dark-blue")
+    def abrir_modal_exportar_relatorio(self):
+        registros = self.relatorio_dados_visiveis or self._filtrar_registros(self.gastos, self.relatorio_filtros)
+        modal = ctk.CTkToplevel(self)
+        modal.title("Exportar relatorio")
+        modal.geometry("360x200")
+        modal.resizable(False, False)
+        modal.configure(fg_color=BRAND_COLORS["surface"])
+        modal.transient(self)
+        modal.grab_set()
+        self._priorizar_janela(modal)
+        self._centralizar_janela(modal)
 
+        frame = ctk.CTkFrame(modal, fg_color=BRAND_COLORS["panel"], corner_radius=14, border_color=BRAND_COLORS["neutral"], border_width=1)
+        frame.pack(fill="both", expand=True, padx=16, pady=16)
+
+        ctk.CTkLabel(
+            frame,
+            text="Escolha o formato para exportar",
+            font=self.fonts["section"],
+            text_color=BRAND_COLORS["text_primary"],
+        ).pack(pady=(12, 6))
+
+        ctk.CTkLabel(
+            frame,
+            text="O relatorio respeita os filtros atuais.",
+            font=self.fonts["subtitle"],
+            text_color=BRAND_COLORS["text_secondary"],
+        ).pack(pady=(0, 12))
+
+        botoes = ctk.CTkFrame(frame, fg_color="transparent")
+        botoes.pack(fill="x", padx=12, pady=(0, 12))
+
+        self._criar_botao(
+            botoes,
+            "PDF",
+            lambda: (modal.destroy(), self.exportar_relatorio_pdf(registros)),
+            height=38,
+        ).pack(fill="x", padx=12, pady=4)
+
+        self._criar_botao(
+            botoes,
+            "CSV",
+            lambda: (modal.destroy(), self.exportar_relatorio_csv(registros)),
+            fg_color=BRAND_COLORS["neutral"],
+            hover_color="#3B3B3B",
+            height=38,
+        ).pack(fill="x", padx=12, pady=4)
+
+        self._criar_botao(
+            frame,
+            "Cancelar",
+            modal.destroy,
+            fg_color=BRAND_COLORS["neutral"],
+            hover_color="#3B3B3B",
+            height=36,
+        ).pack(fill="x", padx=12, pady=(4, 6))
+
+
+def main(theme_mode: str | None = None, config_path: str | None = None):
+    """Ponto de entrada da UI: abre seletor e instancia a aplicação."""
     from app.ui.empresa_selector import selecionar_empresa
 
     empresa_info = selecionar_empresa()
-
     if not empresa_info:
-
         return
 
     app = ControleGastosApp(
-
         arquivo_dados=empresa_info.get("arquivo"),
-
         empresa_nome=empresa_info.get("empresa_nome"),
-
         empresa_id=empresa_info.get("empresa_id"),
-
         empresa_razao=empresa_info.get("empresa_razao"),
-
+        theme_mode=theme_mode or "dark",
+        config_path=config_path,
     )
-
     app.mainloop()
+
 
 

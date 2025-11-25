@@ -1,38 +1,64 @@
 # -*- mode: python ; coding: utf-8 -*-
+import os
 
+block_cipher = None
 
 a = Analysis(
     ['INTERFACE.py'],
-    pathex=[],
+    pathex=[os.path.abspath('.')], 
     binaries=[],
-    datas=[],
-    hiddenimports=[],
+    datas=[
+        ('app', 'app'),
+        ('relatorios', 'relatorios'),
+        ('logo_empresa.png', '.'),
+        ('logo.ico', '.')
+    ],
+    hiddenimports=[
+        'customtkinter',
+        'requests',
+        'PIL',
+        'PIL.Image',
+        'PIL.ImageTk',
+        'PIL._imaging',              # >>> IMPORTANTE
+        'PIL._tkinter_finder',       # >>> IMPORTANTE
+        'CTkMessagebox',
+        'reportlab'
+    ],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
     excludes=[],
     noarchive=False,
-    optimize=0,
+    optimize=0
 )
-pyz = PYZ(a.pure)
+
+pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
 
 exe = EXE(
     pyz,
     a.scripts,
-    a.binaries,
-    a.datas,
     [],
-    name='INTERFACE',
+    exclude_binaries=True,
+    name='CaptacaoEmpresarial',          # <<< sem acento!
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
     upx=True,
-    upx_exclude=[],
-    runtime_tmpdir=None,
-    console=False,
+    console=False,             # janela oculta
     disable_windowed_traceback=False,
     argv_emulation=False,
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
+    icon='logo.ico'
+)
+
+coll = COLLECT(
+    exe,
+    a.binaries,
+    a.datas,
+    strip=False,
+    upx=True,
+    upx_exclude=[],
+    name='INTERFACE'
 )
