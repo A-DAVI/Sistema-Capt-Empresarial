@@ -71,10 +71,11 @@ class EmpresaSelector(ctk.CTk):
         super().__init__()
 
         self._aplicar_tema_preferido()
-        self.title("CAPT Empresarial - Selecao de Empresa")
+        self.title("Painel Financeiro - Selecione sua empresa")
         self.geometry("520x420")
         self.resizable(False, False)
         self.configure(fg_color=BRAND_COLORS["background"])
+        self._centralizar_janela(self)
 
         self.data_dir = workspace_path("app", "data")
         workspace_logo = workspace_path("logo_empresa.png")
@@ -157,14 +158,14 @@ class EmpresaSelector(ctk.CTk):
 
         ctk.CTkLabel(
             container,
-            text="CAPT Empresarial - Grupo 14D",
+            text="Painel Financeiro — Grupo 14D",
             font=ctk.CTkFont(family=FONT_FAMILY, size=22, weight="bold"),
             text_color=BRAND_COLORS["text_primary"],
         ).pack(pady=(6, 2))
 
         ctk.CTkLabel(
             container,
-            text="Selecione a unidade para continuar",
+            text="Selecione sua empresa para acessar o painel",
             font=ctk.CTkFont(family=FONT_FAMILY, size=14),
             text_color=BRAND_COLORS["text_secondary"],
         ).pack(pady=(0, 18))
@@ -185,7 +186,7 @@ class EmpresaSelector(ctk.CTk):
 
         ctk.CTkButton(
             botoes,
-            text="Entrar",
+            text="Acessar painel",
             command=self._entrar,
             height=44,
             corner_radius=12,
@@ -196,7 +197,7 @@ class EmpresaSelector(ctk.CTk):
 
         ctk.CTkButton(
             botoes,
-            text="Sair",
+            text="Voltar",
             command=self._cancelar,
             height=40,
             corner_radius=12,
@@ -226,7 +227,7 @@ class EmpresaSelector(ctk.CTk):
         nome_display = self.combo_empresas.get().strip()
         empresa_info = self.empresas_map.get(nome_display)
         if not empresa_info:
-            messagebox.showerror('Selecao invalida', 'Escolha uma empresa antes de continuar.')
+            messagebox.showerror("Seleção necessária", "Escolha uma de suas empresas para continuar.")
             return
 
         empresa_id = empresa_info['id']
@@ -238,7 +239,7 @@ class EmpresaSelector(ctk.CTk):
                 logger.info("Arquivo de empresa criado: %s", arquivo)
         except Exception as exc:
             logger.error("Falha ao preparar arquivo da empresa %s: %s", empresa_id, exc)
-            messagebox.showerror("Erro", "Não foi possível preparar o arquivo da empresa selecionada.")
+            messagebox.showerror("Erro", "Não foi possível preparar os dados da empresa selecionada.")
             return
 
         self.selected_info = {
@@ -251,7 +252,7 @@ class EmpresaSelector(ctk.CTk):
         self.destroy()
 
     def _cancelar(self) -> None:
-        logger.info('Selecao de empresa cancelada pelo usuario.')
+        logger.info("Seleção de empresa cancelada pelo usuário.")
         self.selected_info = None
         self.destroy()
 
