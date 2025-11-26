@@ -18,6 +18,7 @@ from typing import Any, Iterable
 from app.utils.formatting import format_brl, validar_data, validar_valor
 
 from app.utils.report import generate_pdf_report
+from app.ui.dashboard import abrir_dashboard
 
 from app.data.store import load_data, save_data
 
@@ -74,7 +75,7 @@ class ControleGastosApp(ctk.CTk):
         self.config_path = config_path
         self._apply_theme(self.theme_mode)
 
-        self.title("Sistema CAPT Empresarial - Grupo 14D")
+        self.title("Painel Financeiro — Grupo 14D")
 
         self.geometry("860x1000")
 
@@ -306,7 +307,18 @@ class ControleGastosApp(ctk.CTk):
 
         return valor_label
 
-    def _criar_botao(self, parent, texto: str, comando, *, fg_color=None, hover_color=None, height: int = 46):
+    def _criar_botao(self, parent, texto: str, comando, *, fg_color=None, hover_color=None, height: int = 46, width: int | None = None):
+
+        kwargs = {
+            "height": height,
+            "corner_radius": 12,
+            "fg_color": fg_color or BRAND_COLORS["accent"],
+            "hover_color": hover_color or BRAND_COLORS["accent_hover"],
+            "font": self.fonts["button"],
+            "text_color": BRAND_COLORS["text_primary"],
+        }
+        if width is not None:
+            kwargs["width"] = width
 
         return ctk.CTkButton(
 
@@ -316,17 +328,7 @@ class ControleGastosApp(ctk.CTk):
 
             command=comando,
 
-            height=height,
-
-            corner_radius=12,
-
-            fg_color=fg_color or BRAND_COLORS["accent"],
-
-            hover_color=hover_color or BRAND_COLORS["accent_hover"],
-
-            font=self.fonts["button"],
-
-            text_color=BRAND_COLORS["text_primary"],
+            **kwargs,
 
         )
 
@@ -480,7 +482,43 @@ class ControleGastosApp(ctk.CTk):
 
         if not hasattr(self, "tipos_despesa"):
 
-            self.tipos_despesa = []
+                    self.tipos_despesa = [
+            "Tarifas bancarias",
+            "Combustivel lubrificante",
+            "Servicos de terceiros",
+            "Internet",
+            "Fretes e transportes",
+            "Materiais de consumo",
+            "Comissao de venda",
+            "Despesa de viagem",
+            "Fornecedores de materia prima, embalagens e insumos",
+            "Honorarios",
+            "Consultoria juridica",
+            "Manutencao de equipamentos",
+            "Bens de pequeno valor",
+            "Imobilizado - Veiculo",
+            "Imobilizado - Maquina e equipamentos",
+            "Imobilizado - Computadores e Perifericos",
+            "Manutencao de veiculos",
+            "Alvara e taxa de licenca sanitaria",
+            "IPVA e licenciamento",
+            "IPTU",
+            "Agua e esgoto",
+            "Energia Eletrica",
+            "Telefone",
+            "Correios e Malotes",
+            "FGTS",
+            "DARF INSS",
+            "ICMS",
+            "Impostos Fiscais (PIS, Cofins, IRP e CSLL)",
+            "Simples Nacional",
+            "Salarios (Funcionarios)",
+            "Ferias (Funcionarios)",
+            "Rescisao (Funcionarios)",
+            "13o Salario (Funcionarios)",
+            "Pro-labore (Socios)",
+            "Aluguel",
+        ]
 
         modal = ctk.CTkToplevel(self)
 
@@ -540,15 +578,12 @@ class ControleGastosApp(ctk.CTk):
             nome = entry_nome.get().strip()
 
             if not nome:
-
                 messagebox.showerror("Erro", "Informe um nome para a categoria.")
-
                 return
 
             if any(nome.lower() == existente.lower() for existente in self.tipos_despesa):
 
-                messagebox.showinfo("Aviso", "Esta categoria ja esta cadastrada.")
-
+                messagebox.showinfo("Aviso", "Esta categoria já está cadastrada.")
                 return
 
             self.tipos_despesa.append(nome)
@@ -700,7 +735,7 @@ class ControleGastosApp(ctk.CTk):
 
             if novo.lower() != antigo.lower() and any(novo.lower() == existente.lower() for existente in self.tipos_despesa):
 
-                messagebox.showerror("Erro", "Ja existe uma categoria com este nome.")
+                messagebox.showerror("Erro", "Já existe uma categoria com este nome.")
 
                 return
 
@@ -1181,7 +1216,7 @@ class ControleGastosApp(ctk.CTk):
 
             top_actions,
 
-            text=f"Acesso: {self.empresa_nome}",
+            text=f"Área do cliente — {self.empresa_nome}",
 
             font=ctk.CTkFont(family=FONT_FAMILY, size=13),
 
@@ -1263,7 +1298,7 @@ class ControleGastosApp(ctk.CTk):
 
             header_frame,
 
-            text='Controle de Gastos e Relatorios Empresariais',
+            text='Painel Financeiro e Relatórios',
 
             font=self.fonts['subtitle'],
 
@@ -1275,7 +1310,7 @@ class ControleGastosApp(ctk.CTk):
 
             main_frame,
 
-            text='Registro de Despesas Operacionais',
+            text='Gestão de despesas',
 
             font=self.fonts['section'],
 
@@ -1468,7 +1503,7 @@ class ControleGastosApp(ctk.CTk):
 
             botoes_frame,
 
-            'Salvar despesa',
+            'Registrar despesa',
 
             self.salvar_despesa,
 
@@ -1482,7 +1517,7 @@ class ControleGastosApp(ctk.CTk):
 
             botoes_frame,
 
-            'Limpar campos',
+            'Limpar formulário',
 
             self.limpar_campos,
 
@@ -1506,7 +1541,7 @@ class ControleGastosApp(ctk.CTk):
 
             main_frame,
 
-            text='Relatorios e Indicadores Financeiros',
+            text='Centro de relatórios',
 
             font=self.fonts['section'],
 
@@ -1540,9 +1575,9 @@ class ControleGastosApp(ctk.CTk):
 
             cards_container,
 
-            'Quantidade de registros',
+            'Total de registros',
 
-            '0 lançamentos',
+            '0 registros',
 
             1,
 
@@ -1556,7 +1591,7 @@ class ControleGastosApp(ctk.CTk):
 
             botoes_relatorios,
 
-            'Filtro',
+            'Filtros do resumo executivo',
 
             self.abrir_modal_filtro_resumo,
 
@@ -1570,7 +1605,7 @@ class ControleGastosApp(ctk.CTk):
 
             botoes_relatorios,
 
-            'Historico detalhado',
+            'Histórico completo',
 
             self.mostrar_relatorio,
 
@@ -1584,7 +1619,21 @@ class ControleGastosApp(ctk.CTk):
 
             botoes_relatorios,
 
-            'Exportar relatorio',
+            'Dashboard',
+
+            self.abrir_dashboard_executivo,
+
+            fg_color=BRAND_COLORS['neutral'],
+
+            hover_color='#3B3B3B',
+
+        ).pack(side='left', expand=True, fill='x', padx=8)
+
+        self._criar_botao(
+
+            botoes_relatorios,
+
+            'Exportar relatório',
 
             self.abrir_modal_exportar_relatorio,
 
@@ -1594,7 +1643,7 @@ class ControleGastosApp(ctk.CTk):
 
             botoes_relatorios,
 
-            'Central de relatorios',
+            'Centro de relatórios',
 
             self.abrir_central_relatorios,
 
@@ -1659,27 +1708,27 @@ class ControleGastosApp(ctk.CTk):
 
             shutil.copy2(origem, destino_final)
 
-            messagebox.showinfo("Sucesso", f"Relatorio copiado para:\n{destino_final}")
+            messagebox.showinfo("Sucesso", f"Relatório copiado para:\n{destino_final}")
 
         except Exception as exc:  # noqa: BLE001
 
-            messagebox.showerror("Erro", f"Falha ao copiar o relatório:\n{exc}")
+            messagebox.showerror("Erro", f"Não foi possível copiar o relatório:\n{exc}")
 
     def abrir_central_relatorios(self):
 
         origem = workspace_path("relatorios")
         arquivos = sorted(
-            [p for p in origem.glob(f"relatorio_{self.empresa_slug}*.pdf") if p.is_file()],
+            [p for p in origem.glob(f"relatorio_{self.empresa_slug}*") if p.is_file()],
             key=lambda p: p.stat().st_mtime,
             reverse=True,
         )
         if not arquivos:
-            messagebox.showinfo("Info", "Nenhum relatorio gerado para esta empresa.")
+            messagebox.showinfo("Informação", "Nenhum relatório disponível para esta empresa.")
             return
 
         modal = ctk.CTkToplevel(self)
-        modal.title("Central de relatorios gerados")
-        modal.geometry("640x420")
+        modal.title("Centro de relatórios")
+        modal.geometry("720x480")
         modal.resizable(False, False)
         modal.configure(fg_color=BRAND_COLORS["surface"])
         modal.transient(self)
@@ -1698,7 +1747,7 @@ class ControleGastosApp(ctk.CTk):
 
         header = ctk.CTkLabel(
             wrapper,
-            text=f"Relatorios da empresa: {self.empresa_nome}",
+            text=f"Relatórios — {self.empresa_nome}",
             font=self.fonts["section"],
             text_color=BRAND_COLORS["text_primary"],
         )
@@ -1717,6 +1766,9 @@ class ControleGastosApp(ctk.CTk):
             )
             linha.pack(fill="x", pady=6, padx=4)
 
+            # identifica tipo pela extensão
+            ext = arq.suffix.lower()
+            tipo_label = "PDF" if ext == ".pdf" else "CSV" if ext == ".csv" else ext.replace(".", "").upper()
             display_nome = f"Relatorio {self.empresa_nome}"
             info = ctk.CTkLabel(
                 linha,
@@ -1729,13 +1781,22 @@ class ControleGastosApp(ctk.CTk):
             botoes = ctk.CTkFrame(linha, fg_color="transparent")
             botoes.pack(side="right", padx=12, pady=6)
 
+            ctk.CTkLabel(
+                botoes,
+                text=tipo_label,
+                font=self.fonts["label"],
+                text_color=BRAND_COLORS["text_secondary"],
+                width=36,
+            ).pack(side="left", padx=(0, 6))
+
             self._criar_botao(
                 botoes,
                 "Abrir",
                 lambda p=arq: self._abrir_arquivo(p),
                 fg_color=BRAND_COLORS["neutral"],
                 hover_color="#3B3B3B",
-                height=32,
+                height=34,
+                width=120,
             ).pack(side="left", padx=4)
 
             self._criar_botao(
@@ -1744,7 +1805,8 @@ class ControleGastosApp(ctk.CTk):
                 lambda p=arq: self._copiar_arquivo_para(p),
                 fg_color=BRAND_COLORS["neutral"],
                 hover_color="#3B3B3B",
-                height=32,
+                height=34,
+                width=130,
             ).pack(side="left", padx=6)
 
             def remover(p: Path, linha_ref=linha):
@@ -1769,7 +1831,7 @@ class ControleGastosApp(ctk.CTk):
 
         self._abrir_modal_filtros(
 
-            "Filtro do Resumo Financeiro",
+            "Filtros do resumo executivo",
 
             self.resumo_filtros,
 
@@ -1785,17 +1847,23 @@ class ControleGastosApp(ctk.CTk):
 
         self.atualizar_stats()
 
+    def abrir_dashboard_executivo(self):
+        try:
+            abrir_dashboard(self, Path(self.arquivo_dados))
+        except Exception as exc:  # noqa: BLE001
+            messagebox.showerror("Erro", f"Não foi possível exibir o painel:\n{exc}")
+
     def abrir_modal_filtro_relatorio(self):
 
         if not self.relatorio_window or not self.relatorio_window.winfo_exists():
 
-            messagebox.showinfo("Info", "Abra o relatório completo antes de aplicar filtros.")
+            messagebox.showinfo("Informa??o", "Abra o relatorio completo antes de aplicar filtros.")
 
             return
 
         self._abrir_modal_filtros(
 
-            "Filtros do Relatorio Completo",
+            "Filtros do relatorio completo",
 
             self.relatorio_filtros,
 
@@ -1855,7 +1923,7 @@ class ControleGastosApp(ctk.CTk):
 
                 frame,
 
-                text="Nenhum registro encontrado para os filtros selecionados.",
+                text="Nenhum lançamento corresponde aos filtros selecionados.",
 
                 font=self.fonts["label"],
 
@@ -2002,7 +2070,7 @@ class ControleGastosApp(ctk.CTk):
 
         if not validar_data(data):
 
-            messagebox.showerror("Erro", "Data inválida! Use o formato DD/MM/AAAA.")
+            messagebox.showerror("Erro", "Data inválida. Use o formato DD/MM/AAAA.")
 
             return
 
@@ -2900,7 +2968,7 @@ class ControleGastosApp(ctk.CTk):
 
         if not self.gastos:
 
-            messagebox.showinfo("Info", "Nenhuma despesa registrada ainda.")
+            messagebox.showinfo("Informação", "Nenhum lançamento registrado ainda.")
 
             return
 
@@ -2914,7 +2982,7 @@ class ControleGastosApp(ctk.CTk):
 
         self.relatorio_window = ctk.CTkToplevel(self)
 
-        self.relatorio_window.title("Relatorios e Indicadores Financeiros - Grupo 14D")
+        self.relatorio_window.title("Centro de relatórios - Grupo 14D")
 
         self.relatorio_window.geometry("1050x720")
 
@@ -2934,7 +3002,7 @@ class ControleGastosApp(ctk.CTk):
 
             self.relatorio_window,
 
-            text="Histórico corporativo de despesas",
+            text="Centro de relatórios",
 
             font=self.fonts["section"],
 
@@ -3002,7 +3070,7 @@ class ControleGastosApp(ctk.CTk):
 
             botoes_frame,
 
-            "Fechar",
+            "Voltar ao painel",
 
             self._fechar_relatorio_window,
 
@@ -3051,8 +3119,8 @@ class ControleGastosApp(ctk.CTk):
             return
 
         messagebox.showinfo(
-            "Relatorio gerado",
-            f"Relatorio em PDF gerado com sucesso em:\n{caminho}",
+            "Relatório criado",
+            f"Relatório em PDF criado em:\n{caminho}",
         )
 
     def _obter_registros_exportacao(self, registros: Iterable[dict[str, Any]] | None = None) -> list[dict[str, Any]] | None:
@@ -3062,7 +3130,7 @@ class ControleGastosApp(ctk.CTk):
         elif isinstance(self.gastos, list):
             registros_validos = list(self.gastos)
         if not registros_validos:
-            messagebox.showinfo("Info", "Nenhuma despesa registrada para exportar.")
+            messagebox.showinfo("Informação", "Nenhum lançamento disponível para exportação.")
             return None
         return registros_validos
 
@@ -3086,14 +3154,14 @@ class ControleGastosApp(ctk.CTk):
                         gasto.get("forma_pagamento", ""),
                         f"{float(gasto.get('valor', 0) or 0):.2f}".replace(".", ","),
                     ])
-            messagebox.showinfo("Relatorio gerado", f"CSV salvo em: {caminho_destino}")
+            messagebox.showinfo("Relatório criado", f"Arquivo CSV criado em: {caminho_destino}")
         except Exception as exc:  # noqa: BLE001
-            messagebox.showerror("Erro", f"Falha ao gerar CSV: {exc}")
+            messagebox.showerror("Erro", f"Não foi possível gerar o arquivo CSV: {exc}")
 
     def abrir_modal_exportar_relatorio(self):
         registros = self.relatorio_dados_visiveis or self._filtrar_registros(self.gastos, self.relatorio_filtros)
         modal = ctk.CTkToplevel(self)
-        modal.title("Exportar relatorio")
+        modal.title("Exportar relatório")
         modal.geometry("360x200")
         modal.resizable(False, False)
         modal.configure(fg_color=BRAND_COLORS["surface"])
@@ -3114,7 +3182,7 @@ class ControleGastosApp(ctk.CTk):
 
         ctk.CTkLabel(
             frame,
-            text="O relatorio respeita os filtros atuais.",
+            text="O relatório respeita os filtros atuais.",
             font=self.fonts["subtitle"],
             text_color=BRAND_COLORS["text_secondary"],
         ).pack(pady=(0, 12))
@@ -3165,6 +3233,11 @@ def main(theme_mode: str | None = None, config_path: str | None = None):
         config_path=config_path,
     )
     app.mainloop()
+
+
+
+
+
 
 
 
