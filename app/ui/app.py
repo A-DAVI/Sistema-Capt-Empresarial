@@ -18,6 +18,7 @@ from typing import Any, Iterable
 from app.utils.formatting import format_brl, validar_data, validar_valor
 
 from app.utils.report import generate_pdf_report
+from app.ui.dashboard import abrir_dashboard
 
 from app.data.store import load_data, save_data
 
@@ -74,7 +75,7 @@ class ControleGastosApp(ctk.CTk):
         self.config_path = config_path
         self._apply_theme(self.theme_mode)
 
-        self.title("Sistema CAPT Empresarial - Grupo 14D")
+        self.title("Painel Financeiro — Grupo 14D")
 
         self.geometry("860x1000")
 
@@ -99,7 +100,7 @@ class ControleGastosApp(ctk.CTk):
 
         self.gastos: list[dict[str, Any]] = load_data(self.arquivo_dados)
 
-        # Estado janela de gestÃ£o (lista com filtros por campos simples)
+        # Estado janela de gestão (lista com filtros por campos simples)
 
         self.janela_gestao = None
 
@@ -306,7 +307,18 @@ class ControleGastosApp(ctk.CTk):
 
         return valor_label
 
-    def _criar_botao(self, parent, texto: str, comando, *, fg_color=None, hover_color=None, height: int = 46):
+    def _criar_botao(self, parent, texto: str, comando, *, fg_color=None, hover_color=None, height: int = 46, width: int | None = None):
+
+        kwargs = {
+            "height": height,
+            "corner_radius": 12,
+            "fg_color": fg_color or BRAND_COLORS["accent"],
+            "hover_color": hover_color or BRAND_COLORS["accent_hover"],
+            "font": self.fonts["button"],
+            "text_color": BRAND_COLORS["text_primary"],
+        }
+        if width is not None:
+            kwargs["width"] = width
 
         return ctk.CTkButton(
 
@@ -316,17 +328,7 @@ class ControleGastosApp(ctk.CTk):
 
             command=comando,
 
-            height=height,
-
-            corner_radius=12,
-
-            fg_color=fg_color or BRAND_COLORS["accent"],
-
-            hover_color=hover_color or BRAND_COLORS["accent_hover"],
-
-            font=self.fonts["button"],
-
-            text_color=BRAND_COLORS["text_primary"],
+            **kwargs,
 
         )
 
@@ -431,7 +433,7 @@ class ControleGastosApp(ctk.CTk):
             pass
 
     def _persistir_tema(self):
-        """Salva a preferÃªncia de tema no config.json para uso em prÃ³ximas execuÃ§Ãµes."""
+        """Salva a preferência de tema no config.json para uso em próximas execuções."""
         if not self.config_path:
             target = workspace_path("config.json")
         else:
@@ -480,7 +482,43 @@ class ControleGastosApp(ctk.CTk):
 
         if not hasattr(self, "tipos_despesa"):
 
-            self.tipos_despesa = []
+                    self.tipos_despesa = [
+            "Tarifas bancarias",
+            "Combustivel lubrificante",
+            "Servicos de terceiros",
+            "Internet",
+            "Fretes e transportes",
+            "Materiais de consumo",
+            "Comissao de venda",
+            "Despesa de viagem",
+            "Fornecedores de materia prima, embalagens e insumos",
+            "Honorarios",
+            "Consultoria juridica",
+            "Manutencao de equipamentos",
+            "Bens de pequeno valor",
+            "Imobilizado - Veiculo",
+            "Imobilizado - Maquina e equipamentos",
+            "Imobilizado - Computadores e Perifericos",
+            "Manutencao de veiculos",
+            "Alvara e taxa de licenca sanitaria",
+            "IPVA e licenciamento",
+            "IPTU",
+            "Agua e esgoto",
+            "Energia Eletrica",
+            "Telefone",
+            "Correios e Malotes",
+            "FGTS",
+            "DARF INSS",
+            "ICMS",
+            "Impostos Fiscais (PIS, Cofins, IRP e CSLL)",
+            "Simples Nacional",
+            "Salarios (Funcionarios)",
+            "Ferias (Funcionarios)",
+            "Rescisao (Funcionarios)",
+            "13o Salario (Funcionarios)",
+            "Pro-labore (Socios)",
+            "Aluguel",
+        ]
 
         modal = ctk.CTkToplevel(self)
 
@@ -540,15 +578,12 @@ class ControleGastosApp(ctk.CTk):
             nome = entry_nome.get().strip()
 
             if not nome:
-
                 messagebox.showerror("Erro", "Informe um nome para a categoria.")
-
                 return
 
             if any(nome.lower() == existente.lower() for existente in self.tipos_despesa):
 
-                messagebox.showinfo("Aviso", "Esta categoria ja esta cadastrada.")
-
+                messagebox.showinfo("Aviso", "Esta categoria já está cadastrada.")
                 return
 
             self.tipos_despesa.append(nome)
@@ -653,6 +688,7 @@ class ControleGastosApp(ctk.CTk):
             font=self.fonts["label"],
 
             dropdown_font=self.fonts["dropdown"],
+            
 
         )
 
@@ -700,7 +736,7 @@ class ControleGastosApp(ctk.CTk):
 
             if novo.lower() != antigo.lower() and any(novo.lower() == existente.lower() for existente in self.tipos_despesa):
 
-                messagebox.showerror("Erro", "Ja existe uma categoria com este nome.")
+                messagebox.showerror("Erro", "Já existe uma categoria com este nome.")
 
                 return
 
@@ -757,52 +793,6 @@ class ControleGastosApp(ctk.CTk):
             height=40,
 
         ).pack(side="left", expand=True, fill="x", padx=(6, 0))
-
-    def abrir_modal_lista_categorias(self):
-        """Modal simples e rolavel para escolher categoria quando a lista fica longa."""
-        categorias = sorted(getattr(self, "tipos_despesa", []), key=lambda valor: valor.lower())
-        if not categorias:
-            messagebox.showinfo("Aviso", "Nenhuma categoria cadastrada.")
-            return
-
-        modal = ctk.CTkToplevel(self)
-        modal.title("Categorias disponÃ­veis")
-        modal.geometry("360x420")
-        modal.resizable(False, False)
-        modal.configure(fg_color=BRAND_COLORS["surface"])
-        modal.transient(self)
-        modal.grab_set()
-        self._priorizar_janela(modal)
-        self._centralizar_janela(modal)
-
-        ctk.CTkLabel(
-            modal,
-            text="Selecione a categoria desejada",
-            font=self.fonts["subtitle"],
-            text_color=BRAND_COLORS["text_primary"],
-        ).pack(anchor="w", padx=16, pady=(14, 6))
-
-        lista = ctk.CTkScrollableFrame(modal, fg_color=BRAND_COLORS["panel"])
-        lista.pack(fill="both", expand=True, padx=12, pady=(0, 12))
-
-        def selecionar(nome: str):
-            try:
-                self.combo_tipo.set(nome)
-            except Exception:
-                pass
-            modal.destroy()
-
-        for nome in categorias:
-            btn = ctk.CTkButton(
-                lista,
-                text=nome,
-                command=lambda n=nome: selecionar(n),
-                fg_color=BRAND_COLORS["neutral"],
-                hover_color="#3B3B3B",
-                text_color=BRAND_COLORS["text_primary"],
-                height=34,
-            )
-            btn.pack(fill="x", padx=10, pady=4)
 
     def _priorizar_janela(self, janela: ctk.CTkToplevel):
 
@@ -989,7 +979,7 @@ class ControleGastosApp(ctk.CTk):
 
             conteudo,
 
-            text="Data InÃ­cio (DD/MM/AAAA)",
+            text="Data Início (DD/MM/AAAA)",
 
             font=self.fonts["subtitle"],
 
@@ -1073,13 +1063,13 @@ class ControleGastosApp(ctk.CTk):
 
             if inicio_val and not validar_data(inicio_val):
 
-                messagebox.showerror("Erro", "Data inicial invÃ¡lida. Use o formato DD/MM/AAAA.")
+                messagebox.showerror("Erro", "Data inicial inválida. Use o formato DD/MM/AAAA.")
 
                 return
 
             if fim_val and not validar_data(fim_val):
 
-                messagebox.showerror("Erro", "Data final invÃ¡lida. Use o formato DD/MM/AAAA.")
+                messagebox.showerror("Erro", "Data final inválida. Use o formato DD/MM/AAAA.")
 
                 return
 
@@ -1089,7 +1079,7 @@ class ControleGastosApp(ctk.CTk):
 
             if dt_inicio and dt_fim and dt_inicio > dt_fim:
 
-                messagebox.showerror("Erro", "A data inicial nÃ£o pode ser posterior Ã  data final.")
+                messagebox.showerror("Erro", "A data inicial não pode ser posterior à data final.")
 
                 return
 
@@ -1212,7 +1202,7 @@ class ControleGastosApp(ctk.CTk):
 
         main_frame = ctk.CTkFrame(self.scroll_container, corner_radius=24, fg_color=BRAND_COLORS['surface'])
 
-        # ancorar no topo para evitar Ã¡rea vazia
+        # ancorar no topo para evitar área vazia
         main_frame.pack(fill='both', expand=False, padx=12, pady=12, anchor="n")
 
         header_frame = ctk.CTkFrame(main_frame, fg_color='transparent')
@@ -1227,7 +1217,7 @@ class ControleGastosApp(ctk.CTk):
 
             top_actions,
 
-            text=f"Acesso: {self.empresa_nome}",
+            text=f"Área do cliente — {self.empresa_nome}",
 
             font=ctk.CTkFont(family=FONT_FAMILY, size=13),
 
@@ -1297,7 +1287,7 @@ class ControleGastosApp(ctk.CTk):
 
             header_frame,
 
-            text='Captacao de Despesas-14D',
+            text='Meu Negócio - Central de Controle',
 
             font=self.fonts['title'],
 
@@ -1309,7 +1299,7 @@ class ControleGastosApp(ctk.CTk):
 
             header_frame,
 
-            text='Controle de Gastos e Relatorios Empresariais',
+            text='Despesas, Dashboard e Relatórios',
 
             font=self.fonts['subtitle'],
 
@@ -1321,7 +1311,7 @@ class ControleGastosApp(ctk.CTk):
 
             main_frame,
 
-            text='Registro de Despesas Operacionais',
+            text='Lançamento de depesas',
 
             font=self.fonts['section'],
 
@@ -1397,7 +1387,7 @@ class ControleGastosApp(ctk.CTk):
 
             formulario_frame,
 
-            'Data do lanÃ§amento',
+            'Data do lançamento',
 
             lambda container: ctk.CTkEntry(
 
@@ -1416,8 +1406,8 @@ class ControleGastosApp(ctk.CTk):
         self.entry_data.insert(0, datetime.now().strftime('%d/%m/%Y'))
 
         self.tipos_despesa = [
-            "Ãgua e esgoto",
-            "Energia ElÃ©trica",
+            "Água e esgoto",
+            "Energia Elétrica",
             "Telefone",
             "Correios e Malotes",
             "FGTS",
@@ -1425,11 +1415,11 @@ class ControleGastosApp(ctk.CTk):
             "ICMS",
             "Impostos Fiscais (PIS, Cofins, IRP e CSLL)",
             "Simples Nacional",
-            "SalÃ¡rios (FuncionÃ¡rios)",
-            "FÃ©rias (FuncionÃ¡rios)",
-            "RescisÃ£o (FuncionÃ¡rios)",
-            "13Âº SalÃ¡rio (FuncionÃ¡rios)",
-            "Pro-labore (SÃ³cios)",
+            "Salários (Funcionários)",
+            "Férias (Funcionários)",
+            "Rescisão (Funcionários)",
+            "13º Salário (Funcionários)",
+            "Pro-labore (Sócios)",
             "Aluguel",
         ]
 
@@ -1450,21 +1440,11 @@ class ControleGastosApp(ctk.CTk):
                 font=self.fonts['label'],
 
                 dropdown_font=self.fonts['dropdown'],
+                
 
             ),
 
         )
-        # Botao auxiliar para listar todas as categorias em um modal com scroll
-        ctk.CTkButton(
-            formulario_frame,
-            text="Ver categorias",
-            command=self.abrir_modal_lista_categorias,
-            fg_color=BRAND_COLORS['neutral'],
-            hover_color="#3B3B3B",
-            height=30,
-            font=self.fonts['button'],
-            text_color=BRAND_COLORS['text_primary'],
-        ).pack(fill='x', padx=12, pady=(0, 8))
 
         self.combo_tipo.set('Selecione o tipo')
 
@@ -1525,7 +1505,7 @@ class ControleGastosApp(ctk.CTk):
 
             botoes_frame,
 
-            'Salvar despesa',
+            'Registrar despesa',
 
             self.salvar_despesa,
 
@@ -1539,7 +1519,7 @@ class ControleGastosApp(ctk.CTk):
 
             botoes_frame,
 
-            'Limpar campos',
+            'Limpar formulário',
 
             self.limpar_campos,
 
@@ -1563,7 +1543,7 @@ class ControleGastosApp(ctk.CTk):
 
             main_frame,
 
-            text='Relatorios e Indicadores Financeiros',
+            text='Centro de relatórios',
 
             font=self.fonts['section'],
 
@@ -1597,9 +1577,9 @@ class ControleGastosApp(ctk.CTk):
 
             cards_container,
 
-            'Quantidade de registros',
+            'Total de registros',
 
-            '0 lanÃ§amentos',
+            '0 registros',
 
             1,
 
@@ -1613,7 +1593,7 @@ class ControleGastosApp(ctk.CTk):
 
             botoes_relatorios,
 
-            'Filtro',
+            'Filtros do resumo executivo',
 
             self.abrir_modal_filtro_resumo,
 
@@ -1627,7 +1607,7 @@ class ControleGastosApp(ctk.CTk):
 
             botoes_relatorios,
 
-            'Historico detalhado',
+            'Histórico completo',
 
             self.mostrar_relatorio,
 
@@ -1641,7 +1621,21 @@ class ControleGastosApp(ctk.CTk):
 
             botoes_relatorios,
 
-            'Exportar relatorio',
+            'Dashboard',
+
+            self.abrir_dashboard_executivo,
+
+            fg_color=BRAND_COLORS['neutral'],
+
+            hover_color='#3B3B3B',
+
+        ).pack(side='left', expand=True, fill='x', padx=8)
+
+        self._criar_botao(
+
+            botoes_relatorios,
+
+            'Exportar relatório',
 
             self.abrir_modal_exportar_relatorio,
 
@@ -1651,7 +1645,7 @@ class ControleGastosApp(ctk.CTk):
 
             botoes_relatorios,
 
-            'Central de relatorios',
+            'Centro de relatórios',
 
             self.abrir_central_relatorios,
 
@@ -1696,7 +1690,7 @@ class ControleGastosApp(ctk.CTk):
 
         except Exception as exc:  # noqa: BLE001
 
-            messagebox.showerror("Erro", f"NÃ£o foi possÃ­vel abrir o arquivo:\n{exc}")
+            messagebox.showerror("Erro", f"Não foi possível abrir o arquivo:\n{exc}")
 
     def _copiar_arquivo_para(self, origem: Path) -> None:
 
@@ -1716,27 +1710,27 @@ class ControleGastosApp(ctk.CTk):
 
             shutil.copy2(origem, destino_final)
 
-            messagebox.showinfo("Sucesso", f"Relatorio copiado para:\n{destino_final}")
+            messagebox.showinfo("Sucesso", f"Relatório copiado para:\n{destino_final}")
 
         except Exception as exc:  # noqa: BLE001
 
-            messagebox.showerror("Erro", f"Falha ao copiar o relatÃ³rio:\n{exc}")
+            messagebox.showerror("Erro", f"Não foi possível copiar o relatório:\n{exc}")
 
     def abrir_central_relatorios(self):
 
         origem = workspace_path("relatorios")
         arquivos = sorted(
-            [p for p in origem.glob(f"relatorio_{self.empresa_slug}*.pdf") if p.is_file()],
+            [p for p in origem.glob(f"relatorio_{self.empresa_slug}*") if p.is_file()],
             key=lambda p: p.stat().st_mtime,
             reverse=True,
         )
         if not arquivos:
-            messagebox.showinfo("Info", "Nenhum relatorio gerado para esta empresa.")
+            messagebox.showinfo("Informação", "Nenhum relatório disponível para esta empresa.")
             return
 
         modal = ctk.CTkToplevel(self)
-        modal.title("Central de relatorios gerados")
-        modal.geometry("640x420")
+        modal.title("Centro de relatórios")
+        modal.geometry("720x480")
         modal.resizable(False, False)
         modal.configure(fg_color=BRAND_COLORS["surface"])
         modal.transient(self)
@@ -1755,7 +1749,7 @@ class ControleGastosApp(ctk.CTk):
 
         header = ctk.CTkLabel(
             wrapper,
-            text=f"Relatorios da empresa: {self.empresa_nome}",
+            text=f"Relatórios — {self.empresa_nome}",
             font=self.fonts["section"],
             text_color=BRAND_COLORS["text_primary"],
         )
@@ -1774,6 +1768,9 @@ class ControleGastosApp(ctk.CTk):
             )
             linha.pack(fill="x", pady=6, padx=4)
 
+            # identifica tipo pela extensão
+            ext = arq.suffix.lower()
+            tipo_label = "PDF" if ext == ".pdf" else "CSV" if ext == ".csv" else ext.replace(".", "").upper()
             display_nome = f"Relatorio {self.empresa_nome}"
             info = ctk.CTkLabel(
                 linha,
@@ -1786,13 +1783,22 @@ class ControleGastosApp(ctk.CTk):
             botoes = ctk.CTkFrame(linha, fg_color="transparent")
             botoes.pack(side="right", padx=12, pady=6)
 
+            ctk.CTkLabel(
+                botoes,
+                text=tipo_label,
+                font=self.fonts["label"],
+                text_color=BRAND_COLORS["text_secondary"],
+                width=36,
+            ).pack(side="left", padx=(0, 6))
+
             self._criar_botao(
                 botoes,
                 "Abrir",
                 lambda p=arq: self._abrir_arquivo(p),
                 fg_color=BRAND_COLORS["neutral"],
                 hover_color="#3B3B3B",
-                height=32,
+                height=34,
+                width=120,
             ).pack(side="left", padx=4)
 
             self._criar_botao(
@@ -1801,7 +1807,8 @@ class ControleGastosApp(ctk.CTk):
                 lambda p=arq: self._copiar_arquivo_para(p),
                 fg_color=BRAND_COLORS["neutral"],
                 hover_color="#3B3B3B",
-                height=32,
+                height=34,
+                width=130,
             ).pack(side="left", padx=6)
 
             def remover(p: Path, linha_ref=linha):
@@ -1826,7 +1833,7 @@ class ControleGastosApp(ctk.CTk):
 
         self._abrir_modal_filtros(
 
-            "Filtro do Resumo Financeiro",
+            "Filtros do resumo executivo",
 
             self.resumo_filtros,
 
@@ -1842,17 +1849,23 @@ class ControleGastosApp(ctk.CTk):
 
         self.atualizar_stats()
 
+    def abrir_dashboard_executivo(self):
+        try:
+            abrir_dashboard(self, Path(self.arquivo_dados))
+        except Exception as exc:  # noqa: BLE001
+            messagebox.showerror("Erro", f"Não foi possível exibir o painel:\n{exc}")
+
     def abrir_modal_filtro_relatorio(self):
 
         if not self.relatorio_window or not self.relatorio_window.winfo_exists():
 
-            messagebox.showinfo("Info", "Abra o relatÃ³rio completo antes de aplicar filtros.")
+            messagebox.showinfo("Informa??o", "Abra o relatorio completo antes de aplicar filtros.")
 
             return
 
         self._abrir_modal_filtros(
 
-            "Filtros do Relatorio Completo",
+            "Filtros do relatorio completo",
 
             self.relatorio_filtros,
 
@@ -1912,7 +1925,7 @@ class ControleGastosApp(ctk.CTk):
 
                 frame,
 
-                text="Nenhum registro encontrado para os filtros selecionados.",
+                text="Nenhum lançamento corresponde aos filtros selecionados.",
 
                 font=self.fonts["label"],
 
@@ -2004,7 +2017,7 @@ class ControleGastosApp(ctk.CTk):
 
             "Mudar de empresa",
 
-            "Deseja voltar Ã  seleÃ§Ã£o de empresas? Todos os dados visÃ­veis serÃ£o recarregados.",
+            "Deseja voltar à seleção de empresas? Todos os dados visíveis serão recarregados.",
 
         )
 
@@ -2019,7 +2032,7 @@ class ControleGastosApp(ctk.CTk):
             "empresa_razao": self.empresa_razao,
         }
 
-        # encerra antes de abrir novo seletor para evitar mÃºltiplas instÃ¢ncias do Tk
+        # encerra antes de abrir novo seletor para evitar múltiplas instâncias do Tk
         self.destroy()
 
         info = selecionar_empresa()
@@ -2059,7 +2072,7 @@ class ControleGastosApp(ctk.CTk):
 
         if not validar_data(data):
 
-            messagebox.showerror("Erro", "Data invÃ¡lida! Use o formato DD/MM/AAAA.")
+            messagebox.showerror("Erro", "Data inválida. Use o formato DD/MM/AAAA.")
 
             return
 
@@ -2079,7 +2092,7 @@ class ControleGastosApp(ctk.CTk):
 
         if valor is None:
 
-            messagebox.showerror("Erro", "Valor invÃ¡lido! Digite um nÃºmero maior que zero.")
+            messagebox.showerror("Erro", "Valor inválido! Digite um número maior que zero.")
 
             return
 
@@ -2089,7 +2102,7 @@ class ControleGastosApp(ctk.CTk):
 
         if not save_data(self.arquivo_dados, self.gastos):
 
-            messagebox.showerror("Erro", "NÃ£o foi possÃ­vel salvar os dados em disco.")
+            messagebox.showerror("Erro", "Não foi possível salvar os dados em disco.")
 
         self.atualizar_stats()
 
@@ -2135,11 +2148,11 @@ class ControleGastosApp(ctk.CTk):
 
         if self.quantidade_card_value:
 
-            sufixo = "lanÃ§amento" if quantidade == 1 else "lanÃ§amentos"
+            sufixo = "lançamento" if quantidade == 1 else "lançamentos"
 
             self.quantidade_card_value.configure(text=f"{quantidade} {sufixo}")
 
-    # ------- GestÃ£o com mÃºltiplos filtros simples -------
+    # ------- Gestão com múltiplos filtros simples -------
 
     def abrir_gestao_gastos(self):
 
@@ -2159,7 +2172,7 @@ class ControleGastosApp(ctk.CTk):
 
         self.janela_gestao = ctk.CTkToplevel(self)
 
-        self.janela_gestao.title('Captacao de Despesas-14D - GestÃ£o de Despesas')
+        self.janela_gestao.title('Captacao de Despesas-14D - Gestão de Despesas')
 
         self.janela_gestao.geometry('940x620')
 
@@ -2175,7 +2188,7 @@ class ControleGastosApp(ctk.CTk):
 
             self.janela_gestao,
 
-            text='GestÃ£o de Despesas Operacionais',
+            text='Gestão de Despesas Operacionais',
 
             font=self.fonts['section'],
 
@@ -2207,7 +2220,7 @@ class ControleGastosApp(ctk.CTk):
 
             filtros_frame,
 
-            text='Data InÃ­cio (DD/MM/AAAA)',
+            text='Data Início (DD/MM/AAAA)',
 
             font=self.fonts['subtitle'],
 
@@ -2299,7 +2312,7 @@ class ControleGastosApp(ctk.CTk):
 
             filtros_frame,
 
-            values=['Todos', 'AtÃ© 100', '100 a 500', '500 a 1000', 'Acima de 1000'],
+            values=['Todos', 'Até 100', '100 a 500', '500 a 1000', 'Acima de 1000'],
 
             height=36,
 
@@ -2525,7 +2538,7 @@ class ControleGastosApp(ctk.CTk):
 
             timestamp = gasto.get("timestamp")
 
-            exibicao = timestamp.replace("T", " ")[:16] if timestamp else "Sem registro de horÃ¡rio"
+            exibicao = timestamp.replace("T", " ")[:16] if timestamp else "Sem registro de horário"
 
             ctk.CTkLabel(
 
@@ -2609,7 +2622,7 @@ class ControleGastosApp(ctk.CTk):
 
                 return True
 
-            if criterio == "AtÃ© 100":
+            if criterio == "Até 100":
 
                 return valor <= 100
 
@@ -2835,7 +2848,7 @@ class ControleGastosApp(ctk.CTk):
 
             if not validar_data(nova_data):
 
-                messagebox.showerror("Erro", "Data invÃ¡lida. Use o formato DD/MM/AAAA.")
+                messagebox.showerror("Erro", "Data inválida. Use o formato DD/MM/AAAA.")
 
                 return
 
@@ -2859,7 +2872,7 @@ class ControleGastosApp(ctk.CTk):
 
             if novo_valor is None:
 
-                messagebox.showerror("Erro", "Valor invÃ¡lido! Digite um nÃºmero maior que zero.")
+                messagebox.showerror("Erro", "Valor inválido! Digite um número maior que zero.")
 
                 return
 
@@ -2887,7 +2900,7 @@ class ControleGastosApp(ctk.CTk):
 
             if not save_ok:
 
-                messagebox.showerror("Erro", "NÃ£o foi possÃ­vel salvar os dados em disco.")
+                messagebox.showerror("Erro", "Não foi possível salvar os dados em disco.")
 
             else:
 
@@ -2899,7 +2912,7 @@ class ControleGastosApp(ctk.CTk):
 
         botoes_modal.pack(fill="x", padx=24, pady=(12, 10))
 
-        self._criar_botao(botoes_modal, "Salvar alteraÃ§Ãµes", salvar_edicao, height=42).pack(
+        self._criar_botao(botoes_modal, "Salvar alterações", salvar_edicao, height=42).pack(
 
             side="left", expand=True, fill="x", padx=(0, 8)
 
@@ -2931,7 +2944,7 @@ class ControleGastosApp(ctk.CTk):
 
         tipo = gasto.get("tipo", "--")
 
-        confirmar = messagebox.askyesno("Confirmar exclusÃ£o", f"Deseja excluir a despesa de {data} ({tipo}) no valor de {format_brl(valor)}?")
+        confirmar = messagebox.askyesno("Confirmar exclusão", f"Deseja excluir a despesa de {data} ({tipo}) no valor de {format_brl(valor)}?")
 
         if not confirmar:
 
@@ -2947,7 +2960,7 @@ class ControleGastosApp(ctk.CTk):
 
         if not save_ok:
 
-            messagebox.showerror("Erro", "NÃ£o foi possÃ­vel salvar os dados em disco.")
+            messagebox.showerror("Erro", "Não foi possível salvar os dados em disco.")
 
         else:
 
@@ -2957,7 +2970,7 @@ class ControleGastosApp(ctk.CTk):
 
         if not self.gastos:
 
-            messagebox.showinfo("Info", "Nenhuma despesa registrada ainda.")
+            messagebox.showinfo("Informação", "Nenhum lançamento registrado ainda.")
 
             return
 
@@ -2971,7 +2984,7 @@ class ControleGastosApp(ctk.CTk):
 
         self.relatorio_window = ctk.CTkToplevel(self)
 
-        self.relatorio_window.title("Relatorios e Indicadores Financeiros - Grupo 14D")
+        self.relatorio_window.title("Centro de relatórios - Grupo 14D")
 
         self.relatorio_window.geometry("1050x720")
 
@@ -2991,7 +3004,7 @@ class ControleGastosApp(ctk.CTk):
 
             self.relatorio_window,
 
-            text="HistÃ³rico corporativo de despesas",
+            text="Centro de relatórios",
 
             font=self.fonts["section"],
 
@@ -3059,7 +3072,7 @@ class ControleGastosApp(ctk.CTk):
 
             botoes_frame,
 
-            "Fechar",
+            "Voltar ao painel",
 
             self._fechar_relatorio_window,
 
@@ -3108,8 +3121,8 @@ class ControleGastosApp(ctk.CTk):
             return
 
         messagebox.showinfo(
-            "Relatorio gerado",
-            f"Relatorio em PDF gerado com sucesso em:\n{caminho}",
+            "Relatório criado",
+            f"Relatório em PDF criado em:\n{caminho}",
         )
 
     def _obter_registros_exportacao(self, registros: Iterable[dict[str, Any]] | None = None) -> list[dict[str, Any]] | None:
@@ -3119,7 +3132,7 @@ class ControleGastosApp(ctk.CTk):
         elif isinstance(self.gastos, list):
             registros_validos = list(self.gastos)
         if not registros_validos:
-            messagebox.showinfo("Info", "Nenhuma despesa registrada para exportar.")
+            messagebox.showinfo("Informação", "Nenhum lançamento disponível para exportação.")
             return None
         return registros_validos
 
@@ -3143,14 +3156,14 @@ class ControleGastosApp(ctk.CTk):
                         gasto.get("forma_pagamento", ""),
                         f"{float(gasto.get('valor', 0) or 0):.2f}".replace(".", ","),
                     ])
-            messagebox.showinfo("Relatorio gerado", f"CSV salvo em: {caminho_destino}")
+            messagebox.showinfo("Relatório criado", f"Arquivo CSV criado em: {caminho_destino}")
         except Exception as exc:  # noqa: BLE001
-            messagebox.showerror("Erro", f"Falha ao gerar CSV: {exc}")
+            messagebox.showerror("Erro", f"Não foi possível gerar o arquivo CSV: {exc}")
 
     def abrir_modal_exportar_relatorio(self):
         registros = self.relatorio_dados_visiveis or self._filtrar_registros(self.gastos, self.relatorio_filtros)
         modal = ctk.CTkToplevel(self)
-        modal.title("Exportar relatorio")
+        modal.title("Exportar relatório")
         modal.geometry("360x200")
         modal.resizable(False, False)
         modal.configure(fg_color=BRAND_COLORS["surface"])
@@ -3171,7 +3184,7 @@ class ControleGastosApp(ctk.CTk):
 
         ctk.CTkLabel(
             frame,
-            text="O relatorio respeita os filtros atuais.",
+            text="O relatório respeita os filtros atuais.",
             font=self.fonts["subtitle"],
             text_color=BRAND_COLORS["text_secondary"],
         ).pack(pady=(0, 12))
@@ -3206,7 +3219,7 @@ class ControleGastosApp(ctk.CTk):
 
 
 def main(theme_mode: str | None = None, config_path: str | None = None):
-    """Ponto de entrada da UI: abre seletor e instancia a aplicaÃ§Ã£o."""
+    """Ponto de entrada da UI: abre seletor e instancia a aplicação."""
     from app.ui.empresa_selector import selecionar_empresa
 
     empresa_info = selecionar_empresa()
@@ -3222,6 +3235,14 @@ def main(theme_mode: str | None = None, config_path: str | None = None):
         config_path=config_path,
     )
     app.mainloop()
+
+
+
+
+
+
+
+
 
 
 
