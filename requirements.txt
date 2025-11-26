@@ -3,6 +3,6 @@ customtkinter
 CTkMessagebox
 reportlab
 Pillow
-os
+matplotlib
 
 

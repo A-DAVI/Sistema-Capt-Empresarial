@@ -29,9 +29,9 @@ jobs:
 
       - name: Build EXE
         run: |
-          pyinstaller INTERFACE.spec
-          if (Test-Path dist/INTERFACE/INTERFACE.exe) {
-            Copy-Item dist/INTERFACE/INTERFACE.exe dist/CaptacaoEmpresarial14D.exe -Force
+          pyinstaller -y INTERFACE.spec
+          if (Test-Path dist/INTERFACE/CaptacaoEmpresarial.exe) {
+            Copy-Item dist/INTERFACE/CaptacaoEmpresarial.exe dist/CaptacaoEmpresarial14D.exe -Force
           }
 
       - name: Ensure installer directory exists
