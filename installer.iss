@@ -17,7 +17,7 @@ WizardStyle=modern
 PrivilegesRequired=admin
 
 [Files]
-Source: "dist\INTERFACE\CaptacaoEmpresarial.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "dist\INTERFACE\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs
 
 [Icons]
 Name: "{autoprograms}\Captacao Empresarial - Grupo 14D"; Filename: "{app}\CaptacaoEmpresarial.exe"
