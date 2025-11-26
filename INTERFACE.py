@@ -17,7 +17,7 @@ _prepare_sys_path()
 
 from app.ui.app import main
 from app.utils.bootstrap import bootstrap_application
-from app.utils.updater import auto_update
+from app.bootstrap.updater import auto_update
 
 
 if __name__ == "__main__":
