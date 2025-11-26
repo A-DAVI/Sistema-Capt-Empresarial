@@ -688,7 +688,6 @@ class ControleGastosApp(ctk.CTk):
             font=self.fonts["label"],
 
             dropdown_font=self.fonts["dropdown"],
-            dropdown_height=260,
 
         )
 
@@ -1440,7 +1439,6 @@ class ControleGastosApp(ctk.CTk):
                 font=self.fonts['label'],
 
                 dropdown_font=self.fonts['dropdown'],
-                dropdown_height=260,
 
             ),
 
