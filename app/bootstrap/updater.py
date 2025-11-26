@@ -9,6 +9,8 @@ from pathlib import Path
 
 import requests
 
+import os
+
 from app.utils.paths import ensure_workspace_dir
 from app.version import __version__ as CURRENT_VERSION
 
@@ -19,14 +21,23 @@ ZIP_ASSET = "CaptacaoEmpresarial14D.zip"
 def get_latest() -> dict | None:
     """Obtém informações da última release do GitHub."""
     url = f"https://api.github.com/repos/{GITHUB_REPO}/releases/latest"
-    resp = requests.get(url, timeout=10)
-    if resp.status_code != 200:
+    try:
+        resp = requests.get(url, timeout=10)
+        if resp.status_code != 200:
+            return None
+        return resp.json()
+    except Exception:
         return None
-    return resp.json()
 
 
 def check_update() -> tuple[str, str] | None:
     """Verifica se existe uma versão mais recente publicada."""
+    # Evita rodar em builds dev ou quando o usuário desabilita via env.
+    if os.getenv("SKIP_AUTO_UPDATE"):
+        return None
+    if CURRENT_VERSION.startswith("0.0.0"):
+        return None
+
     data = get_latest()
     if not data:
         return None
