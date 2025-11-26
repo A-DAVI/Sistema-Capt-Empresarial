@@ -16,6 +16,8 @@ from app.version import __version__ as CURRENT_VERSION
 
 GITHUB_REPO = "A-DAVI/Sistema-Capt-Empresarial"
 ZIP_ASSET = "CaptacaoEmpresarial14D.zip"
+_UPDATE_DIR = ensure_workspace_dir("update")
+_MARKER_FILE = _UPDATE_DIR / "update_in_progress.txt"
 
 
 def get_latest() -> dict | None:
@@ -37,12 +39,18 @@ def check_update() -> tuple[str, str] | None:
         return None
     if CURRENT_VERSION.startswith("0.0.0"):
         return None
+    if _MARKER_FILE.exists():
+        # Atualização anterior ainda em andamento; evita loop.
+        return None
 
     data = get_latest()
     if not data:
         return None
-    latest_version = data.get("tag_name", "").replace("v", "")
-    if latest_version == CURRENT_VERSION:
+    latest_version = data.get("tag_name", "").lstrip("v").strip()
+    current_version = CURRENT_VERSION.lstrip("v").strip()
+    if not latest_version or not current_version:
+        return None
+    if latest_version == current_version:
         return None
     for asset in data.get("assets", []):
         if asset.get("name") == ZIP_ASSET:
@@ -52,8 +60,7 @@ def check_update() -> tuple[str, str] | None:
 
 def download_zip(url: str) -> Path:
     """Baixa o pacote .zip do onedir para a pasta update."""
-    update_dir = ensure_workspace_dir("update")
-    zip_path = update_dir / ZIP_ASSET
+    zip_path = _UPDATE_DIR / ZIP_ASSET
     with requests.get(url, stream=True) as response:
         response.raise_for_status()
         with open(zip_path, "wb") as target:
@@ -72,7 +79,7 @@ def _extract_zip(zip_path: Path) -> Path:
     return extract_dir
 
 
-def install_and_restart(zip_path: Path) -> None:
+def install_and_restart(zip_path: Path, target_version: str) -> None:
     """
     Copia o conteúdo do onedir extraído sobre a instalação atual e reinicia o app.
     Usa um script .bat para evitar problemas de arquivo em uso.
@@ -81,6 +88,10 @@ def install_and_restart(zip_path: Path) -> None:
     current_dir = current_exe.parent
     extracted_dir = _extract_zip(zip_path)
     update_bat = current_dir / "update.bat"
+    try:
+        _MARKER_FILE.write_text(target_version, encoding="utf-8")
+    except Exception:
+        pass
 
     bat_script = f"""
 @echo off
@@ -88,6 +99,7 @@ echo Atualizando aplicativo...
 ping 127.0.0.1 -n 2 >nul
 xcopy "{extracted_dir}\\*" "{current_dir}\\" /E /I /Y /Q
 start "" "{current_exe}"
+if exist "{_MARKER_FILE}" del "{_MARKER_FILE}"
 del "%~f0"
 """
     update_bat.write_text(bat_script.strip(), encoding="utf-8")
@@ -100,6 +112,6 @@ def auto_update() -> None:
     result = check_update()
     if not result:
         return
-    url, _version = result
+    url, latest_version = result
     zip_path = download_zip(url)
-    install_and_restart(zip_path)
+    install_and_restart(zip_path, latest_version)
