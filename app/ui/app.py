@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+﻿# -*- coding: utf-8 -*-
 
 from __future__ import annotations
 
@@ -688,6 +688,7 @@ class ControleGastosApp(ctk.CTk):
             font=self.fonts["label"],
 
             dropdown_font=self.fonts["dropdown"],
+            dropdown_height=260,
 
         )
 
@@ -1286,7 +1287,7 @@ class ControleGastosApp(ctk.CTk):
 
             header_frame,
 
-            text='Captacao de Despesas-14D',
+            text='Meu Negócio - Central de Controle',
 
             font=self.fonts['title'],
 
@@ -1298,7 +1299,7 @@ class ControleGastosApp(ctk.CTk):
 
             header_frame,
 
-            text='Painel Financeiro e Relatórios',
+            text='Despesas, Dashboard e Relatórios',
 
             font=self.fonts['subtitle'],
 
@@ -1310,7 +1311,7 @@ class ControleGastosApp(ctk.CTk):
 
             main_frame,
 
-            text='Gestão de despesas',
+            text='Lançamento de depesas',
 
             font=self.fonts['section'],
 
@@ -1439,6 +1440,7 @@ class ControleGastosApp(ctk.CTk):
                 font=self.fonts['label'],
 
                 dropdown_font=self.fonts['dropdown'],
+                dropdown_height=260,
 
             ),
 
