@@ -22,11 +22,11 @@ from app.bootstrap.updater import auto_update
 
 if __name__ == "__main__":
     # Executa auto-update apenas no binario empacotado
-    #if getattr(sys, "frozen", False):
-        #try:
-            #auto_update()
-        #except Exception:
-            #pass
+    if getattr(sys, "frozen", False):
+        try:
+            auto_update()
+        except Exception:
+            pass
 
     # Inicializa bootstrap e lock para evitar multiplas instancias
     bootstrap_ctx = bootstrap_application()
