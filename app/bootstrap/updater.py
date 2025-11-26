@@ -10,9 +10,9 @@ from pathlib import Path
 import requests
 
 from app.utils.paths import ensure_workspace_dir
+from app.version import __version__ as CURRENT_VERSION
 
 GITHUB_REPO = "A-DAVI/Sistema-Capt-Empresarial"
-CURRENT_VERSION = "1.0.0"  # ajuste para a versão local do app
 ZIP_ASSET = "CaptacaoEmpresarial14D.zip"
 
 

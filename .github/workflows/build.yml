@@ -22,6 +22,9 @@ jobs:
         with:
           python-version: '3.13'
 
+      - name: Definir versão do build
+        run: echo "__version__ = '${{ github.ref_name }}'" > app/version.py
+
       - name: Install dependencies
         run: |
           pip install -r requirements.txt
