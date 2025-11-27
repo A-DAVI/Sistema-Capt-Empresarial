@@ -1680,7 +1680,8 @@ class ControleGastosApp(ctk.CTk):
 
             header_frame,
 
-            text='Captacao de Despesas-14D',
+    
+            text='Meu Negócio — Central de Controle',
 
             font=self.fonts['title'],
 
@@ -1692,7 +1693,7 @@ class ControleGastosApp(ctk.CTk):
 
             header_frame,
 
-            text='Painel Financeiro e Relatórios',
+            text='Despesas, Dashboards e Relatórios',
 
             font=self.fonts['subtitle'],
 
@@ -1704,7 +1705,7 @@ class ControleGastosApp(ctk.CTk):
 
             main_frame,
 
-            text='Gestão de despesas',
+            text='Lançamento de Despesas',
 
             font=self.fonts['section'],
 
@@ -1736,7 +1737,7 @@ class ControleGastosApp(ctk.CTk):
 
             categorias_header,
 
-            text='Categorias personalizadas',
+            text='Formulário de Despesas',
 
             font=self.fonts['subtitle'],
 
@@ -1970,7 +1971,7 @@ class ControleGastosApp(ctk.CTk):
 
             main_frame,
 
-            text='Centro de relatórios',
+            text='Central de Resumo e Relatórios',
 
             font=self.fonts['section'],
 
@@ -2004,7 +2005,7 @@ class ControleGastosApp(ctk.CTk):
 
             cards_container,
 
-            'Total de registros',
+            'Total de Despesas Lançadas',
 
             '0 registros',
 
@@ -2020,7 +2021,7 @@ class ControleGastosApp(ctk.CTk):
 
             botoes_relatorios,
 
-            'Filtros do resumo executivo',
+            'Filtro do Resumo',
 
             self.abrir_modal_filtro_resumo,
 
@@ -2028,19 +2029,19 @@ class ControleGastosApp(ctk.CTk):
 
             hover_color='#3B3B3B',
 
-        ).pack(side='left', expand=True, fill='x', padx=(0, 8))
+        ).pack(side='left', expand=True, fill='x', padx=(0, 9))
 
         self._criar_botao(
 
             botoes_relatorios,
 
-            'Histórico completo',
+            'Histórico completo de Depesas',
 
             self.mostrar_relatorio,
 
             fg_color=BRAND_COLORS['neutral'],
 
-            hover_color='#3B3B3B',
+            hover_color='#4B4B4B',
 
         ).pack(side='left', expand=True, fill='x', padx=8)
 
@@ -2054,7 +2055,7 @@ class ControleGastosApp(ctk.CTk):
 
             fg_color=BRAND_COLORS['neutral'],
 
-            hover_color='#3B3B3B',
+            hover_color="#4B4B4B",
 
         ).pack(side='left', expand=True, fill='x', padx=8)
 
@@ -2062,7 +2063,7 @@ class ControleGastosApp(ctk.CTk):
 
             botoes_relatorios,
 
-            'Exportar relatório',
+            'Exportar relatórios',
 
             self.abrir_modal_exportar_relatorio,
 
@@ -2072,7 +2073,7 @@ class ControleGastosApp(ctk.CTk):
 
             botoes_relatorios,
 
-            'Centro de relatórios',
+            'Central de relatórios',
 
             self.abrir_central_relatorios,
 
