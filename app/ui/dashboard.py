@@ -142,16 +142,21 @@ def _total_por_categoria(despesas: Iterable[dict], mes_ano: str | None = None) -
 def _total_por_fornecedor(despesas: Iterable[dict]) -> dict[str, float]:
     """Soma valores por fornecedor (normalizado)."""
     tot = defaultdict(float)
-    if not despesas:
+    try:
+        if not despesas:
+            return {}
+        for reg in despesas:
+            if not isinstance(reg, dict):
+                continue
+            nome = str(reg.get("fornecedor") or "").strip().upper()
+            if not nome:
+                continue
+            try:
+                tot[nome] += float(reg.get("valor", 0) or 0)
+            except Exception:
+                continue
+    except Exception:
         return {}
-    for reg in despesas:
-        nome = str(reg.get("fornecedor") or "").strip().upper()
-        if not nome:
-            continue
-        try:
-            tot[nome] += float(reg.get("valor", 0) or 0)
-        except Exception:
-            continue
     return dict(sorted(tot.items(), key=lambda x: x[1], reverse=True))
 
 
@@ -288,7 +293,12 @@ def _plot_pizza(ax, categorias: dict[str, float], colors: dict[str, str], color_
     total = sum(valores) or 1.0
     # Explode zero para não destacar fatias pequenas
     explode = [0.0 for _ in valores]
-    palette = colors["pie"]
+    palette = colors.get("pie")
+    if not palette:
+        palette = [
+            "#7B61FF", "#4C7DFF", "#7DD3FC", "#F59E0B", "#EF4444",
+            "#10B981", "#6366F1", "#EC4899", "#22D3EE", "#F97316",
+        ]
     if color_map:
         palette = [color_map.get(lbl, palette[idx % len(palette)]) for idx, lbl in enumerate(labels)]
     pie_result = ax.pie(
@@ -373,11 +383,7 @@ def _plot_top_fornecedores(ax, dados: dict[str, float], colors: dict[str, str], 
     ax.grid(axis="x", linestyle="--", alpha=0.3, color=colors["divider"])
     ax.set_facecolor(colors["panel"])
     ax.tick_params(colors=colors["text_secondary"], labelsize=9)
-    legend_items = []
-    for lbl, val, col in zip(labels, valores, palette):
-        pct = (val / total) * 100 if total else 0
-        legend_items.append((lbl, val, pct, col))
-    return legend_items
+    return []
 
 
 def _plot_linha(ax, dados: OrderedDict[str, float], colors: dict[str, str]):
@@ -700,6 +706,8 @@ def abrir_dashboard(parent, empresa_path: Path):
     canvas_pie: FigureCanvasTkAgg | None = None
 
     def atualizar_legenda(items: list[tuple[str, float, float, str]]):
+        if not items:
+            items = []
         for child in legend_frame.winfo_children():
             try:
                 child.destroy()
@@ -752,7 +760,7 @@ def abrir_dashboard(parent, empresa_path: Path):
                 pass
         fig = Figure(figsize=(6.2, 4.8), dpi=100, facecolor=colors["surface"])
         ax_pie = fig.add_subplot(1, 1, 1, facecolor=colors["panel"])
-        legend_items = _plot_pizza(ax_pie, cats, colors, color_map)
+        legend_items = _plot_pizza(ax_pie, cats, colors, color_map) or []
         fig.tight_layout(pad=1.0)
         canvas_pie = FigureCanvasTkAgg(fig, master=chart_holder)
         canvas_pie.draw()
