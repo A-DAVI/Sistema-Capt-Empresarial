@@ -188,6 +188,46 @@ class ControleGastosApp(ctk.CTk):
         ]
         self.fornecedores = sorted({nome.strip().upper() for nome in fornecedores_base if nome.strip()})
 
+        categorias_flags = [
+            ("Água e esgoto", False),
+            ("Energia Elétrica", False),
+            ("Telefone", False),
+            ("Correios e Malotes", False),
+            ("FGTS", False),
+            ("DARF INSS", False),
+            ("ICMS", False),
+            ("Impostos Fiscais (PIS, Cofins, IRP e CSLL)", False),
+            ("Simples Nacional", False),
+            ("Salários (Funcionários)", False),
+            ("Férias (Funcionários)", False),
+            ("Rescisão (Funcionários)", False),
+            ("13º Salário (Funcionários)", False),
+            ("Pro-labore (Sócios)", False),
+            ("Aluguel", False),
+            ("Tarifas bancarias", False),
+            ("combustível lubrificante", True),
+            ("serviços de terceiros", True),
+            ("Internet", False),
+            ("Fretes e transportes", True),
+            ("materiais de consumo", True),
+            ("comissão de venda", True),
+            ("despesa de viagem", False),
+            ("Fornecedores de matéria prima, embalagens e insumos", True),
+            ("Honorários", False),
+            ("Consultoria jurídica", True),
+            ("manutenção de equipamentos", True),
+            ("bens de pequeno valor", True),
+            ("Imobilizado - Veiculo", True),
+            ("Imobilizado - Maquina e equipamentos", True),
+            ("Imobilizado - Computadores e Periféricos", True),
+            ("Manutenção de veículos", True),
+            ("Alvara e taxa de licença sanitária", False),
+            ("IPVA e licenciamento", False),
+            ("IPTU", False),
+        ]
+        self.categorias_requer_fornecedor = {nome for nome, precisa in categorias_flags if precisa}
+        self.tipos_despesa = [nome for nome, _ in categorias_flags]
+
         self.criar_widgets()
 
         self._aplicar_icone_janela()
@@ -949,6 +989,20 @@ class ControleGastosApp(ctk.CTk):
         entry.bind("<KeyRelease>", lambda event: atualizar_lista(entry.get()))
         atualizar_lista()
 
+    def _on_tipo_change(self, *_args) -> None:
+        """Ativa/desativa fornecedor automaticamente conforme a categoria."""
+        tipo_atual = (self.combo_tipo.get() or "").strip()
+        exige = tipo_atual in getattr(self, "categorias_requer_fornecedor", set())
+        try:
+            if exige:
+                self.switch_fornecedor.select()
+            else:
+                self.switch_fornecedor.deselect()
+                self.combo_fornecedor.set("Selecione o fornecedor")
+            self._toggle_fornecedor()
+        except Exception:
+            pass
+
     def _gerar_slug(self, texto: str) -> str:
 
         texto = texto.lower().strip()
@@ -1535,6 +1589,7 @@ class ControleGastosApp(ctk.CTk):
             ),
 
         )
+        self.combo_tipo.configure(command=self._on_tipo_change)
 
         self.combo_tipo.set('Selecione o tipo')
 
@@ -1586,6 +1641,49 @@ class ControleGastosApp(ctk.CTk):
             ),
 
         )
+
+        # Seção de fornecedor (visível apenas quando a categoria exige).
+        self.switch_fornecedor = ctk.CTkSwitch(
+            formulario_frame,
+            text="Informar fornecedor",
+            font=self.fonts["subtitle"],
+            command=self._toggle_fornecedor,
+        )
+        self.switch_fornecedor.pack(fill="x", padx=12, pady=(4, 0))
+
+        self.fornecedor_fields = ctk.CTkFrame(formulario_frame, fg_color="transparent")
+        self.fornecedor_fields.pack(fill="x", padx=12, pady=(0, 12))
+        ctk.CTkLabel(
+            self.fornecedor_fields,
+            text="Fornecedor",
+            font=self.fonts["subtitle"],
+            text_color=BRAND_COLORS["text_secondary"],
+        ).pack(anchor="w", pady=(6, 4))
+
+        fornecedor_row = ctk.CTkFrame(self.fornecedor_fields, fg_color="transparent")
+        fornecedor_row.pack(fill="x")
+
+        self.combo_fornecedor = ReadOnlyComboBox(
+            fornecedor_row,
+            values=self.fornecedores,
+            height=38,
+            font=self.fonts["label"],
+            dropdown_font=self.fonts["dropdown"],
+        )
+        self.combo_fornecedor.pack(side="left", fill="x", expand=True, pady=(0, 6))
+        self.combo_fornecedor.set("Selecione o fornecedor")
+
+        ctk.CTkButton(
+            fornecedor_row,
+            text="🔍",
+            width=38,
+            command=self._abrir_busca_fornecedor,
+            fg_color=BRAND_COLORS["neutral"],
+            hover_color="#3B3B3B",
+            font=self.fonts["button"],
+        ).pack(side="left", padx=(8, 0))
+
+        self._toggle_fornecedor()
 
         self.switch_fornecedor = ctk.CTkSwitch(
             formulario_frame,
