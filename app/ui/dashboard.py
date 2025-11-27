@@ -220,7 +220,7 @@ def _criar_kpi(parent, titulo: str, valor: str, subtitulo: str | None = None, *,
     card = ctk.CTkFrame(
         parent,
         fg_color=colors["card"],
-        corner_radius=16,
+        corner_radius=12,
         border_width=1,
         border_color=colors["divider"],
     )
@@ -249,7 +249,7 @@ def _criar_kpi(parent, titulo: str, valor: str, subtitulo: str | None = None, *,
             font=FONT_KPI_LABEL,
             text_color=colors["text_secondary"],
             anchor="w",
-        ).pack(fill="x", padx=14, pady=(0, 12))
+        ).pack(fill="x", padx=12, pady=(0, 8))
     card.lbl_titulo = lbl_titulo  # type: ignore[attr-defined]
     card.lbl_valor = lbl_valor  # type: ignore[attr-defined]
     return card
@@ -526,7 +526,7 @@ def abrir_dashboard(parent, empresa_path: Path):
     # KPIs (grid 4 col)
     kpi_data = calcular_kpi_idx(current_idx)
     kpi_wrap = ctk.CTkFrame(scroll, fg_color="transparent")
-    kpi_wrap.pack(fill="x", padx=14, pady=(0, 12))
+    kpi_wrap.pack(fill="x", padx=12, pady=(0, 8))
 
     for i in range(4):
         kpi_wrap.grid_columnconfigure(i, weight=1)
@@ -536,14 +536,14 @@ def abrir_dashboard(parent, empresa_path: Path):
         f"Total do mês — {kpi_data['mes_atual_label']}",
         kpi_data["total_mes_atual"],
     )
-    card1.grid(row=0, column=0, sticky="nsew", padx=6, pady=4, ipady=2)
+    card1.grid(row=0, column=0, sticky="nsew", padx=4, pady=2, ipady=0)
 
     card2 = _criar_kpi(
         kpi_wrap,
         f"Total do mês anterior — {kpi_data['mes_anterior_label']}",
         kpi_data["total_mes_anterior"],
     )
-    card2.grid(row=0, column=1, sticky="nsew", padx=6, pady=4, ipady=2)
+    card2.grid(row=0, column=1, sticky="nsew", padx=4, pady=2, ipady=0)
 
     card3 = _criar_kpi(
         kpi_wrap,
@@ -551,14 +551,14 @@ def abrir_dashboard(parent, empresa_path: Path):
         kpi_data["variacao"],
         cor_valor=colors["success"] if kpi_data["variacao_up"] else colors["danger"],
     )
-    card3.grid(row=0, column=2, sticky="nsew", padx=6, pady=4, ipady=2)
+    card3.grid(row=0, column=2, sticky="nsew", padx=4, pady=2, ipady=0)
 
     card4 = _criar_kpi(
         kpi_wrap,
         "Despesa com maior impacto no mês",
         kpi_data["maior_categoria"],
     )
-    card4.grid(row=0, column=3, sticky="nsew", padx=6, pady=4, ipady=2)
+    card4.grid(row=0, column=3, sticky="nsew", padx=4, pady=2, ipady=0)
 
     def atualizar_kpis(idx: int) -> None:
         kpi = calcular_kpi_idx(idx)
