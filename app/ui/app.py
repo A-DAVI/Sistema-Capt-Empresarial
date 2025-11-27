@@ -1674,16 +1674,6 @@ class ControleGastosApp(ctk.CTk):
         self.combo_fornecedor.pack(side="left", fill="x", expand=True, pady=(0, 6))
         self.combo_fornecedor.set("Selecione o fornecedor")
 
-        ctk.CTkButton(
-            fornecedor_row,
-            text="🔍",
-            width=38,
-            command=self._abrir_busca_fornecedor,
-            fg_color=BRAND_COLORS["neutral"],
-            hover_color="#3B3B3B",
-            font=self.fonts["button"],
-        ).pack(side="left", padx=(8, 0))
-
         self._toggle_fornecedor()
 
         self.switch_fornecedor = ctk.CTkSwitch(
