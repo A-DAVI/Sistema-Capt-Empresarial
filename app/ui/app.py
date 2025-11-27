@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+﻿# -*- coding: utf-8 -*-
 
 from __future__ import annotations
 
@@ -1705,7 +1705,7 @@ class ControleGastosApp(ctk.CTk):
 
             main_frame,
 
-            text='Lançamento de Despesas',
+            text=' ',
 
             font=self.fonts['section'],
 
@@ -1737,7 +1737,7 @@ class ControleGastosApp(ctk.CTk):
 
             categorias_header,
 
-            text='Formulário de Despesas',
+            text='Adicione suas Despesas aqui: ',
 
             font=self.fonts['subtitle'],
 
