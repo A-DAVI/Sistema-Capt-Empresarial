@@ -52,8 +52,8 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            dist/Controle - GRUPO 14D.exe
-            dist/Controle - GRUPO 14D.zip
-            installer/Controle - GRUPO 14D.exe
+            "dist/Controle - GRUPO 14D.exe"
+            "dist/Controle - GRUPO 14D.zip"
+            "installer/Controle - GRUPO 14D.exe"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
