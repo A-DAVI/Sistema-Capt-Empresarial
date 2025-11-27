@@ -81,6 +81,7 @@ def generate_pdf_report(
     - Cabeçalho com nome da empresa e data/hora de geração.
     - Resumo com total e quantidade de lançamentos.
     - Lista de despesas (data, tipo, forma, valor).
+    - Inclui fornecedor quando disponível.
     """
     if canvas is None or A4 is None:
         raise RuntimeError(
@@ -171,8 +172,9 @@ def generate_pdf_report(
         y_pos -= 8 * mm
         c.setFont("Helvetica-Bold", 10)
         c.drawString(x_margin, y_pos, "Data")
-        c.drawString(x_margin + 3 * cm, y_pos, "Tipo")
-        c.drawString(x_margin + 10 * cm, y_pos, "Forma")
+        c.drawString(x_margin + 2.0 * cm, y_pos, "Tipo")
+        c.drawString(x_margin + 7.2 * cm, y_pos, "Forma")
+        c.drawString(x_margin + 9.8 * cm, y_pos, "Fornecedor")
         c.drawRightString(width - x_margin, y_pos, "Valor (R$)")
         y_pos -= 4 * mm
         c.line(x_margin, y_pos, width - x_margin, y_pos)
@@ -197,13 +199,15 @@ def generate_pdf_report(
             y = desenhar_cabecalho_tabela(height - 3 * cm, "Continuação - Detalhamento das Despesas")
 
         data = gasto.get("data", "")
-        tipo = str(gasto.get("tipo", ""))[:40]
-        forma = str(gasto.get("forma_pagamento", ""))[:25]
+        tipo = str(gasto.get("tipo", "") or "")[:32]
+        forma = str(gasto.get("forma_pagamento", "") or "")[:18]
+        fornecedor = str(gasto.get("fornecedor", "") or "")[:40]
         valor = format_brl(float(gasto.get("valor", 0) or 0))
 
         c.drawString(x_margin, y, data)
-        c.drawString(x_margin + 3 * cm, y, tipo)
-        c.drawString(x_margin + 10 * cm, y, forma)
+        c.drawString(x_margin + 2.0 * cm, y, tipo)
+        c.drawString(x_margin + 7.2 * cm, y, forma)
+        c.drawString(x_margin + 9.8 * cm, y, fornecedor)
         c.drawRightString(width - x_margin, y, valor)
         y -= 6 * mm
 

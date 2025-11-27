@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+﻿# -*- coding: utf-8 -*-
 
 from __future__ import annotations
 
@@ -99,6 +99,7 @@ class ControleGastosApp(ctk.CTk):
         self.empresa_slug = self._gerar_slug(self.empresa_razao or self.empresa_nome or self.empresa_id)
 
         self.gastos: list[dict[str, Any]] = load_data(self.arquivo_dados)
+        self.fornecedores: list[str] = sorted({str(g.get("fornecedor") or "").strip() for g in self.gastos if (g.get("fornecedor") or "").strip()})
 
         # Estado janela de gestão (lista com filtros por campos simples)
 
@@ -113,6 +114,8 @@ class ControleGastosApp(ctk.CTk):
         self.filtro_tipo_combo = None
 
         self.filtro_forma_combo = None
+
+        self.filtro_fornecedor_combo = None
 
         self.filtro_valor_combo = None
 
@@ -155,6 +158,79 @@ class ControleGastosApp(ctk.CTk):
         self.total_card_value = None
 
         self.quantidade_card_value = None
+
+        fornecedores_base = [
+            "PMAN SERVICOS REPRESENTACOES COM E IND LTDA",
+            "COLMEIA DISTRIBUIDORA LTDA",
+            "SOLUCAO, INGREDIENTES INDUSTRIAIS LTDA",
+            "KASSIA FLORES LTDA",
+            "ETIQUETAS MARINGA LTDA",
+            "SANTA ROSA COMERCIO DE EMBALAGENS LTDA-EPP",
+            "COMERCIO DE CHAPAS DE MDF LAMINIL LTDA",
+            "CLEVERSON GERALDO RODRIGUES - ME",
+            "ALMEVAN DISTRIBUIDORA DE ALIMENTOS LTDA",
+            "BEBIDAS WHITE RIVER LTDA",
+            "USINA ALTO ALEGRE S.A - ACUCAR E ALCOOL",
+            "PALUMA VARIEDADES LTDA",
+            "SUNNYVALE COM E REPRES LTDA",
+            "CELERITAS DISTRIBUICAO DE BEBIDAS EM GERAL LTDA",
+            "IND. COM. BEBIDAS FUNADA LTDA",
+            "L DUARTE ALVES LTDA",
+            "DIFRIPAR LOGISTICA E DISTRIBUICAO LTDA",
+            "COFERPAN - COM FERM E PROD PANIF LTDA",
+            "ARILU DISTRIBUIDORA S/A",
+            "OESA COMERCIO E REPRESENTACOES S/A",
+            "DISTRIBUIDORA DE GEN ALIM COLUMBIA LTDA",
+            "TRANS APUCARANA TRANSPORTES RODOVIARIOS LTDA",
+            "RODOVIARIO AFONSO LTDA",
+            "ATACADAO S.A.",
+            "SUPERMERCADO GUGUY LTDA",
+            "M.J. DISTRIBUIDORA",
+            "BAKER FAF LTDA",
+            "COAGRU COOPERATIVA AGROINDUSTRIAL UNIAO",
+        ]
+        self.fornecedores = sorted({nome.strip().upper() for nome in fornecedores_base if nome.strip()})
+
+        categorias_flags = [
+            ("Água e esgoto", False),
+            ("Energia Elétrica", False),
+            ("Telefone", False),
+            ("Correios e Malotes", False),
+            ("FGTS", False),
+            ("DARF INSS", False),
+            ("ICMS", False),
+            ("Impostos Fiscais (PIS, Cofins, IRP e CSLL)", False),
+            ("Simples Nacional", False),
+            ("Salários (Funcionários)", False),
+            ("Férias (Funcionários)", False),
+            ("Rescisão (Funcionários)", False),
+            ("13º Salário (Funcionários)", False),
+            ("Pro-labore (Sócios)", False),
+            ("Aluguel", False),
+            ("Tarifas bancarias", False),
+            ("combustível lubrificante", True),
+            ("serviços de terceiros", True),
+            ("Internet", False),
+            ("Fretes e transportes", True),
+            ("materiais de consumo", True),
+            ("comissão de venda", True),
+            ("despesa de viagem", False),
+            ("Fornecedores de matéria prima, embalagens e insumos", True),
+            ("Honorários", False),
+            ("Consultoria jurídica", True),
+            ("manutenção de equipamentos", True),
+            ("bens de pequeno valor", True),
+            ("Imobilizado - Veiculo", True),
+            ("Imobilizado - Maquina e equipamentos", True),
+            ("Imobilizado - Computadores e Periféricos", True),
+            ("Manutenção de veículos", True),
+            ("Alvara e taxa de licença sanitária", False),
+            ("IPVA e licenciamento", False),
+            ("IPTU", False),
+        ]
+        categorias_flags = [(self._normalizar_categoria(nome), precisa) for nome, precisa in categorias_flags]
+        self.categorias_requer_fornecedor = {nome for nome, precisa in categorias_flags if precisa}
+        self.tipos_despesa = sorted({nome for nome, _ in categorias_flags})
 
         self.criar_widgets()
 
@@ -456,7 +532,8 @@ class ControleGastosApp(ctk.CTk):
 
         if hasattr(self, "tipos_despesa"):
 
-            self.tipos_despesa = sorted(self.tipos_despesa, key=lambda valor: valor.lower())
+            normalizadas = {self._normalizar_categoria(valor) for valor in self.tipos_despesa if valor}
+            self.tipos_despesa = sorted(normalizadas)
 
         combo_principal = getattr(self, "combo_tipo", None)
 
@@ -482,43 +559,44 @@ class ControleGastosApp(ctk.CTk):
 
         if not hasattr(self, "tipos_despesa"):
 
-                    self.tipos_despesa = [
-            "Tarifas bancarias",
-            "Combustivel lubrificante",
-            "Servicos de terceiros",
-            "Internet",
-            "Fretes e transportes",
-            "Materiais de consumo",
-            "Comissao de venda",
-            "Despesa de viagem",
-            "Fornecedores de materia prima, embalagens e insumos",
-            "Honorarios",
-            "Consultoria juridica",
-            "Manutencao de equipamentos",
-            "Bens de pequeno valor",
-            "Imobilizado - Veiculo",
-            "Imobilizado - Maquina e equipamentos",
-            "Imobilizado - Computadores e Perifericos",
-            "Manutencao de veiculos",
-            "Alvara e taxa de licenca sanitaria",
-            "IPVA e licenciamento",
-            "IPTU",
-            "Agua e esgoto",
-            "Energia Eletrica",
-            "Telefone",
-            "Correios e Malotes",
-            "FGTS",
-            "DARF INSS",
-            "ICMS",
-            "Impostos Fiscais (PIS, Cofins, IRP e CSLL)",
-            "Simples Nacional",
-            "Salarios (Funcionarios)",
-            "Ferias (Funcionarios)",
-            "Rescisao (Funcionarios)",
-            "13o Salario (Funcionarios)",
-            "Pro-labore (Socios)",
-            "Aluguel",
-        ]
+            base = [
+                "Tarifas bancarias",
+                "Combustivel lubrificante",
+                "Servicos de terceiros",
+                "Internet",
+                "Fretes e transportes",
+                "Materiais de consumo",
+                "Comissao de venda",
+                "Despesa de viagem",
+                "Fornecedores de materia prima, embalagens e insumos",
+                "Honorarios",
+                "Consultoria juridica",
+                "Manutencao de equipamentos",
+                "Bens de pequeno valor",
+                "Imobilizado - Veiculo",
+                "Imobilizado - Maquina e equipamentos",
+                "Imobilizado - Computadores e Perifericos",
+                "Manutencao de veiculos",
+                "Alvara e taxa de licenca sanitaria",
+                "IPVA e licenciamento",
+                "IPTU",
+                "Agua e esgoto",
+                "Energia Eletrica",
+                "Telefone",
+                "Correios e Malotes",
+                "FGTS",
+                "DARF INSS",
+                "ICMS",
+                "Impostos Fiscais (PIS, Cofins, IRP e CSLL)",
+                "Simples Nacional",
+                "Salarios (Funcionarios)",
+                "Ferias (Funcionarios)",
+                "Rescisao (Funcionarios)",
+                "13o Salario (Funcionarios)",
+                "Pro-labore (Socios)",
+                "Aluguel",
+            ]
+            self.tipos_despesa = sorted({self._normalizar_categoria(nome) for nome in base})
 
         modal = ctk.CTkToplevel(self)
 
@@ -575,13 +653,13 @@ class ControleGastosApp(ctk.CTk):
 
         def adicionar():
 
-            nome = entry_nome.get().strip()
+            nome = self._normalizar_categoria(entry_nome.get())
 
             if not nome:
                 messagebox.showerror("Erro", "Informe um nome para a categoria.")
                 return
 
-            if any(nome.lower() == existente.lower() for existente in self.tipos_despesa):
+            if any(nome == self._normalizar_categoria(existente) for existente in self.tipos_despesa):
 
                 messagebox.showinfo("Aviso", "Esta categoria já está cadastrada.")
                 return
@@ -621,6 +699,156 @@ class ControleGastosApp(ctk.CTk):
             height=40,
 
         ).pack(side="left", expand=True, fill="x", padx=(6, 0))
+
+    def abrir_central_cadastros(self):
+        categorias = sorted(self.tipos_despesa, key=lambda v: v.lower())
+        fornecedores = sorted(self.fornecedores, key=lambda v: v.lower())
+
+        modal = ctk.CTkToplevel(self)
+        modal.title("Central de cadastros")
+        modal.geometry("620x360")
+        modal.resizable(False, False)
+        modal.configure(fg_color=BRAND_COLORS["surface"])
+        modal.transient(self)
+        modal.grab_set()
+        self._priorizar_janela(modal)
+        self._centralizar_janela(modal)
+
+        container = ctk.CTkFrame(modal, fg_color=BRAND_COLORS["panel"], border_color=BRAND_COLORS["neutral"], border_width=1, corner_radius=12)
+        container.pack(fill="both", expand=True, padx=16, pady=16)
+        container.grid_columnconfigure(0, weight=1)
+        container.grid_columnconfigure(1, weight=1)
+
+        # Categorias
+        cat_frame = ctk.CTkFrame(container, fg_color="transparent")
+        cat_frame.grid(row=0, column=0, sticky="nsew", padx=(10, 6), pady=10)
+        ctk.CTkLabel(cat_frame, text="Categorias", font=self.fonts["subtitle"], text_color=BRAND_COLORS["text_primary"]).pack(anchor="w")
+        cat_combo = ReadOnlyComboBox(cat_frame, values=categorias, height=34, font=self.fonts["label"], dropdown_font=self.fonts["dropdown"])
+        cat_combo.pack(fill="x", pady=(6, 4))
+        cat_entry = ctk.CTkEntry(cat_frame, height=36, font=self.fonts["label"])
+        cat_entry.pack(fill="x", pady=(0, 8))
+
+        def refresh_categorias():
+            cats = sorted(self.tipos_despesa, key=lambda v: v.lower())
+            cat_combo.configure(values=cats)
+            if cats:
+                cat_combo.set(cats[0])
+
+        def add_categoria():
+            nome = cat_entry.get().strip()
+            if not nome:
+                messagebox.showerror("Erro", "Informe o nome da categoria.")
+                return
+            if any(nome.lower() == c.lower() for c in self.tipos_despesa):
+                messagebox.showinfo("Aviso", "Categoria já existe.")
+                return
+            self.tipos_despesa.append(nome)
+            self._atualizar_listas_categorias()
+            refresh_categorias()
+            cat_entry.delete(0, tk.END)
+
+        def renomear_categoria():
+            atual = cat_combo.get().strip()
+            novo = cat_entry.get().strip()
+            if not atual:
+                messagebox.showerror("Erro", "Selecione uma categoria.")
+                return
+            if not novo:
+                messagebox.showerror("Erro", "Informe o novo nome.")
+                return
+            if any(novo.lower() == c.lower() for c in self.tipos_despesa if c.lower() != atual.lower()):
+                messagebox.showerror("Erro", "Já existe uma categoria com esse nome.")
+                return
+            for i, c in enumerate(self.tipos_despesa):
+                if c.lower() == atual.lower():
+                    self.tipos_despesa[i] = novo
+                    break
+            self._atualizar_listas_categorias()
+            refresh_categorias()
+            cat_entry.delete(0, tk.END)
+
+        def remover_categoria():
+            atual = cat_combo.get().strip()
+            if not atual:
+                messagebox.showerror("Erro", "Selecione uma categoria.")
+                return
+            if not messagebox.askyesno("Confirmar", f"Remover categoria \"{atual}\"?"):
+                return
+            self.tipos_despesa = [c for c in self.tipos_despesa if c.lower() != atual.lower()]
+            self._atualizar_listas_categorias()
+            refresh_categorias()
+            cat_entry.delete(0, tk.END)
+
+        btns_cat = ctk.CTkFrame(cat_frame, fg_color="transparent")
+        btns_cat.pack(fill="x", pady=(6, 0))
+        self._criar_botao(btns_cat, "Adicionar", add_categoria, height=34).pack(fill="x", pady=2)
+        self._criar_botao(btns_cat, "Renomear", renomear_categoria, height=34, fg_color=BRAND_COLORS["neutral"], hover_color="#3B3B3B").pack(fill="x", pady=2)
+        self._criar_botao(btns_cat, "Remover", remover_categoria, height=34, fg_color=BRAND_COLORS["danger"], hover_color="#962d22").pack(fill="x", pady=2)
+        refresh_categorias()
+
+        # Fornecedores
+        forn_frame = ctk.CTkFrame(container, fg_color="transparent")
+        forn_frame.grid(row=0, column=1, sticky="nsew", padx=(6, 10), pady=10)
+        ctk.CTkLabel(forn_frame, text="Fornecedores", font=self.fonts["subtitle"], text_color=BRAND_COLORS["text_primary"]).pack(anchor="w")
+        forn_combo = ReadOnlyComboBox(forn_frame, values=fornecedores, height=34, font=self.fonts["label"], dropdown_font=self.fonts["dropdown"])
+        forn_combo.pack(fill="x", pady=(6, 4))
+        forn_entry = ctk.CTkEntry(forn_frame, height=36, font=self.fonts["label"])
+        forn_entry.pack(fill="x", pady=(0, 8))
+
+        def refresh_fornecedores():
+            lista = sorted(self.fornecedores, key=lambda v: v.lower())
+            forn_combo.configure(values=lista)
+            if lista:
+                forn_combo.set(lista[0])
+
+        def add_fornecedor():
+            nome = forn_entry.get().strip()
+            if not nome:
+                messagebox.showerror("Erro", "Informe o nome do fornecedor.")
+                return
+            if any(nome.lower() == f.lower() for f in self.fornecedores):
+                messagebox.showinfo("Aviso", "Fornecedor já existe.")
+                return
+            self.fornecedores.append(nome)
+            refresh_fornecedores()
+            forn_entry.delete(0, tk.END)
+
+        def renomear_fornecedor():
+            atual = forn_combo.get().strip()
+            novo = forn_entry.get().strip()
+            if not atual:
+                messagebox.showerror("Erro", "Selecione um fornecedor.")
+                return
+            if not novo:
+                messagebox.showerror("Erro", "Informe o novo nome.")
+                return
+            if any(novo.lower() == f.lower() for f in self.fornecedores if f.lower() != atual.lower()):
+                messagebox.showerror("Erro", "Já existe um fornecedor com esse nome.")
+                return
+            for i, f in enumerate(self.fornecedores):
+                if f.lower() == atual.lower():
+                    self.fornecedores[i] = novo
+                    break
+            refresh_fornecedores()
+            forn_entry.delete(0, tk.END)
+
+        def remover_fornecedor():
+            atual = forn_combo.get().strip()
+            if not atual:
+                messagebox.showerror("Erro", "Selecione um fornecedor.")
+                return
+            if not messagebox.askyesno("Confirmar", f"Remover fornecedor \"{atual}\"?"):
+                return
+            self.fornecedores = [f for f in self.fornecedores if f.lower() != atual.lower()]
+            refresh_fornecedores()
+            forn_entry.delete(0, tk.END)
+
+        btns_forn = ctk.CTkFrame(forn_frame, fg_color="transparent")
+        btns_forn.pack(fill="x", pady=(6, 0))
+        self._criar_botao(btns_forn, "Adicionar", add_fornecedor, height=34).pack(fill="x", pady=2)
+        self._criar_botao(btns_forn, "Renomear", renomear_fornecedor, height=34, fg_color=BRAND_COLORS["neutral"], hover_color="#3B3B3B").pack(fill="x", pady=2)
+        self._criar_botao(btns_forn, "Remover", remover_fornecedor, height=34, fg_color=BRAND_COLORS["danger"], hover_color="#962d22").pack(fill="x", pady=2)
+        refresh_fornecedores()
 
     def abrir_modal_editar_categoria(self):
 
@@ -717,9 +945,9 @@ class ControleGastosApp(ctk.CTk):
 
         def salvar():
 
-            antigo = combo.get().strip()
+            antigo = self._normalizar_categoria(combo.get())
 
-            novo = entry_nome.get().strip()
+            novo = self._normalizar_categoria(entry_nome.get())
 
             if not antigo:
 
@@ -733,7 +961,7 @@ class ControleGastosApp(ctk.CTk):
 
                 return
 
-            if novo.lower() != antigo.lower() and any(novo.lower() == existente.lower() for existente in self.tipos_despesa):
+            if novo != antigo and any(novo == self._normalizar_categoria(existente) for existente in self.tipos_despesa):
 
                 messagebox.showerror("Erro", "Já existe uma categoria com este nome.")
 
@@ -741,7 +969,7 @@ class ControleGastosApp(ctk.CTk):
 
             for idx, valor in enumerate(self.tipos_despesa):
 
-                if valor.lower() == antigo.lower():
+                if self._normalizar_categoria(valor) == antigo:
 
                     self.tipos_despesa[idx] = novo
 
@@ -749,13 +977,13 @@ class ControleGastosApp(ctk.CTk):
 
             combo_principal = getattr(self, "combo_tipo", None)
 
-            if combo_principal and combo_principal.get().strip().lower() == antigo.lower():
+            if combo_principal and self._normalizar_categoria(combo_principal.get()) == antigo:
 
                 combo_principal.set(novo)
 
             combo_filtro = getattr(self, "filtro_tipo_combo", None)
 
-            if combo_filtro and combo_filtro.get().strip().lower() == antigo.lower():
+            if combo_filtro and self._normalizar_categoria(combo_filtro.get()) == antigo:
 
                 combo_filtro.set(novo)
 
@@ -843,9 +1071,9 @@ class ControleGastosApp(ctk.CTk):
 
             normalizados["data_fim"] = data_fim
 
-        tipo = (filtros.get("tipo") or "").strip()
+        tipo = self._normalizar_categoria(filtros.get("tipo"))
 
-        if tipo and tipo != "Todos":
+        if tipo and tipo != "TODOS":
 
             normalizados["tipo"] = tipo
 
@@ -855,7 +1083,174 @@ class ControleGastosApp(ctk.CTk):
 
             normalizados["forma"] = forma
 
+        fornecedor = self._normalizar_fornecedor(filtros.get("fornecedor"))
+
+        if fornecedor and fornecedor != "TODOS":
+
+            normalizados["fornecedor"] = fornecedor
+
         return normalizados
+
+    def _normalizar_categoria(self, nome: str | None) -> str:
+        """Normaliza o nome da categoria para comparação e exibição."""
+        return (nome or "").strip().upper()
+
+    def _normalizar_fornecedor(self, nome: str | None) -> str:
+        """Normaliza o nome do fornecedor."""
+        return (nome or "").strip().upper()
+
+    def _toggle_fornecedor(self) -> None:
+        """Exibe ou oculta o campo de fornecedor conforme a necessidade."""
+        if not hasattr(self, "fornecedor_fields"):
+            return
+        ativo = bool(getattr(self, "fornecedor_ativo", tk.IntVar(value=0)).get())
+        try:
+            if ativo:
+                self.fornecedor_fields.pack(fill="x", padx=12, pady=(0, 12))
+            else:
+                self.fornecedor_fields.pack_forget()
+                self.combo_fornecedor.set("Selecione o fornecedor")
+        except Exception:
+            pass
+
+    def _abrir_busca_fornecedor(self) -> None:
+        """Abre uma janela simples para buscar fornecedor por texto."""
+        modal = ctk.CTkToplevel(self)
+        modal.title("Buscar fornecedor")
+        modal.geometry("420x480")
+        modal.configure(fg_color=BRAND_COLORS.get("surface", "#111111"))
+        modal.transient(self)
+        modal.grab_set()
+        self._priorizar_janela(modal)
+        self._centralizar_janela(modal)
+
+        ctk.CTkLabel(
+            modal,
+            text="Digite para filtrar",
+            font=self.fonts["subtitle"],
+            text_color=BRAND_COLORS.get("text_secondary", "#CCCCCC"),
+        ).pack(anchor="w", padx=12, pady=(12, 4))
+
+        entry = ctk.CTkEntry(modal, height=36, font=self.fonts["label"])
+        entry.pack(fill="x", padx=12, pady=(0, 8))
+
+        lista = tk.Listbox(modal, height=15, font=("Segoe UI", 11))
+        lista.pack(fill="both", expand=True, padx=12, pady=(0, 12))
+
+        fornecedores = self.fornecedores
+
+        def atualizar_lista(filtro: str = "") -> None:
+            lista.delete(0, tk.END)
+            termo = filtro.strip().upper()
+            for nome in fornecedores:
+                if not termo or termo in nome:
+                    lista.insert(tk.END, nome)
+
+        def selecionar(event=None) -> None:  # noqa: ANN001
+            if not lista.curselection():
+                return
+            valor = lista.get(lista.curselection()[0])
+            if hasattr(self, "fornecedor_ativo"):
+                self.fornecedor_ativo.set(1)
+            self.combo_fornecedor.set(valor)
+            self._toggle_fornecedor()
+            modal.destroy()
+
+        lista.bind("<Double-Button-1>", selecionar)
+        entry.bind("<KeyRelease>", lambda event: atualizar_lista(entry.get()))
+        atualizar_lista()
+
+    def _abrir_busca_categoria(self) -> None:
+        """Abre uma janela para buscar e selecionar categoria de despesa."""
+        modal = ctk.CTkToplevel(self)
+        modal.title("Buscar categoria")
+        modal.geometry("420x480")
+        modal.configure(fg_color=BRAND_COLORS.get("surface", "#111111"))
+        modal.transient(self)
+        modal.grab_set()
+        self._priorizar_janela(modal)
+        self._centralizar_janela(modal)
+
+        ctk.CTkLabel(
+            modal,
+            text="Digite para filtrar",
+            font=self.fonts["subtitle"],
+            text_color=BRAND_COLORS.get("text_secondary", "#CCCCCC"),
+        ).pack(anchor="w", padx=12, pady=(12, 4))
+
+        entry = ctk.CTkEntry(modal, height=36, font=self.fonts["label"])
+        entry.pack(fill="x", padx=12, pady=(0, 8))
+
+        lista = tk.Listbox(modal, height=15, font=("Segoe UI", 11))
+        lista.pack(fill="both", expand=True, padx=12, pady=(0, 12))
+
+        categorias = sorted(self.tipos_despesa)
+
+        def atualizar_lista(filtro: str = "") -> None:
+            lista.delete(0, tk.END)
+            termo = filtro.strip().upper()
+            for nome in categorias:
+                if not termo or termo in nome:
+                    lista.insert(tk.END, nome)
+
+        def selecionar(event=None) -> None:  # noqa: ANN001
+            if not lista.curselection():
+                return
+            valor = lista.get(lista.curselection()[0])
+            self.combo_tipo.set(valor)
+            self._on_tipo_change()
+            modal.destroy()
+
+        lista.bind("<Double-Button-1>", selecionar)
+        entry.bind("<KeyRelease>", lambda event: atualizar_lista(entry.get()))
+        atualizar_lista()
+
+    def _on_tipo_change(self, *_args) -> None:
+        """Ativa/desativa fornecedor automaticamente conforme a categoria."""
+        tipo_atual = self._normalizar_categoria(self.combo_tipo.get())
+        exige = tipo_atual in getattr(self, "categorias_requer_fornecedor", set())
+        try:
+            if exige:
+                self.fornecedor_ativo.set(1)
+            else:
+                self.fornecedor_ativo.set(0)
+                self.combo_fornecedor.set("Selecione o fornecedor")
+            self._toggle_fornecedor()
+        except Exception:
+            pass
+
+    def _formatar_valor_widget(self, widget: tk.Entry | ctk.CTkEntry | None) -> None:
+        """Formata o campo de valor enquanto digita (##.###,##)."""
+        if widget is None:
+            return
+        if getattr(self, "_formatando_valor", False):
+            return
+        try:
+            self._formatando_valor = True
+            texto = widget.get() or ""
+            digits = "".join(ch for ch in texto if ch.isdigit())
+            if not digits:
+                widget.delete(0, "end")
+                return
+            valor_centavos = int(digits)
+            valor_float = valor_centavos / 100
+            formatado = (
+                f"{valor_float:,.2f}"
+                .replace(",", "X")
+                .replace(".", ",")
+                .replace("X", ".")
+            )
+            cursor = len(formatado)
+            widget.delete(0, "end")
+            widget.insert(0, formatado)
+            widget.icursor(cursor)
+        except Exception:
+            try:
+                widget.icursor("end")
+            except Exception:
+                pass
+        finally:
+            self._formatando_valor = False
 
     def _gerar_slug(self, texto: str) -> str:
 
@@ -889,13 +1284,19 @@ class ControleGastosApp(ctk.CTk):
 
         tipo = filtros.get("tipo")
 
-        if tipo and gasto.get("tipo") != tipo:
+        if tipo and self._normalizar_categoria(gasto.get("tipo")) != tipo:
 
             return False
 
         forma = filtros.get("forma")
 
         if forma and gasto.get("forma_pagamento") != forma:
+
+            return False
+
+        fornecedor = filtros.get("fornecedor")
+
+        if fornecedor and self._normalizar_fornecedor(gasto.get("fornecedor")) != fornecedor:
 
             return False
 
@@ -1050,6 +1451,26 @@ class ControleGastosApp(ctk.CTk):
 
         combo_forma.set(filtros.get("forma", "Todos") or "Todos")
 
+        ctk.CTkLabel(
+
+            conteudo,
+
+            text="Fornecedor",
+
+            font=self.fonts["subtitle"],
+
+            text_color=BRAND_COLORS["text_secondary"],
+
+        ).pack(anchor="w", padx=12, pady=(12, 4))
+
+        fornecedores_opcoes = ["Todos"] + self.fornecedores
+
+        combo_fornecedor = ReadOnlyComboBox(conteudo, values=fornecedores_opcoes, height=38, font=self.fonts["label"], dropdown_font=self.fonts["dropdown"])
+
+        combo_fornecedor.pack(fill="x", padx=12)
+
+        combo_fornecedor.set(filtros.get("fornecedor", "Todos") or "Todos")
+
         botoes = ctk.CTkFrame(conteudo, fg_color="transparent")
 
         botoes.pack(fill="x", padx=12, pady=(20, 8))
@@ -1103,6 +1524,12 @@ class ControleGastosApp(ctk.CTk):
             if forma_valor and forma_valor != "Todos":
 
                 novos_filtros["forma"] = forma_valor
+
+            fornecedor_valor = combo_fornecedor.get().strip().upper()
+
+            if fornecedor_valor and fornecedor_valor != "TODOS":
+
+                novos_filtros["fornecedor"] = fornecedor_valor
 
             on_apply(novos_filtros or None)
 
@@ -1286,7 +1713,8 @@ class ControleGastosApp(ctk.CTk):
 
             header_frame,
 
-            text='Captacao de Despesas-14D',
+    
+            text='Meu Negócio — Central de Controle',
 
             font=self.fonts['title'],
 
@@ -1298,7 +1726,7 @@ class ControleGastosApp(ctk.CTk):
 
             header_frame,
 
-            text='Painel Financeiro e Relatórios',
+            text='Despesas, Dashboards e Relatórios',
 
             font=self.fonts['subtitle'],
 
@@ -1310,7 +1738,7 @@ class ControleGastosApp(ctk.CTk):
 
             main_frame,
 
-            text='Gestão de despesas',
+            text=' ',
 
             font=self.fonts['section'],
 
@@ -1342,7 +1770,7 @@ class ControleGastosApp(ctk.CTk):
 
             categorias_header,
 
-            text='Categorias personalizadas',
+            text='Adicione suas Despesas aqui: ',
 
             font=self.fonts['subtitle'],
 
@@ -1355,31 +1783,12 @@ class ControleGastosApp(ctk.CTk):
         botoes_categoria.pack(side='right')
 
         self._criar_botao(
-
             botoes_categoria,
-
-            'Editar categoria',
-
-            self.abrir_modal_editar_categoria,
-
+            'Central de cadastros',
+            self.abrir_central_cadastros,
             height=36,
-
             fg_color=BRAND_COLORS['neutral'],
-
             hover_color="#3B3B3B",
-
-        ).pack(side='right', padx=(8, 0))
-
-        self._criar_botao(
-
-            botoes_categoria,
-
-            'Adicionar categoria',
-
-            self.abrir_modal_nova_categoria,
-
-            height=36,
-
         ).pack(side='right')
 
         self.entry_data = self._criar_input_group(
@@ -1404,23 +1813,48 @@ class ControleGastosApp(ctk.CTk):
 
         self.entry_data.insert(0, datetime.now().strftime('%d/%m/%Y'))
 
-        self.tipos_despesa = [
-            "Água e esgoto",
-            "Energia Elétrica",
-            "Telefone",
-            "Correios e Malotes",
-            "FGTS",
-            "DARF INSS",
-            "ICMS",
-            "Impostos Fiscais (PIS, Cofins, IRP e CSLL)",
-            "Simples Nacional",
-            "Salários (Funcionários)",
-            "Férias (Funcionários)",
-            "Rescisão (Funcionários)",
-            "13º Salário (Funcionários)",
-            "Pro-labore (Sócios)",
-            "Aluguel",
-        ]
+        if not getattr(self, "tipos_despesa", None):
+            base = [
+                "Água e esgoto",
+                "Energia Elétrica",
+                "Telefone",
+                "Correios e Malotes",
+                "FGTS",
+                "DARF INSS",
+                "ICMS",
+                "Impostos Fiscais (PIS, Cofins, IRP e CSLL)",
+                "Simples Nacional",
+                "Salários (Funcionários)",
+                "Férias (Funcionários)",
+                "Rescisão (Funcionários)",
+                "13º Salário (Funcionários)",
+                "Pro-labore (Sócios)",
+                "Aluguel",
+            ]
+            self.tipos_despesa = sorted({self._normalizar_categoria(nome) for nome in base})
+
+        def _build_combo_tipo(container: ctk.CTkFrame):
+            linha = ctk.CTkFrame(container, fg_color="transparent")
+            linha.pack(fill="x")
+            combo = ReadOnlyComboBox(
+                linha,
+                values=self.tipos_despesa,
+                height=40,
+                font=self.fonts['label'],
+                dropdown_font=self.fonts['dropdown'],
+            )
+            combo.pack(side="left", fill="x", expand=True)
+            ctk.CTkButton(
+                linha,
+                text="🔍",
+                width=42,
+                fg_color=BRAND_COLORS["accent"],
+                hover_color=BRAND_COLORS["accent_hover"],
+                text_color="#FFFFFF",
+                font=self.fonts["button"],
+                command=self._abrir_busca_categoria,
+            ).pack(side="left", padx=(8, 0))
+            return combo
 
         self.combo_tipo = self._criar_input_group(
 
@@ -1428,21 +1862,10 @@ class ControleGastosApp(ctk.CTk):
 
             'Tipo de despesa',
 
-            lambda container: ReadOnlyComboBox(
-
-                container,
-
-                values=self.tipos_despesa,
-
-                height=40,
-
-                font=self.fonts['label'],
-
-                dropdown_font=self.fonts['dropdown'],
-
-            ),
+            _build_combo_tipo,
 
         )
+        self.combo_tipo.configure(command=self._on_tipo_change)
 
         self.combo_tipo.set('Selecione o tipo')
 
@@ -1494,6 +1917,47 @@ class ControleGastosApp(ctk.CTk):
             ),
 
         )
+        self.entry_valor.bind("<KeyRelease>", lambda event: self._formatar_valor_widget(self.entry_valor))
+
+        # Controle interno para exibir fornecedor somente quando a categoria exige.
+        self.fornecedor_ativo = tk.IntVar(value=0)
+
+        # Seção de fornecedor (visível apenas quando a categoria exige).
+        self.fornecedor_fields = ctk.CTkFrame(formulario_frame, fg_color="transparent")
+        self.fornecedor_fields.pack(fill="x", padx=12, pady=(0, 12))
+        ctk.CTkLabel(
+            self.fornecedor_fields,
+            text="Fornecedor",
+            font=self.fonts["subtitle"],
+            text_color=BRAND_COLORS["text_secondary"],
+        ).pack(anchor="w", pady=(6, 4))
+
+        fornecedor_row = ctk.CTkFrame(self.fornecedor_fields, fg_color="transparent")
+        fornecedor_row.pack(fill="x")
+
+        self.combo_fornecedor = ReadOnlyComboBox(
+            fornecedor_row,
+            values=self.fornecedores,
+            height=38,
+            font=self.fonts["label"],
+            dropdown_font=self.fonts["dropdown"],
+        )
+        self.combo_fornecedor.pack(side="left", fill="x", expand=True, pady=(0, 6))
+        self.combo_fornecedor.set("Selecione o fornecedor")
+
+        # Botão de busca do fornecedor (visível em ambos os temas).
+        ctk.CTkButton(
+            fornecedor_row,
+            text="🔍",
+            width=42,
+            fg_color=BRAND_COLORS["accent"],
+            hover_color=BRAND_COLORS["accent_hover"],
+            text_color="#FFFFFF",
+            font=self.fonts["button"],
+            command=self._abrir_busca_fornecedor,
+        ).pack(side="left", padx=(8, 0), pady=(0, 6))
+
+        self._toggle_fornecedor()
 
         botoes_frame = ctk.CTkFrame(main_frame, fg_color='transparent')
 
@@ -1541,7 +2005,7 @@ class ControleGastosApp(ctk.CTk):
 
             main_frame,
 
-            text='Centro de relatórios',
+            text='Central de Resumo e Relatórios',
 
             font=self.fonts['section'],
 
@@ -1575,7 +2039,7 @@ class ControleGastosApp(ctk.CTk):
 
             cards_container,
 
-            'Total de registros',
+            'Total de Despesas Lançadas',
 
             '0 registros',
 
@@ -1591,7 +2055,7 @@ class ControleGastosApp(ctk.CTk):
 
             botoes_relatorios,
 
-            'Filtros do resumo executivo',
+            'Filtro do Resumo',
 
             self.abrir_modal_filtro_resumo,
 
@@ -1599,19 +2063,19 @@ class ControleGastosApp(ctk.CTk):
 
             hover_color='#3B3B3B',
 
-        ).pack(side='left', expand=True, fill='x', padx=(0, 8))
+        ).pack(side='left', expand=True, fill='x', padx=(0, 9))
 
         self._criar_botao(
 
             botoes_relatorios,
 
-            'Histórico completo',
+            'Histórico completo de Depesas',
 
             self.mostrar_relatorio,
 
             fg_color=BRAND_COLORS['neutral'],
 
-            hover_color='#3B3B3B',
+            hover_color='#4B4B4B',
 
         ).pack(side='left', expand=True, fill='x', padx=8)
 
@@ -1625,7 +2089,7 @@ class ControleGastosApp(ctk.CTk):
 
             fg_color=BRAND_COLORS['neutral'],
 
-            hover_color='#3B3B3B',
+            hover_color="#4B4B4B",
 
         ).pack(side='left', expand=True, fill='x', padx=8)
 
@@ -1633,7 +2097,7 @@ class ControleGastosApp(ctk.CTk):
 
             botoes_relatorios,
 
-            'Exportar relatório',
+            'Exportar relatórios',
 
             self.abrir_modal_exportar_relatorio,
 
@@ -1643,7 +2107,7 @@ class ControleGastosApp(ctk.CTk):
 
             botoes_relatorios,
 
-            'Centro de relatórios',
+            'Central de relatórios',
 
             self.abrir_central_relatorios,
 
@@ -1910,12 +2374,10 @@ class ControleGastosApp(ctk.CTk):
         frame = self.relatorio_scroll_frame
 
         frame.grid_columnconfigure(0, weight=2)
-
         frame.grid_columnconfigure(1, weight=4)
-
         frame.grid_columnconfigure(2, weight=3)
-
         frame.grid_columnconfigure(3, weight=2)
+        frame.grid_columnconfigure(4, weight=3)
 
         if not registros_ordenados:
 
@@ -1935,7 +2397,7 @@ class ControleGastosApp(ctk.CTk):
 
         header_font = self.fonts["subtitle"]
 
-        headers = ["Data", "Tipo de despesa", "Forma de pagamento", "Valor"]
+        headers = ["Data", "Tipo de despesa", "Forma de pagamento", "Valor", "Fornecedor"]
 
         for col, header_text in enumerate(headers):
 
@@ -1955,7 +2417,7 @@ class ControleGastosApp(ctk.CTk):
 
         separator = ctk.CTkFrame(frame, height=2, fg_color=BRAND_COLORS["neutral"])
 
-        separator.grid(row=1, column=0, columnspan=4, sticky="ew", padx=5, pady=(0, 8))
+        separator.grid(row=1, column=0, columnspan=5, sticky="ew", padx=5, pady=(0, 8))
 
         row_font = self.fonts["label"]
 
@@ -1978,6 +2440,7 @@ class ControleGastosApp(ctk.CTk):
                 text_color=BRAND_COLORS["text_primary"],
 
             )
+            fornecedor_label = ctk.CTkLabel(frame, text=gasto.get("fornecedor", "--") or "--", font=row_font)
 
             data_label.grid(row=i, column=0, padx=10, pady=6, sticky="w")
 
@@ -1986,10 +2449,11 @@ class ControleGastosApp(ctk.CTk):
             forma_label.grid(row=i, column=2, padx=10, pady=6, sticky="w")
 
             valor_label.grid(row=i, column=3, padx=10, pady=6, sticky="e")
+            fornecedor_label.grid(row=i, column=4, padx=10, pady=6, sticky="w")
 
             row_separator = ctk.CTkFrame(frame, height=1, fg_color=BRAND_COLORS["neutral"])
 
-            row_separator.grid(row=i + 1, column=0, columnspan=4, sticky="ew", padx=10)
+            row_separator.grid(row=i + 1, column=0, columnspan=5, sticky="ew", padx=10)
 
     def _exportar_pdf_relatorio_filtrado(self):
 
@@ -2062,7 +2526,8 @@ class ControleGastosApp(ctk.CTk):
 
         data = (self.entry_data.get() or "").strip()
 
-        tipo = self.combo_tipo.get()
+        tipo_raw = (self.combo_tipo.get() or "").strip()
+        tipo = self._normalizar_categoria(tipo_raw)
 
         pagamento = self.combo_pagamento.get()
 
@@ -2074,7 +2539,7 @@ class ControleGastosApp(ctk.CTk):
 
             return
 
-        if tipo == "Selecione o tipo":
+        if not tipo_raw or tipo_raw == "Selecione o tipo":
 
             messagebox.showerror("Erro", "Selecione um tipo de despesa!")
 
@@ -2094,7 +2559,18 @@ class ControleGastosApp(ctk.CTk):
 
             return
 
-        registro = {"data": data, "tipo": tipo, "forma_pagamento": pagamento, "valor": valor, "timestamp": datetime.now().isoformat()}
+        fornecedor = ""
+        if getattr(self, "fornecedor_ativo", tk.IntVar(value=0)).get():
+            fornecedor = self._normalizar_fornecedor(self.combo_fornecedor.get())
+
+        registro = {
+            "data": data,
+            "tipo": tipo,
+            "forma_pagamento": pagamento,
+            "valor": valor,
+            "fornecedor": fornecedor or None,
+            "timestamp": datetime.now().isoformat(),
+        }
 
         self.gastos.append(registro)
 
@@ -2127,6 +2603,14 @@ class ControleGastosApp(ctk.CTk):
         self.combo_pagamento.set("Selecione a forma")
 
         self.entry_valor.delete(0, "end")
+
+        if getattr(self, "fornecedor_ativo", None) is not None:
+            self.fornecedor_ativo.set(0)
+            self.combo_fornecedor.set("Selecione o fornecedor")
+            try:
+                self._toggle_fornecedor()
+            except Exception:
+                pass
 
     def atualizar_stats(self):
 
@@ -2210,7 +2694,7 @@ class ControleGastosApp(ctk.CTk):
 
         filtros_frame.pack(fill='x', padx=20, pady=(0, 15))
 
-        for coluna in range(4):
+        for coluna in range(5):
 
             filtros_frame.grid_columnconfigure(coluna, weight=1)
 
@@ -2298,13 +2782,37 @@ class ControleGastosApp(ctk.CTk):
 
             filtros_frame,
 
+            text='Fornecedor',
+
+            font=self.fonts['subtitle'],
+
+            text_color=BRAND_COLORS['text_secondary'],
+
+        ).grid(row=0, column=4, sticky='w', padx=12, pady=(12, 2))
+
+        fornecedores_filtro = ['Todos'] + self.fornecedores
+
+        self.filtro_fornecedor_combo = ReadOnlyComboBox(
+
+            filtros_frame, values=fornecedores_filtro, height=36, font=self.fonts['label'], dropdown_font=self.fonts['dropdown']
+
+        )
+
+        self.filtro_fornecedor_combo.set('Todos')
+
+        self.filtro_fornecedor_combo.grid(row=1, column=4, padx=12, pady=(0, 10), sticky='ew')
+
+        ctk.CTkLabel(
+
+            filtros_frame,
+
             text='Valor',
 
             font=self.fonts['subtitle'],
 
             text_color=BRAND_COLORS['text_secondary'],
 
-        ).grid(row=2, column=0, columnspan=4, sticky='w', padx=12, pady=(6, 2))
+        ).grid(row=2, column=0, columnspan=5, sticky='w', padx=12, pady=(6, 2))
 
         self.filtro_valor_combo = ReadOnlyComboBox(
 
@@ -2322,7 +2830,7 @@ class ControleGastosApp(ctk.CTk):
 
         self.filtro_valor_combo.set('Todos')
 
-        self.filtro_valor_combo.grid(row=3, column=0, columnspan=4, padx=12, pady=(0, 10), sticky='ew')
+        self.filtro_valor_combo.grid(row=3, column=0, columnspan=5, padx=12, pady=(0, 10), sticky='ew')
 
         botoes_filtro = ctk.CTkFrame(filtros_frame, fg_color='transparent')
 
@@ -2534,6 +3042,15 @@ class ControleGastosApp(ctk.CTk):
 
             ).grid(row=0, column=0, sticky="w")
 
+            fornecedor_nome = gasto.get("fornecedor") or ""
+            if fornecedor_nome:
+                ctk.CTkLabel(
+                    detalhes,
+                    text=f"Fornecedor: {fornecedor_nome}",
+                    font=self.fonts["subtitle"],
+                    text_color=BRAND_COLORS["text_secondary"],
+                ).grid(row=2, column=0, sticky="w", pady=(2, 0))
+
             timestamp = gasto.get("timestamp")
 
             exibicao = timestamp.replace("T", " ")[:16] if timestamp else "Sem registro de horário"
@@ -2609,6 +3126,12 @@ class ControleGastosApp(ctk.CTk):
         if forma_filtro and forma_filtro != "Todos":
 
             filtros_basicos["forma"] = forma_filtro
+
+        fornecedor_filtro = self.filtro_fornecedor_combo.get() if getattr(self, "filtro_fornecedor_combo", None) else "Todos"
+
+        if fornecedor_filtro and fornecedor_filtro != "Todos":
+
+            filtros_basicos["fornecedor"] = fornecedor_filtro
 
         valor_filtro = self.filtro_valor_combo.get() if self.filtro_valor_combo else "Todos"
 
@@ -2839,6 +3362,8 @@ class ControleGastosApp(ctk.CTk):
         )
 
         entry_valor.insert(0, f"{float(gasto.get('valor', 0) or 0):.2f}".replace(".", ","))
+        entry_valor.bind("<KeyRelease>", lambda event, w=entry_valor: self._formatar_valor_widget(w))
+        self._formatar_valor_widget(entry_valor)
 
         def salvar_edicao():
 
@@ -3146,13 +3671,19 @@ class ControleGastosApp(ctk.CTk):
             import csv
             with open(caminho_destino, "w", encoding="utf-8", newline="") as csvfile:
                 writer = csv.writer(csvfile, delimiter=";")
-                writer.writerow(["Data", "Tipo", "Forma", "Valor"])
+                writer.writerow(["Data", "Tipo", "Forma", "Valor", "Fornecedor"])
                 for gasto in registros_validos:
+                    fornecedor_bruto = gasto.get("fornecedor")
+                    fornecedor_csv = (
+                        fornecedor_bruto if isinstance(fornecedor_bruto, str) else ""
+                    )
+                    fornecedor_csv = fornecedor_csv.strip().upper() if fornecedor_csv else ""
                     writer.writerow([
                         gasto.get("data", ""),
                         gasto.get("tipo", ""),
                         gasto.get("forma_pagamento", ""),
                         f"{float(gasto.get('valor', 0) or 0):.2f}".replace(".", ","),
+                        fornecedor_csv,
                     ])
             messagebox.showinfo("Relatório criado", f"Arquivo CSV criado em: {caminho_destino}")
         except Exception as exc:  # noqa: BLE001

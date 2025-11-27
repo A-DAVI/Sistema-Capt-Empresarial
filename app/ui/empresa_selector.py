@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+﻿# -*- coding: utf-8 -*-
 from __future__ import annotations
 
 import logging
@@ -71,7 +71,7 @@ class EmpresaSelector(ctk.CTk):
         super().__init__()
 
         self._aplicar_tema_preferido()
-        self.title("Painel Financeiro - Selecione sua empresa")
+        self.title("Bem vindo a sua Central de Controle")
         self.geometry("520x420")
         self.resizable(False, False)
         self.configure(fg_color=BRAND_COLORS["background"])
@@ -158,14 +158,14 @@ class EmpresaSelector(ctk.CTk):
 
         ctk.CTkLabel(
             container,
-            text="Painel Financeiro — Grupo 14D",
+            text="Central de Controle — Seleção de Empresa",
             font=ctk.CTkFont(family=FONT_FAMILY, size=22, weight="bold"),
             text_color=BRAND_COLORS["text_primary"],
         ).pack(pady=(6, 2))
 
         ctk.CTkLabel(
             container,
-            text="Selecione sua empresa para acessar o painel",
+            text="Selecione sua empresa para acessar a central",
             font=ctk.CTkFont(family=FONT_FAMILY, size=14),
             text_color=BRAND_COLORS["text_secondary"],
         ).pack(pady=(0, 18))
@@ -186,7 +186,7 @@ class EmpresaSelector(ctk.CTk):
 
         ctk.CTkButton(
             botoes,
-            text="Acessar painel",
+            text="Acessar",
             command=self._entrar,
             height=44,
             corner_radius=12,
