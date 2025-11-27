@@ -20,11 +20,11 @@ PrivilegesRequired=admin
 Source: "dist\INTERFACE\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs
 
 [Icons]
-Name: "{autoprograms}\CentralDeControle - GRUPO 14D"; Filename: "{app}\CaptacaoEmpresarial.exe"
-Name: "{autodesktop}\CentralDeControle - GRUPO 14D"; Filename: "{app}\CaptacaoEmpresarial.exe"; Tasks: desktopicon
+Name: "{autoprograms}\CentralDeControle - GRUPO 14D"; Filename: "{app}\CentralDeControle-GRUPO14D.exe"
+Name: "{autodesktop}\CentralDeControle - GRUPO 14D"; Filename: "{app}\CentralDeControle-GRUPO14D.exe"; Tasks: desktopicon
 
 [Tasks]
 Name: "desktopicon"; Description: "Criar atalho na area de trabalho"; GroupDescription: "Atalhos adicionais:"
 
 [Run]
-Filename: "{app}\CaptacaoEmpresarial.exe"; Description: "Executar o sistema apos concluir"; Flags: nowait postinstall skipifsilent
+Filename: "{app}\CentralDeControle-GRUPO14D.exe"; Description: "Executar o sistema apos concluir"; Flags: nowait postinstall skipifsilent

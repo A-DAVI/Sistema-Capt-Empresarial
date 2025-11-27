@@ -39,7 +39,7 @@ exe = EXE(
     a.scripts,
     [],
     exclude_binaries=True,
-    name='CaptacaoEmpresarial',          # <<< sem acento!
+    name='CentralDeControle-GRUPO14D',          # <<< sem acento!
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
