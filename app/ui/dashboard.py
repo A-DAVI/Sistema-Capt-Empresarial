@@ -199,8 +199,8 @@ def _kpis(despesas: list[dict]) -> dict[str, str]:
 FONT_TITLE = ("Segoe UI Semibold", 22)
 FONT_SUBTITLE = ("Segoe UI", 12)
 FONT_KPI_TITLE = ("Segoe UI Semibold", 13)
-FONT_KPI_VALUE = ("Segoe UI Semibold", 24)
-FONT_KPI_LABEL = ("Segoe UI", 11)
+FONT_KPI_VALUE = ("Segoe UI Semibold", 20)
+FONT_KPI_LABEL = ("Segoe UI", 10)
 
 
 def _center(win: ctk.CTkToplevel | ctk.CTk, w: int = 1150, h: int = 760) -> None:
