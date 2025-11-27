@@ -713,9 +713,8 @@ def abrir_dashboard(parent, empresa_path: Path):
 
     canvas_pie: FigureCanvasTkAgg | None = None
 
-    def atualizar_legenda(items: list[tuple[str, float, float, str]]):
-        if not items:
-            items = []
+    def atualizar_legenda(items: list[tuple[str, float, float, str]] | None):
+        items = items or []
         for child in legend_frame.winfo_children():
             try:
                 child.destroy()
