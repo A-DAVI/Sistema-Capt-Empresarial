@@ -1219,6 +1219,39 @@ class ControleGastosApp(ctk.CTk):
         except Exception:
             pass
 
+    def _formatar_valor_widget(self, widget: tk.Entry | ctk.CTkEntry | None) -> None:
+        """Formata o campo de valor enquanto digita (##.###,##)."""
+        if widget is None:
+            return
+        if getattr(self, "_formatando_valor", False):
+            return
+        try:
+            self._formatando_valor = True
+            texto = widget.get() or ""
+            digits = "".join(ch for ch in texto if ch.isdigit())
+            if not digits:
+                widget.delete(0, "end")
+                return
+            valor_centavos = int(digits)
+            valor_float = valor_centavos / 100
+            formatado = (
+                f"{valor_float:,.2f}"
+                .replace(",", "X")
+                .replace(".", ",")
+                .replace("X", ".")
+            )
+            cursor = len(formatado)
+            widget.delete(0, "end")
+            widget.insert(0, formatado)
+            widget.icursor(cursor)
+        except Exception:
+            try:
+                widget.icursor("end")
+            except Exception:
+                pass
+        finally:
+            self._formatando_valor = False
+
     def _gerar_slug(self, texto: str) -> str:
 
         texto = texto.lower().strip()
@@ -1884,6 +1917,7 @@ class ControleGastosApp(ctk.CTk):
             ),
 
         )
+        self.entry_valor.bind("<KeyRelease>", lambda event: self._formatar_valor_widget(self.entry_valor))
 
         # Controle interno para exibir fornecedor somente quando a categoria exige.
         self.fornecedor_ativo = tk.IntVar(value=0)
@@ -3328,6 +3362,8 @@ class ControleGastosApp(ctk.CTk):
         )
 
         entry_valor.insert(0, f"{float(gasto.get('valor', 0) or 0):.2f}".replace(".", ","))
+        entry_valor.bind("<KeyRelease>", lambda event, w=entry_valor: self._formatar_valor_widget(w))
+        self._formatar_valor_widget(entry_valor)
 
         def salvar_edicao():
 
