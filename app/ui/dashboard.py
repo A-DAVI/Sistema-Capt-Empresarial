@@ -464,6 +464,65 @@ def abrir_dashboard(parent, empresa_path: Path):
     scroll = ctk.CTkScrollableFrame(janela, fg_color="transparent")
     scroll.pack(fill="both", expand=True, padx=0, pady=0)
 
+    # meses disponíveis e estado atual
+    meses_disponiveis = list(_agrupa_por_mes(despesas).keys())
+    if not meses_disponiveis:
+        meses_disponiveis = []
+    current_idx = len(meses_disponiveis) - 1 if meses_disponiveis else 0
+
+    # mapa de cores para todas as categorias do dataset
+    todas_categorias = sorted({str(reg.get("tipo") or reg.get("categoria") or "Sem categoria") for reg in despesas})
+    palette_base = colors["pie"]
+    color_map_global = {nome: palette_base[i % len(palette_base)] for i, nome in enumerate(todas_categorias)}
+
+    agrupado = _agrupa_por_mes(despesas)
+
+    def calcular_kpi_idx(idx: int) -> dict[str, str | bool]:
+        if not meses_disponiveis:
+            return {
+                "mes_atual_label": "—",
+                "mes_anterior_label": "—",
+                "total_mes_atual": _fmt_brl(0.0),
+                "total_mes_anterior": _fmt_brl(0.0),
+                "variacao": "+0.0%",
+                "variacao_up": True,
+                "maior_categoria": "—",
+            }
+        atual_key = meses_disponiveis[idx]
+        prev_key = meses_disponiveis[idx - 1] if idx - 1 >= 0 else None
+        atual_total = agrupado.get(atual_key, 0.0)
+        prev_total = agrupado.get(prev_key, 0.0) if prev_key else 0.0
+        variacao = 0.0
+        if prev_total:
+            variacao = ((atual_total - prev_total) / prev_total) * 100
+        cats_mes = _total_por_categoria(despesas, atual_key)
+        maior_cat = max(cats_mes.items(), key=lambda x: x[1])[0] if cats_mes else "N/A"
+
+        def fmt_mes(chave: str | None) -> str:
+            if not chave:
+                return "—"
+            dt = datetime.strptime(chave, "%Y-%m")
+            return dt.strftime("%b/%Y")
+
+        return {
+            "mes_atual_label": fmt_mes(atual_key),
+            "mes_anterior_label": fmt_mes(prev_key),
+            "total_mes_atual": _fmt_brl(atual_total),
+            "total_mes_anterior": _fmt_brl(prev_total),
+            "variacao": f"{variacao:+.1f}%",
+            "variacao_up": variacao >= 0,
+            "maior_categoria": maior_cat,
+        }
+
+    if meses_disponiveis:
+        mes_atual = meses_disponiveis[current_idx]
+        categorias_orig: dict[str, float] = _total_por_categoria(despesas, mes_atual)
+        if not categorias_orig:
+            categorias_orig = _total_por_categoria(despesas, None)
+    else:
+        categorias_orig = _total_por_categoria(despesas, None)
+    color_map: dict[str, str] = {nome: color_map_global.get(nome, palette_base[i % len(palette_base)]) for i, nome in enumerate(categorias_orig.keys())}
+
     # KPIs (grid 4 col)
     kpi_data = calcular_kpi_idx(current_idx)
     kpi_wrap = ctk.CTkFrame(scroll, fg_color="transparent")
@@ -517,26 +576,6 @@ def abrir_dashboard(parent, empresa_path: Path):
     # Plots (somente pizza com legenda)
     plots_frame = ctk.CTkFrame(scroll, fg_color=colors["surface"], corner_radius=18)
     plots_frame.pack(fill="both", expand=True, padx=14, pady=12)
-
-    # meses disponíveis e estado atual
-    meses_disponiveis = list(_agrupa_por_mes(despesas).keys())
-    if not meses_disponiveis:
-        meses_disponiveis = []
-    current_idx = len(meses_disponiveis) - 1 if meses_disponiveis else 0
-
-    # mapa de cores para todas as categorias do dataset
-    todas_categorias = sorted({str(reg.get("tipo") or reg.get("categoria") or "Sem categoria") for reg in despesas})
-    palette_base = colors["pie"]
-    color_map_global = {nome: palette_base[i % len(palette_base)] for i, nome in enumerate(todas_categorias)}
-
-    if meses_disponiveis:
-        mes_atual = meses_disponiveis[current_idx]
-        categorias_orig: dict[str, float] = _total_por_categoria(despesas, mes_atual)
-        if not categorias_orig:
-            categorias_orig = _total_por_categoria(despesas, None)
-    else:
-        categorias_orig = _total_por_categoria(despesas, None)
-    color_map: dict[str, str] = {nome: color_map_global.get(nome, palette_base[i % len(palette_base)]) for i, nome in enumerate(categorias_orig.keys())}
 
     def mes_label(idx: int) -> str:
         if not meses_disponiveis:
