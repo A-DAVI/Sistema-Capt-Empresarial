@@ -99,6 +99,7 @@ class ControleGastosApp(ctk.CTk):
         self.empresa_slug = self._gerar_slug(self.empresa_razao or self.empresa_nome or self.empresa_id)
 
         self.gastos: list[dict[str, Any]] = load_data(self.arquivo_dados)
+        self.fornecedores: list[str] = sorted({str(g.get("fornecedor") or "").strip() for g in self.gastos if (g.get("fornecedor") or "").strip()})
 
         # Estado janela de gestão (lista com filtros por campos simples)
 
@@ -693,6 +694,156 @@ class ControleGastosApp(ctk.CTk):
             height=40,
 
         ).pack(side="left", expand=True, fill="x", padx=(6, 0))
+
+    def abrir_central_cadastros(self):
+        categorias = sorted(self.tipos_despesa, key=lambda v: v.lower())
+        fornecedores = sorted(self.fornecedores, key=lambda v: v.lower())
+
+        modal = ctk.CTkToplevel(self)
+        modal.title("Central de cadastros")
+        modal.geometry("620x360")
+        modal.resizable(False, False)
+        modal.configure(fg_color=BRAND_COLORS["surface"])
+        modal.transient(self)
+        modal.grab_set()
+        self._priorizar_janela(modal)
+        self._centralizar_janela(modal)
+
+        container = ctk.CTkFrame(modal, fg_color=BRAND_COLORS["panel"], border_color=BRAND_COLORS["neutral"], border_width=1, corner_radius=12)
+        container.pack(fill="both", expand=True, padx=16, pady=16)
+        container.grid_columnconfigure(0, weight=1)
+        container.grid_columnconfigure(1, weight=1)
+
+        # Categorias
+        cat_frame = ctk.CTkFrame(container, fg_color="transparent")
+        cat_frame.grid(row=0, column=0, sticky="nsew", padx=(10, 6), pady=10)
+        ctk.CTkLabel(cat_frame, text="Categorias", font=self.fonts["subtitle"], text_color=BRAND_COLORS["text_primary"]).pack(anchor="w")
+        cat_combo = ReadOnlyComboBox(cat_frame, values=categorias, height=34, font=self.fonts["label"], dropdown_font=self.fonts["dropdown"])
+        cat_combo.pack(fill="x", pady=(6, 4))
+        cat_entry = ctk.CTkEntry(cat_frame, height=36, font=self.fonts["label"])
+        cat_entry.pack(fill="x", pady=(0, 8))
+
+        def refresh_categorias():
+            cats = sorted(self.tipos_despesa, key=lambda v: v.lower())
+            cat_combo.configure(values=cats)
+            if cats:
+                cat_combo.set(cats[0])
+
+        def add_categoria():
+            nome = cat_entry.get().strip()
+            if not nome:
+                messagebox.showerror("Erro", "Informe o nome da categoria.")
+                return
+            if any(nome.lower() == c.lower() for c in self.tipos_despesa):
+                messagebox.showinfo("Aviso", "Categoria já existe.")
+                return
+            self.tipos_despesa.append(nome)
+            self._atualizar_listas_categorias()
+            refresh_categorias()
+            cat_entry.delete(0, tk.END)
+
+        def renomear_categoria():
+            atual = cat_combo.get().strip()
+            novo = cat_entry.get().strip()
+            if not atual:
+                messagebox.showerror("Erro", "Selecione uma categoria.")
+                return
+            if not novo:
+                messagebox.showerror("Erro", "Informe o novo nome.")
+                return
+            if any(novo.lower() == c.lower() for c in self.tipos_despesa if c.lower() != atual.lower()):
+                messagebox.showerror("Erro", "Já existe uma categoria com esse nome.")
+                return
+            for i, c in enumerate(self.tipos_despesa):
+                if c.lower() == atual.lower():
+                    self.tipos_despesa[i] = novo
+                    break
+            self._atualizar_listas_categorias()
+            refresh_categorias()
+            cat_entry.delete(0, tk.END)
+
+        def remover_categoria():
+            atual = cat_combo.get().strip()
+            if not atual:
+                messagebox.showerror("Erro", "Selecione uma categoria.")
+                return
+            if not messagebox.askyesno("Confirmar", f"Remover categoria \"{atual}\"?"):
+                return
+            self.tipos_despesa = [c for c in self.tipos_despesa if c.lower() != atual.lower()]
+            self._atualizar_listas_categorias()
+            refresh_categorias()
+            cat_entry.delete(0, tk.END)
+
+        btns_cat = ctk.CTkFrame(cat_frame, fg_color="transparent")
+        btns_cat.pack(fill="x", pady=(6, 0))
+        self._criar_botao(btns_cat, "Adicionar", add_categoria, height=34).pack(fill="x", pady=2)
+        self._criar_botao(btns_cat, "Renomear", renomear_categoria, height=34, fg_color=BRAND_COLORS["neutral"], hover_color="#3B3B3B").pack(fill="x", pady=2)
+        self._criar_botao(btns_cat, "Remover", remover_categoria, height=34, fg_color=BRAND_COLORS["danger"], hover_color="#962d22").pack(fill="x", pady=2)
+        refresh_categorias()
+
+        # Fornecedores
+        forn_frame = ctk.CTkFrame(container, fg_color="transparent")
+        forn_frame.grid(row=0, column=1, sticky="nsew", padx=(6, 10), pady=10)
+        ctk.CTkLabel(forn_frame, text="Fornecedores", font=self.fonts["subtitle"], text_color=BRAND_COLORS["text_primary"]).pack(anchor="w")
+        forn_combo = ReadOnlyComboBox(forn_frame, values=fornecedores, height=34, font=self.fonts["label"], dropdown_font=self.fonts["dropdown"])
+        forn_combo.pack(fill="x", pady=(6, 4))
+        forn_entry = ctk.CTkEntry(forn_frame, height=36, font=self.fonts["label"])
+        forn_entry.pack(fill="x", pady=(0, 8))
+
+        def refresh_fornecedores():
+            lista = sorted(self.fornecedores, key=lambda v: v.lower())
+            forn_combo.configure(values=lista)
+            if lista:
+                forn_combo.set(lista[0])
+
+        def add_fornecedor():
+            nome = forn_entry.get().strip()
+            if not nome:
+                messagebox.showerror("Erro", "Informe o nome do fornecedor.")
+                return
+            if any(nome.lower() == f.lower() for f in self.fornecedores):
+                messagebox.showinfo("Aviso", "Fornecedor já existe.")
+                return
+            self.fornecedores.append(nome)
+            refresh_fornecedores()
+            forn_entry.delete(0, tk.END)
+
+        def renomear_fornecedor():
+            atual = forn_combo.get().strip()
+            novo = forn_entry.get().strip()
+            if not atual:
+                messagebox.showerror("Erro", "Selecione um fornecedor.")
+                return
+            if not novo:
+                messagebox.showerror("Erro", "Informe o novo nome.")
+                return
+            if any(novo.lower() == f.lower() for f in self.fornecedores if f.lower() != atual.lower()):
+                messagebox.showerror("Erro", "Já existe um fornecedor com esse nome.")
+                return
+            for i, f in enumerate(self.fornecedores):
+                if f.lower() == atual.lower():
+                    self.fornecedores[i] = novo
+                    break
+            refresh_fornecedores()
+            forn_entry.delete(0, tk.END)
+
+        def remover_fornecedor():
+            atual = forn_combo.get().strip()
+            if not atual:
+                messagebox.showerror("Erro", "Selecione um fornecedor.")
+                return
+            if not messagebox.askyesno("Confirmar", f"Remover fornecedor \"{atual}\"?"):
+                return
+            self.fornecedores = [f for f in self.fornecedores if f.lower() != atual.lower()]
+            refresh_fornecedores()
+            forn_entry.delete(0, tk.END)
+
+        btns_forn = ctk.CTkFrame(forn_frame, fg_color="transparent")
+        btns_forn.pack(fill="x", pady=(6, 0))
+        self._criar_botao(btns_forn, "Adicionar", add_fornecedor, height=34).pack(fill="x", pady=2)
+        self._criar_botao(btns_forn, "Renomear", renomear_fornecedor, height=34, fg_color=BRAND_COLORS["neutral"], hover_color="#3B3B3B").pack(fill="x", pady=2)
+        self._criar_botao(btns_forn, "Remover", remover_fornecedor, height=34, fg_color=BRAND_COLORS["danger"], hover_color="#962d22").pack(fill="x", pady=2)
+        refresh_fornecedores()
 
     def abrir_modal_editar_categoria(self):
 
@@ -1502,31 +1653,12 @@ class ControleGastosApp(ctk.CTk):
         botoes_categoria.pack(side='right')
 
         self._criar_botao(
-
             botoes_categoria,
-
-            'Editar categoria',
-
-            self.abrir_modal_editar_categoria,
-
+            'Central de cadastros',
+            self.abrir_central_cadastros,
             height=36,
-
             fg_color=BRAND_COLORS['neutral'],
-
             hover_color="#3B3B3B",
-
-        ).pack(side='right', padx=(8, 0))
-
-        self._criar_botao(
-
-            botoes_categoria,
-
-            'Adicionar categoria',
-
-            self.abrir_modal_nova_categoria,
-
-            height=36,
-
         ).pack(side='right')
 
         self.entry_data = self._criar_input_group(
