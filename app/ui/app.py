@@ -30,7 +30,7 @@ from app.ui.dashboard import abrir_dashboard
 
 from app.data.store import load_data, save_data
 
-from app.ui.widgets import ReadOnlyComboBox, ScrollableComboBox
+from app.ui.widgets import ReadOnlyComboBox
 
 from app.utils.paths import runtime_path, workspace_path
 
@@ -1605,15 +1605,28 @@ class ControleGastosApp(ctk.CTk):
         ]
 
         self.combo_tipo = self._criar_input_group(
+
             formulario_frame,
+
             'Tipo de despesa',
-            lambda container: ScrollableComboBox(
+
+            lambda container: ReadOnlyComboBox(
+
                 container,
+
                 values=self.tipos_despesa,
-                font=self.fonts[\'label\'],
+
+                height=40,
+
+                font=self.fonts['label'],
+
+                dropdown_font=self.fonts['dropdown'],
+
             ),
+
         )
-        self.combo_tipo.set(\'Selecione o tipo\')
+
+        self.combo_tipo.set('Selecione o tipo')
 
         self.formas_pagamento = [
 
