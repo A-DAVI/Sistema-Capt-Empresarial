@@ -173,8 +173,8 @@ def generate_pdf_report(
         c.setFont("Helvetica-Bold", 10)
         c.drawString(x_margin, y_pos, "Data")
         c.drawString(x_margin + 2.0 * cm, y_pos, "Tipo")
-        c.drawString(x_margin + 6.8 * cm, y_pos, "Forma")
-        c.drawString(x_margin + 11.0 * cm, y_pos, "Fornecedor")
+        c.drawString(x_margin + 6.5 * cm, y_pos, "Forma")
+        c.drawString(x_margin + 10.2 * cm, y_pos, "Fornecedor")
         c.drawRightString(width - x_margin, y_pos, "Valor (R$)")
         y_pos -= 4 * mm
         c.line(x_margin, y_pos, width - x_margin, y_pos)
@@ -201,13 +201,13 @@ def generate_pdf_report(
         data = gasto.get("data", "")
         tipo = str(gasto.get("tipo", "") or "")[:32]
         forma = str(gasto.get("forma_pagamento", "") or "")[:18]
-        fornecedor = str(gasto.get("fornecedor", "") or "")[:34]
+        fornecedor = str(gasto.get("fornecedor", "") or "")[:40]
         valor = format_brl(float(gasto.get("valor", 0) or 0))
 
         c.drawString(x_margin, y, data)
         c.drawString(x_margin + 2.0 * cm, y, tipo)
-        c.drawString(x_margin + 6.8 * cm, y, forma)
-        c.drawString(x_margin + 11.0 * cm, y, fornecedor)
+        c.drawString(x_margin + 6.5 * cm, y, forma)
+        c.drawString(x_margin + 10.2 * cm, y, fornecedor)
         c.drawRightString(width - x_margin, y, valor)
         y -= 6 * mm
 

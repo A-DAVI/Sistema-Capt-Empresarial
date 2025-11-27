@@ -3640,7 +3640,7 @@ class ControleGastosApp(ctk.CTk):
                     fornecedor_csv = (
                         fornecedor_bruto if isinstance(fornecedor_bruto, str) else ""
                     )
-                    fornecedor_csv = fornecedor_csv.strip().upper()
+                    fornecedor_csv = fornecedor_csv.strip().upper() if fornecedor_csv else ""
                     writer.writerow([
                         gasto.get("data", ""),
                         gasto.get("tipo", ""),
