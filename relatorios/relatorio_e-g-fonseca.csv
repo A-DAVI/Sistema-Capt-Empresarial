@@ -1,2 +1,4 @@
-Data;Tipo;Forma;Valor
-24/11/2025;ICMS;Banco;200,00
+Data;Tipo;Forma;Valor;Fornecedor
+27/11/2025;COMBUSTÍVEL LUBRIFICANTE;Dinheiro;200,00;RODOVIARIO AFONSO LTDA
+24/11/2025;ICMS;Banco;200,00;
+24/11/2025;Energia Elétrica;Banco;2000,00;

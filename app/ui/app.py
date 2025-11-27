@@ -2645,7 +2645,7 @@ class ControleGastosApp(ctk.CTk):
 
             text_color=BRAND_COLORS['text_secondary'],
 
-        ).grid(row=2, column=0, columnspan=4, sticky='w', padx=12, pady=(6, 2))
+        ).grid(row=2, column=0, columnspan=5, sticky='w', padx=12, pady=(6, 2))
 
         self.filtro_valor_combo = ReadOnlyComboBox(
 
@@ -2663,7 +2663,7 @@ class ControleGastosApp(ctk.CTk):
 
         self.filtro_valor_combo.set('Todos')
 
-        self.filtro_valor_combo.grid(row=3, column=0, columnspan=4, padx=12, pady=(0, 10), sticky='ew')
+        self.filtro_valor_combo.grid(row=3, column=0, columnspan=5, padx=12, pady=(0, 10), sticky='ew')
 
         botoes_filtro = ctk.CTkFrame(filtros_frame, fg_color='transparent')
 
@@ -3504,12 +3504,13 @@ class ControleGastosApp(ctk.CTk):
                 writer = csv.writer(csvfile, delimiter=";")
                 writer.writerow(["Data", "Tipo", "Forma", "Valor", "Fornecedor"])
                 for gasto in registros_validos:
+                    fornecedor_csv = str(gasto.get("fornecedor") or "").strip().upper()
                     writer.writerow([
                         gasto.get("data", ""),
                         gasto.get("tipo", ""),
                         gasto.get("forma_pagamento", ""),
                         f"{float(gasto.get('valor', 0) or 0):.2f}".replace(".", ","),
-                        gasto.get("fornecedor", "") or "",
+                        fornecedor_csv,
                     ])
             messagebox.showinfo("Relatório criado", f"Arquivo CSV criado em: {caminho_destino}")
         except Exception as exc:  # noqa: BLE001

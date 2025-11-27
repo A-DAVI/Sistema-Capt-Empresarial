@@ -172,9 +172,9 @@ def generate_pdf_report(
         y_pos -= 8 * mm
         c.setFont("Helvetica-Bold", 10)
         c.drawString(x_margin, y_pos, "Data")
-        c.drawString(x_margin + 2.8 * cm, y_pos, "Tipo")
-        c.drawString(x_margin + 8.0 * cm, y_pos, "Forma")
-        c.drawString(x_margin + 12.0 * cm, y_pos, "Fornecedor")
+        c.drawString(x_margin + 2.5 * cm, y_pos, "Tipo")
+        c.drawString(x_margin + 7.5 * cm, y_pos, "Forma")
+        c.drawString(x_margin + 11.0 * cm, y_pos, "Fornecedor")
         c.drawRightString(width - x_margin, y_pos, "Valor (R$)")
         y_pos -= 4 * mm
         c.line(x_margin, y_pos, width - x_margin, y_pos)
@@ -199,15 +199,15 @@ def generate_pdf_report(
             y = desenhar_cabecalho_tabela(height - 3 * cm, "Continuação - Detalhamento das Despesas")
 
         data = gasto.get("data", "")
-        tipo = str(gasto.get("tipo", ""))[:32]
-        forma = str(gasto.get("forma_pagamento", ""))[:20]
-        fornecedor = str(gasto.get("fornecedor", "") or "")[:26]
+        tipo = str(gasto.get("tipo", "") or "")[:28]
+        forma = str(gasto.get("forma_pagamento", "") or "")[:16]
+        fornecedor = str(gasto.get("fornecedor", "") or "")[:28]
         valor = format_brl(float(gasto.get("valor", 0) or 0))
 
         c.drawString(x_margin, y, data)
-        c.drawString(x_margin + 2.8 * cm, y, tipo)
-        c.drawString(x_margin + 8.0 * cm, y, forma)
-        c.drawString(x_margin + 12.0 * cm, y, fornecedor)
+        c.drawString(x_margin + 2.5 * cm, y, tipo)
+        c.drawString(x_margin + 7.5 * cm, y, forma)
+        c.drawString(x_margin + 11.0 * cm, y, fornecedor)
         c.drawRightString(width - x_margin, y, valor)
         y -= 6 * mm
 
