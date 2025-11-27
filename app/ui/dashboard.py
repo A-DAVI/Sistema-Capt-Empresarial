@@ -313,6 +313,11 @@ def _plot_pizza(ax, categorias: dict[str, float], colors: dict[str, str], color_
         wedgeprops={"width": 0.35, "edgecolor": colors["surface"], "linewidth": 1},
     )
     wedges = pie_result[0]
+    legend_items = []
+    effective_colors = palette[: len(valores)]
+    for lbl, val, cor in zip(labels, valores, effective_colors):
+        pct = (val / total) * 100 if total else 0
+        legend_items.append((lbl, val, pct, cor))
 
     # hover: exibe tooltip com valor e %
     annot = ax.annotate(
@@ -355,6 +360,7 @@ def _plot_pizza(ax, categorias: dict[str, float], colors: dict[str, str], color_
     ax.text(0, 0, f"{_fmt_brl(total)}\nTotal", ha="center", va="center", color=colors["text_primary"], fontsize=11, fontweight="bold")
     ax.set_title("Distribuição por categoria", color=colors["text_primary"], pad=10, fontsize=12, fontweight="bold")
     _estilizar_axes(ax, colors)
+    return legend_items
 
 
 def _plot_top_fornecedores(ax, dados: dict[str, float], colors: dict[str, str], limite: int = 7):
@@ -422,7 +428,7 @@ def abrir_dashboard(parent, empresa_path: Path):
     colors = _palette()
 
     janela = ctk.CTkToplevel(parent)
-    janela.title("Dashboard Executivo")
+    janela.title("Central de Controle - Dashboard")
     janela.configure(fg_color=colors["background"])
     try:
         janela.state("zoomed")  # Windows
@@ -439,13 +445,13 @@ def abrir_dashboard(parent, empresa_path: Path):
     header.pack(fill="x", padx=16, pady=(16, 12))
     ctk.CTkLabel(
         header,
-        text=f"Painel Financeiro — {Path(empresa_path).stem}",
+        text=f"Centro de controle de gastos — {Path(empresa_path).stem}",
         font=FONT_TITLE,
         text_color=colors["text_primary"],
     ).pack(anchor="w")
     ctk.CTkLabel(
         header,
-        text="Visão consolidada das suas despesas e indicadores.",
+        text="Visão consolidada das suas despesas.",
         font=FONT_SUBTITLE,
         text_color=colors["text_secondary"],
     ).pack(anchor="w", pady=(2, 0))
@@ -471,7 +477,7 @@ def abrir_dashboard(parent, empresa_path: Path):
 
     card2 = _criar_kpi(
         kpi_wrap,
-        f"Total anterior — {kpi_data['mes_anterior_label']}",
+        f"Total do mês anterior — {kpi_data['mes_anterior_label']}",
         kpi_data["total_mes_anterior"],
     )
     card2.grid(row=0, column=1, sticky="nsew", padx=6, pady=4, ipady=2)
@@ -486,7 +492,7 @@ def abrir_dashboard(parent, empresa_path: Path):
 
     card4 = _criar_kpi(
         kpi_wrap,
-        "Categoria com maior impacto no mês",
+        "Despesa com maior impacto no mês",
         kpi_data["maior_categoria"],
     )
     card4.grid(row=0, column=3, sticky="nsew", padx=6, pady=4, ipady=2)
@@ -770,82 +776,6 @@ def abrir_dashboard(parent, empresa_path: Path):
         atualizar_legenda(legend_items)
 
     render_pie(categorias_orig)
-
-    # Bloco adicional: fornecedores em formato similar (pizza + legenda)
-    fornecedores_data = _total_por_fornecedor(despesas)
-    fornecedores_frame = ctk.CTkFrame(scroll, fg_color=colors["surface"], corner_radius=18)
-    fornecedores_frame.pack(fill="both", expand=True, padx=14, pady=(0, 14))
-    fornecedores_frame.grid_columnconfigure(0, weight=3)
-    fornecedores_frame.grid_columnconfigure(1, weight=2)
-    ctk.CTkLabel(
-        fornecedores_frame,
-        text="Participação por fornecedor",
-        font=FONT_KPI_TITLE,
-        text_color=colors["text_primary"],
-    ).grid(row=0, column=0, columnspan=2, sticky="w", padx=14, pady=(12, 4))
-
-    pie_holder_for = ctk.CTkFrame(fornecedores_frame, fg_color="transparent")
-    pie_holder_for.grid(row=1, column=0, sticky="nsew", padx=(10, 6), pady=(6, 10))
-
-    legend_for = ctk.CTkFrame(fornecedores_frame, fg_color=colors["panel"], corner_radius=12, border_width=1, border_color=colors["divider"])
-    legend_for.grid(row=1, column=1, sticky="nsew", padx=(6, 10), pady=(6, 10))
-    legend_for.pack_propagate(True)
-
-    def render_pie_for(cats: dict[str, float]):
-        # limpar anterior antes de criar novo canvas
-        for child in pie_holder_for.winfo_children():
-            try:
-                child.destroy()
-            except Exception:
-                pass
-        for child in legend_for.winfo_children():
-            try:
-                child.destroy()
-            except Exception:
-                pass
-
-        fig_for = Figure(figsize=(5.2, 4.2), dpi=100, facecolor=colors["surface"])
-        ax_for = fig_for.add_subplot(1, 1, 1, facecolor=colors["panel"])
-        legend_items_for = _plot_pizza(ax_for, cats, colors, None) or []
-        fig_for.tight_layout(pad=1.0)
-        canvas_for = FigureCanvasTkAgg(fig_for, master=pie_holder_for)
-        canvas_for.draw()
-        canvas_for.get_tk_widget().pack(fill="both", expand=True, padx=10, pady=6)
-
-        ctk.CTkLabel(
-            legend_for,
-            text="Fornecedores",
-            font=("Segoe UI Semibold", 13),
-            text_color=colors["text_primary"],
-        ).pack(anchor="w", padx=12, pady=(10, 8))
-        for nome, val, pct, cor in sorted(legend_items_for, key=lambda x: x[1], reverse=True):
-            row = ctk.CTkFrame(legend_for, fg_color="transparent")
-            row.pack(fill="x", padx=10, pady=4)
-            ctk.CTkLabel(row, text="●", font=ctk.CTkFont(size=16), text_color=cor).pack(side="left", padx=(0, 8))
-            text_container = ctk.CTkFrame(row, fg_color="transparent")
-            text_container.pack(side="left", fill="x", expand=True)
-            ctk.CTkLabel(
-                text_container,
-                text=f"{nome if len(nome)<=28 else nome[:25]+'...'}",
-                font=("Segoe UI Semibold", 12),
-                text_color=colors["text_primary"],
-                anchor="w",
-            ).pack(fill="x")
-            ctk.CTkLabel(
-                text_container,
-                text=_fmt_brl(val),
-                font=("Segoe UI", 11),
-                text_color=colors["text_secondary"],
-                anchor="w",
-            ).pack(fill="x")
-            ctk.CTkLabel(
-                row,
-                text=f"{pct:.1f}%",
-                font=("Segoe UI", 11),
-                text_color=colors["text_secondary"],
-            ).pack(side="right", padx=(6, 0))
-
-    render_pie_for(fornecedores_data)
 
     return janela
 
