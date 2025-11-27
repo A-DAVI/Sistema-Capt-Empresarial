@@ -75,7 +75,7 @@ class ControleGastosApp(ctk.CTk):
         self.config_path = config_path
         self._apply_theme(self.theme_mode)
 
-        self.title("Painel Financeiro — Grupo 14D")
+        self.title("Central de Controle")
 
         self.geometry("860x1000")
 
@@ -189,7 +189,13 @@ class ControleGastosApp(ctk.CTk):
             "BAKER FAF LTDA",
             "COAGRU COOPERATIVA AGROINDUSTRIAL UNIAO",
         ]
-        self.fornecedores = sorted({nome.strip().upper() for nome in fornecedores_base if nome.strip()})
+        base_fornecedores = sorted({nome.strip().upper() for nome in fornecedores_base if nome.strip()})
+        if not self.fornecedores:
+            self.fornecedores = base_fornecedores
+        else:
+            # mescla base + existentes sem duplicar
+            atuais = {f.upper() for f in self.fornecedores}
+            self.fornecedores = sorted(atuais.union(base_fornecedores))
 
         categorias_flags = [
             ("Água e esgoto", False),
