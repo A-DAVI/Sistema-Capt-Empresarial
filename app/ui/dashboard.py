@@ -139,6 +139,22 @@ def _total_por_categoria(despesas: Iterable[dict], mes_ano: str | None = None) -
     return dict(tot)
 
 
+def _total_por_fornecedor(despesas: Iterable[dict]) -> dict[str, float]:
+    """Soma valores por fornecedor (normalizado)."""
+    tot = defaultdict(float)
+    if despesas is None:
+        return {}
+    for reg in despesas:
+        nome = str(reg.get("fornecedor") or "").strip().upper()
+        if not nome:
+            continue
+        try:
+            tot[nome] += float(reg.get("valor", 0) or 0)
+        except Exception:
+            continue
+    return dict(sorted(tot.items(), key=lambda x: x[1], reverse=True))
+
+
 def _kpis(despesas: list[dict]) -> dict[str, str]:
     agrupado = _agrupa_por_mes(despesas)
     meses = list(agrupado.keys())
@@ -329,6 +345,34 @@ def _plot_pizza(ax, categorias: dict[str, float], colors: dict[str, str], color_
     ax.text(0, 0, f"{_fmt_brl(total)}\nTotal", ha="center", va="center", color=colors["text_primary"], fontsize=11, fontweight="bold")
     ax.set_title("Distribuição por categoria", color=colors["text_primary"], pad=10, fontsize=12, fontweight="bold")
     _estilizar_axes(ax, colors)
+
+
+def _plot_top_fornecedores(ax, dados: dict[str, float], colors: dict[str, str], limite: int = 7):
+    """Exibe barras horizontais dos maiores fornecedores por valor."""
+    if not dados:
+        ax.text(0.5, 0.5, "Sem dados", ha="center", va="center", color=colors["text_secondary"])
+        ax.axis("off")
+        return
+    items = sorted(dados.items(), key=lambda x: x[1], reverse=True)[:limite]
+    labels = [k for k, _ in items][::-1]
+    valores = [v for _, v in items][::-1]
+    bars = ax.barh(range(len(labels)), valores, color=colors["bar"], edgecolor=colors["divider"], height=0.6)
+    ax.set_yticks(range(len(labels)))
+    ax.set_yticklabels(labels, color=colors["text_secondary"], fontsize=9)
+    for bar, val in zip(bars, valores, strict=False):
+        ax.text(
+            bar.get_width() + max(valores) * 0.02,
+            bar.get_y() + bar.get_height() / 2,
+            _fmt_brl(val),
+            va="center",
+            color=colors["text_primary"],
+            fontsize=9,
+        )
+    ax.invert_yaxis()
+    ax.set_title("Top fornecedores por valor", color=colors["text_primary"], pad=10, fontsize=12, fontweight="bold")
+    ax.grid(axis="x", linestyle="--", alpha=0.3, color=colors["divider"])
+    ax.set_facecolor(colors["panel"])
+    ax.tick_params(colors=colors["text_secondary"], labelsize=9)
     legend_items = []
     for lbl, val, col in zip(labels, valores, palette):
         pct = (val / total) * 100 if total else 0
@@ -368,7 +412,7 @@ def _criar_figuras(frame_plots, dados_mes, categorias_mes, linha_total, colors):
 # ---------------------- Dashboard ---------------------- #
 def abrir_dashboard(parent, empresa_path: Path):
     """Abre o dashboard executivo para a empresa indicada."""
-    despesas = _ler_despesas(empresa_path)
+    despesas = _ler_despesas(empresa_path) or []
     colors = _palette()
 
     janela = ctk.CTkToplevel(parent)
@@ -716,6 +760,24 @@ def abrir_dashboard(parent, empresa_path: Path):
         atualizar_legenda(legend_items)
 
     render_pie(categorias_orig)
+
+    # Bloco adicional: top fornecedores por valor
+    fornecedores_frame = ctk.CTkFrame(scroll, fg_color=colors["surface"], corner_radius=18)
+    fornecedores_frame.pack(fill="both", expand=True, padx=14, pady=(0, 14))
+    fornecedores_frame.grid_columnconfigure(0, weight=1)
+    ctk.CTkLabel(
+        fornecedores_frame,
+        text="Fornecedores com maior impacto",
+        font=FONT_KPI_TITLE,
+        text_color=colors["text_primary"],
+    ).pack(anchor="w", padx=12, pady=(10, 4))
+    fig_top = Figure(figsize=(7.4, 4.2), dpi=100, facecolor=colors["surface"])
+    ax_top = fig_top.add_subplot(1, 1, 1, facecolor=colors["panel"])
+    _plot_top_fornecedores(ax_top, _total_por_fornecedor(despesas), colors, limite=7)
+    fig_top.tight_layout(pad=1.2)
+    canvas_top = FigureCanvasTkAgg(fig_top, master=fornecedores_frame)
+    canvas_top.draw()
+    canvas_top.get_tk_widget().pack(fill="both", expand=True, padx=14, pady=(6, 12))
 
     return janela
 
