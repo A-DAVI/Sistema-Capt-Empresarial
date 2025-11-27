@@ -54,6 +54,6 @@ jobs:
           files: |
             dist/CentralDeControle-GRUPO14D.exe
             dist/CentralDeControle-GRUPO14D.zip
-            installer/CentralDeControle-GRUPO14D.exe
+            installer/CentralDeControle-GRUPO14D-Installer.exe
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
