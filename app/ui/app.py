@@ -1674,47 +1674,17 @@ class ControleGastosApp(ctk.CTk):
         self.combo_fornecedor.pack(side="left", fill="x", expand=True, pady=(0, 6))
         self.combo_fornecedor.set("Selecione o fornecedor")
 
-        self._toggle_fornecedor()
-
-        self.switch_fornecedor = ctk.CTkSwitch(
-            formulario_frame,
-            text="Informar fornecedor",
-            font=self.fonts["subtitle"],
-            command=self._toggle_fornecedor,
-        )
-        self.switch_fornecedor.pack(fill="x", padx=12, pady=(4, 0))
-
-        self.fornecedor_fields = ctk.CTkFrame(formulario_frame, fg_color="transparent")
-        self.fornecedor_fields.pack(fill="x", padx=12, pady=(0, 12))
-        ctk.CTkLabel(
-            self.fornecedor_fields,
-            text="Fornecedor",
-            font=self.fonts["subtitle"],
-            text_color=BRAND_COLORS["text_secondary"],
-        ).pack(anchor="w", pady=(6, 4))
-
-        fornecedor_row = ctk.CTkFrame(self.fornecedor_fields, fg_color="transparent")
-        fornecedor_row.pack(fill="x")
-
-        self.combo_fornecedor = ReadOnlyComboBox(
-            fornecedor_row,
-            values=self.fornecedores,
-            height=38,
-            font=self.fonts["label"],
-            dropdown_font=self.fonts["dropdown"],
-        )
-        self.combo_fornecedor.pack(side="left", fill="x", expand=True, pady=(0, 6))
-        self.combo_fornecedor.set("Selecione o fornecedor")
-
+        # Botão de busca do fornecedor (visível em ambos os temas).
         ctk.CTkButton(
             fornecedor_row,
             text="🔍",
-            width=38,
-            command=self._abrir_busca_fornecedor,
-            fg_color=BRAND_COLORS["neutral"],
-            hover_color="#3B3B3B",
+            width=42,
+            fg_color=BRAND_COLORS["accent"],
+            hover_color=BRAND_COLORS["accent_hover"],
+            text_color="#FFFFFF",
             font=self.fonts["button"],
-        ).pack(side="left", padx=(8, 0))
+            command=self._abrir_busca_fornecedor,
+        ).pack(side="left", padx=(8, 0), pady=(0, 6))
 
         self._toggle_fornecedor()
 
