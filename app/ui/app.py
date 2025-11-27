@@ -156,6 +156,38 @@ class ControleGastosApp(ctk.CTk):
 
         self.quantidade_card_value = None
 
+        fornecedores_base = [
+            "PMAN SERVICOS REPRESENTACOES COM E IND LTDA",
+            "COLMEIA DISTRIBUIDORA LTDA",
+            "SOLUCAO, INGREDIENTES INDUSTRIAIS LTDA",
+            "KASSIA FLORES LTDA",
+            "ETIQUETAS MARINGA LTDA",
+            "SANTA ROSA COMERCIO DE EMBALAGENS LTDA-EPP",
+            "COMERCIO DE CHAPAS DE MDF LAMINIL LTDA",
+            "CLEVERSON GERALDO RODRIGUES - ME",
+            "ALMEVAN DISTRIBUIDORA DE ALIMENTOS LTDA",
+            "BEBIDAS WHITE RIVER LTDA",
+            "USINA ALTO ALEGRE S.A - ACUCAR E ALCOOL",
+            "PALUMA VARIEDADES LTDA",
+            "SUNNYVALE COM E REPRES LTDA",
+            "CELERITAS DISTRIBUICAO DE BEBIDAS EM GERAL LTDA",
+            "IND. COM. BEBIDAS FUNADA LTDA",
+            "L DUARTE ALVES LTDA",
+            "DIFRIPAR LOGISTICA E DISTRIBUICAO LTDA",
+            "COFERPAN - COM FERM E PROD PANIF LTDA",
+            "ARILU DISTRIBUIDORA S/A",
+            "OESA COMERCIO E REPRESENTACOES S/A",
+            "DISTRIBUIDORA DE GEN ALIM COLUMBIA LTDA",
+            "TRANS APUCARANA TRANSPORTES RODOVIARIOS LTDA",
+            "RODOVIARIO AFONSO LTDA",
+            "ATACADAO S.A.",
+            "SUPERMERCADO GUGUY LTDA",
+            "M.J. DISTRIBUIDORA",
+            "BAKER FAF LTDA",
+            "COAGRU COOPERATIVA AGROINDUSTRIAL UNIAO",
+        ]
+        self.fornecedores = sorted({nome.strip().upper() for nome in fornecedores_base if nome.strip()})
+
         self.criar_widgets()
 
         self._aplicar_icone_janela()
@@ -857,6 +889,66 @@ class ControleGastosApp(ctk.CTk):
 
         return normalizados
 
+    def _toggle_fornecedor(self) -> None:
+        """Exibe ou oculta o campo de fornecedor conforme a necessidade."""
+        if not hasattr(self, "fornecedor_fields"):
+            return
+        ativo = bool(self.switch_fornecedor.get())
+        try:
+            if ativo:
+                self.fornecedor_fields.pack(fill="x", padx=12, pady=(0, 12))
+            else:
+                self.fornecedor_fields.pack_forget()
+                self.combo_fornecedor.set("Selecione o fornecedor")
+        except Exception:
+            pass
+
+    def _abrir_busca_fornecedor(self) -> None:
+        """Abre uma janela simples para buscar fornecedor por texto."""
+        modal = ctk.CTkToplevel(self)
+        modal.title("Buscar fornecedor")
+        modal.geometry("420x480")
+        modal.configure(fg_color=BRAND_COLORS.get("surface", "#111111"))
+        modal.transient(self)
+        modal.grab_set()
+        self._priorizar_janela(modal)
+        self._centralizar_janela(modal)
+
+        ctk.CTkLabel(
+            modal,
+            text="Digite para filtrar",
+            font=self.fonts["subtitle"],
+            text_color=BRAND_COLORS.get("text_secondary", "#CCCCCC"),
+        ).pack(anchor="w", padx=12, pady=(12, 4))
+
+        entry = ctk.CTkEntry(modal, height=36, font=self.fonts["label"])
+        entry.pack(fill="x", padx=12, pady=(0, 8))
+
+        lista = tk.Listbox(modal, height=15, font=("Segoe UI", 11))
+        lista.pack(fill="both", expand=True, padx=12, pady=(0, 12))
+
+        fornecedores = self.fornecedores
+
+        def atualizar_lista(filtro: str = "") -> None:
+            lista.delete(0, tk.END)
+            termo = filtro.strip().upper()
+            for nome in fornecedores:
+                if not termo or termo in nome:
+                    lista.insert(tk.END, nome)
+
+        def selecionar(event=None) -> None:  # noqa: ANN001
+            if not lista.curselection():
+                return
+            valor = lista.get(lista.curselection()[0])
+            self.switch_fornecedor.select()
+            self.combo_fornecedor.set(valor)
+            self._toggle_fornecedor()
+            modal.destroy()
+
+        lista.bind("<Double-Button-1>", selecionar)
+        entry.bind("<KeyRelease>", lambda event: atualizar_lista(entry.get()))
+        atualizar_lista()
+
     def _gerar_slug(self, texto: str) -> str:
 
         texto = texto.lower().strip()
@@ -1495,6 +1587,48 @@ class ControleGastosApp(ctk.CTk):
 
         )
 
+        self.switch_fornecedor = ctk.CTkSwitch(
+            formulario_frame,
+            text="Informar fornecedor",
+            font=self.fonts["subtitle"],
+            command=self._toggle_fornecedor,
+        )
+        self.switch_fornecedor.pack(fill="x", padx=12, pady=(4, 0))
+
+        self.fornecedor_fields = ctk.CTkFrame(formulario_frame, fg_color="transparent")
+        self.fornecedor_fields.pack(fill="x", padx=12, pady=(0, 12))
+        ctk.CTkLabel(
+            self.fornecedor_fields,
+            text="Fornecedor",
+            font=self.fonts["subtitle"],
+            text_color=BRAND_COLORS["text_secondary"],
+        ).pack(anchor="w", pady=(6, 4))
+
+        fornecedor_row = ctk.CTkFrame(self.fornecedor_fields, fg_color="transparent")
+        fornecedor_row.pack(fill="x")
+
+        self.combo_fornecedor = ReadOnlyComboBox(
+            fornecedor_row,
+            values=self.fornecedores,
+            height=38,
+            font=self.fonts["label"],
+            dropdown_font=self.fonts["dropdown"],
+        )
+        self.combo_fornecedor.pack(side="left", fill="x", expand=True, pady=(0, 6))
+        self.combo_fornecedor.set("Selecione o fornecedor")
+
+        ctk.CTkButton(
+            fornecedor_row,
+            text="🔍",
+            width=38,
+            command=self._abrir_busca_fornecedor,
+            fg_color=BRAND_COLORS["neutral"],
+            hover_color="#3B3B3B",
+            font=self.fonts["button"],
+        ).pack(side="left", padx=(8, 0))
+
+        self._toggle_fornecedor()
+
         botoes_frame = ctk.CTkFrame(main_frame, fg_color='transparent')
 
         botoes_frame.pack(fill='x', padx=12, pady=(0, 16))
@@ -2094,7 +2228,18 @@ class ControleGastosApp(ctk.CTk):
 
             return
 
-        registro = {"data": data, "tipo": tipo, "forma_pagamento": pagamento, "valor": valor, "timestamp": datetime.now().isoformat()}
+        fornecedor = ""
+        if getattr(self, "switch_fornecedor", None) and self.switch_fornecedor.get():
+            fornecedor = (self.combo_fornecedor.get() or "").strip()
+
+        registro = {
+            "data": data,
+            "tipo": tipo,
+            "forma_pagamento": pagamento,
+            "valor": valor,
+            "fornecedor": fornecedor or None,
+            "timestamp": datetime.now().isoformat(),
+        }
 
         self.gastos.append(registro)
 
@@ -2127,6 +2272,14 @@ class ControleGastosApp(ctk.CTk):
         self.combo_pagamento.set("Selecione a forma")
 
         self.entry_valor.delete(0, "end")
+
+        if getattr(self, "switch_fornecedor", None):
+            self.switch_fornecedor.deselect()
+            self.combo_fornecedor.set("Selecione o fornecedor")
+            try:
+                self._toggle_fornecedor()
+            except Exception:
+                pass
 
     def atualizar_stats(self):
 
