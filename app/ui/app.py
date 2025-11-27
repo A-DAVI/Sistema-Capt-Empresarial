@@ -1550,23 +1550,24 @@ class ControleGastosApp(ctk.CTk):
 
         self.entry_data.insert(0, datetime.now().strftime('%d/%m/%Y'))
 
-        self.tipos_despesa = [
-            "Água e esgoto",
-            "Energia Elétrica",
-            "Telefone",
-            "Correios e Malotes",
-            "FGTS",
-            "DARF INSS",
-            "ICMS",
-            "Impostos Fiscais (PIS, Cofins, IRP e CSLL)",
-            "Simples Nacional",
-            "Salários (Funcionários)",
-            "Férias (Funcionários)",
-            "Rescisão (Funcionários)",
-            "13º Salário (Funcionários)",
-            "Pro-labore (Sócios)",
-            "Aluguel",
-        ]
+        if not getattr(self, "tipos_despesa", None):
+            self.tipos_despesa = [
+                "Água e esgoto",
+                "Energia Elétrica",
+                "Telefone",
+                "Correios e Malotes",
+                "FGTS",
+                "DARF INSS",
+                "ICMS",
+                "Impostos Fiscais (PIS, Cofins, IRP e CSLL)",
+                "Simples Nacional",
+                "Salários (Funcionários)",
+                "Férias (Funcionários)",
+                "Rescisão (Funcionários)",
+                "13º Salário (Funcionários)",
+                "Pro-labore (Sócios)",
+                "Aluguel",
+            ]
 
         self.combo_tipo = self._criar_input_group(
 
