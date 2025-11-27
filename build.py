@@ -25,7 +25,6 @@ def _run_pyinstaller() -> None:
         "--noconsole",
         "--onefile",
         "--windowed",
-        "--uac-admin",
         "--clean",
         "--name",
         OUTPUT_NAME,
