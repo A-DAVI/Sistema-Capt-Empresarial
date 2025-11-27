@@ -2,14 +2,14 @@
 ; Desenvolvido por: Equipe 14D
 
 [Setup]
-AppName=Controle - GRUPO 14D
+AppName=CentralDeControle - GRUPO 14D
 AppVersion=1.0.0
 AppPublisher=Grupo 14D
 DefaultDirName={pf}\Grupo 14D\CaptacaoEmpresarial
 DisableDirPage=no
 DisableProgramGroupPage=no
 OutputDir=installer
-OutputBaseFilename=Controle - GRUPO 14D
+OutputBaseFilename=CentralDeControle-GRUPO14D
 Compression=lzma
 SolidCompression=yes
 SetupIconFile=logo.ico
@@ -20,8 +20,8 @@ PrivilegesRequired=admin
 Source: "dist\INTERFACE\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs
 
 [Icons]
-Name: "{autoprograms}\Controle - GRUPO 14D"; Filename: "{app}\CaptacaoEmpresarial.exe"
-Name: "{autodesktop}\Controle - GRUPO 14D"; Filename: "{app}\CaptacaoEmpresarial.exe"; Tasks: desktopicon
+Name: "{autoprograms}\CentralDeControle - GRUPO 14D"; Filename: "{app}\CaptacaoEmpresarial.exe"
+Name: "{autodesktop}\CentralDeControle - GRUPO 14D"; Filename: "{app}\CaptacaoEmpresarial.exe"; Tasks: desktopicon
 
 [Tasks]
 Name: "desktopicon"; Description: "Criar atalho na area de trabalho"; GroupDescription: "Atalhos adicionais:"

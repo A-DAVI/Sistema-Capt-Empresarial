@@ -34,8 +34,8 @@ jobs:
         run: |
           pyinstaller -y INTERFACE.spec
           if (Test-Path dist/INTERFACE/CaptacaoEmpresarial.exe) {
-            Copy-Item dist/INTERFACE/CaptacaoEmpresarial.exe dist/"Controle - GRUPO 14D.exe" -Force
-            Compress-Archive -Path dist/INTERFACE/* -DestinationPath dist/"Controle - GRUPO 14D.zip" -Force
+            Copy-Item dist/INTERFACE/CaptacaoEmpresarial.exe dist/CentralDeControle-GRUPO14D.exe -Force
+            Compress-Archive -Path dist/INTERFACE/* -DestinationPath dist/CentralDeControle-GRUPO14D.zip -Force
           }
 
       - name: Ensure installer directory exists
@@ -52,8 +52,8 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            "dist/Controle - GRUPO 14D.exe"
-            "dist/Controle - GRUPO 14D.zip"
-            "installer/Controle - GRUPO 14D.exe"
+            dist/CentralDeControle-GRUPO14D.exe
+            dist/CentralDeControle-GRUPO14D.zip
+            installer/CentralDeControle-GRUPO14D.exe
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
