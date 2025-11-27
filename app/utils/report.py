@@ -201,8 +201,8 @@ def generate_pdf_report(
         c.setFont("Helvetica-Bold", 10)
         c.drawString(x_margin, y_pos, "Data")
         c.drawString(x_margin + 2.0 * cm, y_pos, "Tipo")
-        c.drawString(x_margin + 7.2 * cm, y_pos, "Forma")
-        c.drawString(x_margin + 9.8 * cm, y_pos, "Fornecedor")
+        c.drawString(x_margin + 7.0 * cm, y_pos, "Forma")
+        c.drawString(x_margin + 9.5 * cm, y_pos, "Fornecedor")
         c.drawRightString(width - x_margin, y_pos, "Valor (R$)")
         y_pos -= 4 * mm
         c.line(x_margin, y_pos, width - x_margin, y_pos)
@@ -232,9 +232,10 @@ def generate_pdf_report(
         fornecedor = str(gasto.get("fornecedor", "") or "")
         valor = format_brl(float(gasto.get("valor", 0) or 0))
 
-        linhas_tipo = wrap_text(tipo, 32)
-        linhas_forma = wrap_text(forma, 18)
-        linhas_fornec = wrap_text(fornecedor, 38)
+        # limites menores para evitar sobreposição de colunas
+        linhas_tipo = wrap_text(tipo, 26)
+        linhas_forma = wrap_text(forma, 14)
+        linhas_fornec = wrap_text(fornecedor, 30)
         linhas = max(len(linhas_tipo), len(linhas_forma), len(linhas_fornec))
         linha_altura = 4.5 * mm
 
@@ -244,8 +245,8 @@ def generate_pdf_report(
             texto_fornec = linhas_fornec[idx_linha] if idx_linha < len(linhas_fornec) else ""
             c.drawString(x_margin, y, data if idx_linha == 0 else "")
             c.drawString(x_margin + 2.0 * cm, y, texto_tipo)
-            c.drawString(x_margin + 7.2 * cm, y, texto_forma)
-            c.drawString(x_margin + 9.8 * cm, y, texto_fornec)
+            c.drawString(x_margin + 7.0 * cm, y, texto_forma)
+            c.drawString(x_margin + 9.5 * cm, y, texto_fornec)
             if idx_linha == 0:
                 c.drawRightString(width - x_margin, y, valor)
             y -= linha_altura
