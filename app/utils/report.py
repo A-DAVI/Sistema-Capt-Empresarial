@@ -98,6 +98,34 @@ def generate_pdf_report(
         output = workspace_path(output)
     output.parent.mkdir(parents=True, exist_ok=True)
 
+    def wrap_text(texto: str, limite: int) -> list[str]:
+        """Quebra texto em linhas curtas sem estourar coluna."""
+        if not texto:
+            return [""]
+        palavras = str(texto).split()
+        linhas: list[str] = []
+        atual = ""
+        for palavra in palavras:
+            candidato = (atual + " " + palavra).strip() if atual else palavra
+            if len(candidato) <= limite:
+                atual = candidato
+            else:
+                if atual:
+                    linhas.append(atual)
+                # palavra muito longa: fatiar
+                if len(palavra) > limite:
+                    fatias = [palavra[i : i + limite] for i in range(0, len(palavra), limite)]
+                    if fatias:
+                        linhas.append(fatias[0])
+                        for resto in fatias[1:]:
+                            linhas.append(resto)
+                        atual = ""
+                else:
+                    atual = palavra
+        if atual or not linhas:
+            linhas.append(atual)
+        return linhas
+
     canvas_class = NumberedCanvas or canvas.Canvas
     c = canvas_class(str(output), pagesize=A4)
 
@@ -199,17 +227,30 @@ def generate_pdf_report(
             y = desenhar_cabecalho_tabela(height - 3 * cm, "Continuação - Detalhamento das Despesas")
 
         data = gasto.get("data", "")
-        tipo = str(gasto.get("tipo", "") or "")[:32]
-        forma = str(gasto.get("forma_pagamento", "") or "")[:18]
-        fornecedor = str(gasto.get("fornecedor", "") or "")[:40]
+        tipo = str(gasto.get("tipo", "") or "")
+        forma = str(gasto.get("forma_pagamento", "") or "")
+        fornecedor = str(gasto.get("fornecedor", "") or "")
         valor = format_brl(float(gasto.get("valor", 0) or 0))
 
-        c.drawString(x_margin, y, data)
-        c.drawString(x_margin + 2.0 * cm, y, tipo)
-        c.drawString(x_margin + 7.2 * cm, y, forma)
-        c.drawString(x_margin + 9.8 * cm, y, fornecedor)
-        c.drawRightString(width - x_margin, y, valor)
-        y -= 6 * mm
+        linhas_tipo = wrap_text(tipo, 32)
+        linhas_forma = wrap_text(forma, 18)
+        linhas_fornec = wrap_text(fornecedor, 38)
+        linhas = max(len(linhas_tipo), len(linhas_forma), len(linhas_fornec))
+        linha_altura = 4.5 * mm
+
+        for idx_linha in range(linhas):
+            texto_tipo = linhas_tipo[idx_linha] if idx_linha < len(linhas_tipo) else ""
+            texto_forma = linhas_forma[idx_linha] if idx_linha < len(linhas_forma) else ""
+            texto_fornec = linhas_fornec[idx_linha] if idx_linha < len(linhas_fornec) else ""
+            c.drawString(x_margin, y, data if idx_linha == 0 else "")
+            c.drawString(x_margin + 2.0 * cm, y, texto_tipo)
+            c.drawString(x_margin + 7.2 * cm, y, texto_forma)
+            c.drawString(x_margin + 9.8 * cm, y, texto_fornec)
+            if idx_linha == 0:
+                c.drawRightString(width - x_margin, y, valor)
+            y -= linha_altura
+
+        y -= 2 * mm  # espaçamento extra entre linhas
 
     c.save()
     return str(output)
