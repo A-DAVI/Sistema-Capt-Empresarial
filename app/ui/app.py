@@ -1616,7 +1616,7 @@ class ControleGastosApp(ctk.CTk):
 
                 values=self.tipos_despesa,
 
-                height=40,
+                height=50,
 
                 font=self.fonts['label'],
 
