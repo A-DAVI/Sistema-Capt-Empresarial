@@ -11,7 +11,7 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).parent
 DIST_DIR = PROJECT_ROOT / "dist"
 BUILD_DIR = PROJECT_ROOT / "build"
-OUTPUT_NAME = "CaptacaoEmpresarial14D"
+OUTPUT_NAME = "Controle-GRUPO14D"
 
 
 def _run_pyinstaller() -> None:
