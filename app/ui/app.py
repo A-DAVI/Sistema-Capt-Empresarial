@@ -3636,7 +3636,11 @@ class ControleGastosApp(ctk.CTk):
                 writer = csv.writer(csvfile, delimiter=";")
                 writer.writerow(["Data", "Tipo", "Forma", "Valor", "Fornecedor"])
                 for gasto in registros_validos:
-                    fornecedor_csv = str(gasto.get("fornecedor") or "").strip().upper()
+                    fornecedor_bruto = gasto.get("fornecedor")
+                    fornecedor_csv = (
+                        fornecedor_bruto if isinstance(fornecedor_bruto, str) else ""
+                    )
+                    fornecedor_csv = fornecedor_csv.strip().upper()
                     writer.writerow([
                         gasto.get("data", ""),
                         gasto.get("tipo", ""),
