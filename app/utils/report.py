@@ -202,7 +202,7 @@ def generate_pdf_report(
         c.drawString(x_margin, y_pos, "Data")
         c.drawString(x_margin + 2.0 * cm, y_pos, "Tipo")
         c.drawString(x_margin + 7.0 * cm, y_pos, "Forma")
-        c.drawString(x_margin + 9.5 * cm, y_pos, "Fornecedor")
+        c.drawString(x_margin + 9.1 * cm, y_pos, "Fornecedor")
         c.drawRightString(width - x_margin, y_pos, "Valor (R$)")
         y_pos -= 4 * mm
         c.line(x_margin, y_pos, width - x_margin, y_pos)
@@ -246,7 +246,7 @@ def generate_pdf_report(
             c.drawString(x_margin, y, data if idx_linha == 0 else "")
             c.drawString(x_margin + 2.0 * cm, y, texto_tipo)
             c.drawString(x_margin + 7.0 * cm, y, texto_forma)
-            c.drawString(x_margin + 9.5 * cm, y, texto_fornec)
+            c.drawString(x_margin + 9.1 * cm, y, texto_fornec)
             if idx_linha == 0:
                 c.drawRightString(width - x_margin, y, valor)
             y -= linha_altura
