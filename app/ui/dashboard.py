@@ -226,20 +226,22 @@ def _criar_kpi(parent, titulo: str, valor: str, subtitulo: str | None = None, *,
     )
     card.grid_propagate(False)
     card.pack_propagate(False)
-    ctk.CTkLabel(
+    lbl_titulo = ctk.CTkLabel(
         card,
         text=titulo,
         font=FONT_KPI_LABEL,
         text_color=colors["text_secondary"],
         anchor="w",
-    ).pack(fill="x", padx=14, pady=(6, 2))
-    ctk.CTkLabel(
+    )
+    lbl_titulo.pack(fill="x", padx=14, pady=(6, 2))
+    lbl_valor = ctk.CTkLabel(
         card,
         text=valor,
         font=FONT_KPI_VALUE,
         text_color=cor_valor or colors["text_primary"],
         anchor="w",
-    ).pack(fill="x", padx=14, pady=(0, 0))
+    )
+    lbl_valor.pack(fill="x", padx=14, pady=(0, 0))
     if subtitulo:
         ctk.CTkLabel(
             card,
@@ -248,6 +250,8 @@ def _criar_kpi(parent, titulo: str, valor: str, subtitulo: str | None = None, *,
             text_color=colors["text_secondary"],
             anchor="w",
         ).pack(fill="x", padx=14, pady=(0, 12))
+    card.lbl_titulo = lbl_titulo  # type: ignore[attr-defined]
+    card.lbl_valor = lbl_valor  # type: ignore[attr-defined]
     return card
 
 
@@ -461,7 +465,7 @@ def abrir_dashboard(parent, empresa_path: Path):
     scroll.pack(fill="both", expand=True, padx=0, pady=0)
 
     # KPIs (grid 4 col)
-    kpi_data = _kpis(despesas)
+    kpi_data = calcular_kpi_idx(current_idx)
     kpi_wrap = ctk.CTkFrame(scroll, fg_color="transparent")
     kpi_wrap.pack(fill="x", padx=14, pady=(0, 12))
 
@@ -497,6 +501,19 @@ def abrir_dashboard(parent, empresa_path: Path):
     )
     card4.grid(row=0, column=3, sticky="nsew", padx=6, pady=4, ipady=2)
 
+    def atualizar_kpis(idx: int) -> None:
+        kpi = calcular_kpi_idx(idx)
+        card1.lbl_titulo.configure(text=f"Total do mês — {kpi['mes_atual_label']}")
+        card1.lbl_valor.configure(text=kpi["total_mes_atual"])
+        card2.lbl_titulo.configure(text=f"Total do mês anterior — {kpi['mes_anterior_label']}")
+        card2.lbl_valor.configure(text=kpi["total_mes_anterior"])
+        card3.lbl_valor.configure(
+            text=kpi["variacao"],
+            text_color=colors["success"] if kpi.get("variacao_up") else colors["danger"],
+        )
+        card4.lbl_valor.configure(text=kpi["maior_categoria"])
+    atualizar_kpis(current_idx)
+
     # Plots (somente pizza com legenda)
     plots_frame = ctk.CTkFrame(scroll, fg_color=colors["surface"], corner_radius=18)
     plots_frame.pack(fill="both", expand=True, padx=14, pady=12)
@@ -526,6 +543,43 @@ def abrir_dashboard(parent, empresa_path: Path):
             return "Sem dados"
         dt = datetime.strptime(meses_disponiveis[idx], "%Y-%m")
         return dt.strftime("%b/%Y")
+
+    agrupado = _agrupa_por_mes(despesas)
+
+    def calcular_kpi_idx(idx: int) -> dict[str, str | bool]:
+        if not meses_disponiveis:
+            return {
+                "mes_atual_label": "—",
+                "mes_anterior_label": "—",
+                "total_mes_atual": _fmt_brl(0.0),
+                "total_mes_anterior": _fmt_brl(0.0),
+                "variacao": "+0.0%",
+                "variacao_up": True,
+                "maior_categoria": "—",
+            }
+        atual_key = meses_disponiveis[idx]
+        prev_key = meses_disponiveis[idx - 1] if idx - 1 >= 0 else None
+        atual_total = agrupado.get(atual_key, 0.0)
+        prev_total = agrupado.get(prev_key, 0.0) if prev_key else 0.0
+        variacao = 0.0
+        if prev_total:
+            variacao = ((atual_total - prev_total) / prev_total) * 100
+        cats_mes = _total_por_categoria(despesas, atual_key)
+        maior_cat = max(cats_mes.items(), key=lambda x: x[1])[0] if cats_mes else "N/A"
+        def fmt_mes(chave: str | None) -> str:
+            if not chave:
+                return "—"
+            dt = datetime.strptime(chave, "%Y-%m")
+            return dt.strftime("%b/%Y")
+        return {
+            "mes_atual_label": fmt_mes(atual_key),
+            "mes_anterior_label": fmt_mes(prev_key),
+            "total_mes_atual": _fmt_brl(atual_total),
+            "total_mes_anterior": _fmt_brl(prev_total),
+            "variacao": f"{variacao:+.1f}%",
+            "variacao_up": variacao >= 0,
+            "maior_categoria": maior_cat,
+        }
 
     # estado do filtro
     selected_categories: set[str] = set(categorias_orig.keys())
@@ -559,6 +613,7 @@ def abrir_dashboard(parent, empresa_path: Path):
         selected_categories = set(categorias_orig.keys())
         atualizar_colors(categorias_orig)
         render_pie(categorias_orig)
+        atualizar_kpis(current_idx)
 
     btn_prev = ctk.CTkButton(
         month_nav,
