@@ -933,7 +933,7 @@ class ControleGastosApp(ctk.CTk):
         """Exibe ou oculta o campo de fornecedor conforme a necessidade."""
         if not hasattr(self, "fornecedor_fields"):
             return
-        ativo = bool(self.switch_fornecedor.get())
+        ativo = bool(getattr(self, "fornecedor_ativo", tk.IntVar(value=0)).get())
         try:
             if ativo:
                 self.fornecedor_fields.pack(fill="x", padx=12, pady=(0, 12))
@@ -980,7 +980,8 @@ class ControleGastosApp(ctk.CTk):
             if not lista.curselection():
                 return
             valor = lista.get(lista.curselection()[0])
-            self.switch_fornecedor.select()
+            if hasattr(self, "fornecedor_ativo"):
+                self.fornecedor_ativo.set(1)
             self.combo_fornecedor.set(valor)
             self._toggle_fornecedor()
             modal.destroy()
@@ -995,9 +996,9 @@ class ControleGastosApp(ctk.CTk):
         exige = tipo_atual in getattr(self, "categorias_requer_fornecedor", set())
         try:
             if exige:
-                self.switch_fornecedor.select()
+                self.fornecedor_ativo.set(1)
             else:
-                self.switch_fornecedor.deselect()
+                self.fornecedor_ativo.set(0)
                 self.combo_fornecedor.set("Selecione o fornecedor")
             self._toggle_fornecedor()
         except Exception:
@@ -1643,15 +1644,10 @@ class ControleGastosApp(ctk.CTk):
 
         )
 
-        # Seção de fornecedor (visível apenas quando a categoria exige).
-        self.switch_fornecedor = ctk.CTkSwitch(
-            formulario_frame,
-            text="Informar fornecedor",
-            font=self.fonts["subtitle"],
-            command=self._toggle_fornecedor,
-        )
-        self.switch_fornecedor.pack(fill="x", padx=12, pady=(4, 0))
+        # Controle interno para exibir fornecedor somente quando a categoria exige.
+        self.fornecedor_ativo = tk.IntVar(value=0)
 
+        # Seção de fornecedor (visível apenas quando a categoria exige).
         self.fornecedor_fields = ctk.CTkFrame(formulario_frame, fg_color="transparent")
         self.fornecedor_fields.pack(fill="x", padx=12, pady=(0, 12))
         ctk.CTkLabel(
@@ -2288,7 +2284,7 @@ class ControleGastosApp(ctk.CTk):
             return
 
         fornecedor = ""
-        if getattr(self, "switch_fornecedor", None) and self.switch_fornecedor.get():
+        if getattr(self, "fornecedor_ativo", tk.IntVar(value=0)).get():
             fornecedor = (self.combo_fornecedor.get() or "").strip()
 
         registro = {
@@ -2332,8 +2328,8 @@ class ControleGastosApp(ctk.CTk):
 
         self.entry_valor.delete(0, "end")
 
-        if getattr(self, "switch_fornecedor", None):
-            self.switch_fornecedor.deselect()
+        if getattr(self, "fornecedor_ativo", None) is not None:
+            self.fornecedor_ativo.set(0)
             self.combo_fornecedor.set("Selecione o fornecedor")
             try:
                 self._toggle_fornecedor()
