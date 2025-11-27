@@ -142,7 +142,7 @@ def _total_por_categoria(despesas: Iterable[dict], mes_ano: str | None = None) -
 def _total_por_fornecedor(despesas: Iterable[dict]) -> dict[str, float]:
     """Soma valores por fornecedor (normalizado)."""
     tot = defaultdict(float)
-    if despesas is None:
+    if not despesas:
         return {}
     for reg in despesas:
         nome = str(reg.get("fornecedor") or "").strip().upper()
