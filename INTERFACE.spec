@@ -50,7 +50,8 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon='logo.ico'
+    icon='logo.ico',
+    uac_admin=True,            # solicita execução como administrador
 )
 
 coll = COLLECT(
