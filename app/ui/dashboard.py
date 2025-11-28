@@ -1,6 +1,6 @@
-"""Dashboard executivo de despesas (CustomTkinter + Matplotlib).
+﻿"""Dashboard executivo de despesas (CustomTkinter + Matplotlib).
 
-API pública:
+API pÃºblica:
     abrir_dashboard(parent, empresa_path: Path)
 """
 
@@ -15,6 +15,8 @@ from typing import Iterable
 import customtkinter as ctk
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
+from app.data.repository import JsonDataRepository
+from app.services.dashboard import agrupa_por_mes as svc_agrupa_por_mes, total_por_categoria as svc_total_por_categoria, dashboard_dto
 
 # Paleta expandida para garantir cores distintas nas categorias
 PIE_PALETTE = [
@@ -83,13 +85,10 @@ def _palette() -> dict[str, str]:
 # ---------------------- Dados e KPIs ---------------------- #
 def _ler_despesas(empresa_path: Path) -> list[dict]:
     try:
-        raw = Path(empresa_path).read_text(encoding="utf-8")
-        data = json.loads(raw)
-        if isinstance(data, list):
-            return data
+        repo = JsonDataRepository(empresa_path)
+        return repo.load()
     except Exception:
         return []
-    return []
 
 
 def _parse_data(reg: dict) -> datetime | None:
@@ -103,17 +102,7 @@ def _parse_data(reg: dict) -> datetime | None:
 
 
 def _agrupa_por_mes(despesas: Iterable[dict]) -> OrderedDict[str, float]:
-    soma = defaultdict(float)
-    for reg in despesas:
-        dt = _parse_data(reg)
-        if not dt:
-            continue
-        chave = dt.strftime("%Y-%m")
-        try:
-            soma[chave] += float(reg.get("valor", 0) or 0)
-        except Exception:
-            continue
-    return OrderedDict(sorted(soma.items()))
+    return svc_agrupa_por_mes(despesas)
 
 
 def _ultimos_meses(dados: OrderedDict[str, float], limite: int = 6) -> OrderedDict[str, float]:
@@ -124,19 +113,7 @@ def _ultimos_meses(dados: OrderedDict[str, float], limite: int = 6) -> OrderedDi
 
 
 def _total_por_categoria(despesas: Iterable[dict], mes_ano: str | None = None) -> dict[str, float]:
-    tot = defaultdict(float)
-    for reg in despesas:
-        dt = _parse_data(reg)
-        if not dt:
-            continue
-        if mes_ano and dt.strftime("%Y-%m") != mes_ano:
-            continue
-        cat = str(reg.get("tipo") or reg.get("categoria") or "Sem categoria")
-        try:
-            tot[cat] += float(reg.get("valor", 0) or 0)
-        except Exception:
-            continue
-    return dict(tot)
+    return svc_total_por_categoria(despesas, mes_ano)
 
 
 def _total_por_fornecedor(despesas: Iterable[dict]) -> dict[str, float]:
@@ -180,7 +157,7 @@ def _kpis(despesas: list[dict]) -> dict[str, str]:
 
     def fmt_mes(chave: str | None) -> str:
         if not chave:
-            return "—"
+            return "â€”"
         dt = datetime.strptime(chave, "%Y-%m")
         return dt.strftime("%b/%Y")
 
@@ -256,7 +233,7 @@ def _criar_kpi(parent, titulo: str, valor: str, subtitulo: str | None = None, *,
     return card
 
 
-# ---------------------- Gráficos ---------------------- #
+# ---------------------- GrÃ¡ficos ---------------------- #
 def _fmt_brl(v: float) -> str:
     return f"R$ {v:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
 
@@ -284,7 +261,7 @@ def _plot_barras(ax, dados: OrderedDict[str, float], colors: dict[str, str]):
         color=colors["text_secondary"],
         rotation=90,
     )
-    ax.set_title("Gastos por mês", color=colors["text_primary"], pad=12, fontsize=12, fontweight="bold")
+    ax.set_title("Gastos por mÃªs", color=colors["text_primary"], pad=12, fontsize=12, fontweight="bold")
     _estilizar_axes(ax, colors)
 
 
@@ -296,7 +273,7 @@ def _plot_pizza(ax, categorias: dict[str, float], colors: dict[str, str], color_
     labels = list(categorias.keys())
     valores = list(categorias.values())
     total = sum(valores) or 1.0
-    # Explode zero para não destacar fatias pequenas
+    # Explode zero para nÃ£o destacar fatias pequenas
     explode = [0.0 for _ in valores]
     palette = colors.get("pie")
     if not palette:
@@ -363,7 +340,7 @@ def _plot_pizza(ax, categorias: dict[str, float], colors: dict[str, str], color_
     ax.figure.canvas.mpl_connect("motion_notify_event", _hover)
 
     ax.text(0, 0, f"{_fmt_brl(total)}\nTotal", ha="center", va="center", color=colors["text_primary"], fontsize=11, fontweight="bold")
-    ax.set_title("Distribuição por categoria", color=colors["text_primary"], pad=10, fontsize=12, fontweight="bold")
+    ax.set_title("DistribuiÃ§Ã£o por categoria", color=colors["text_primary"], pad=10, fontsize=12, fontweight="bold")
     _estilizar_axes(ax, colors)
     return legend_items
 
@@ -411,12 +388,12 @@ def _plot_linha(ax, dados: OrderedDict[str, float], colors: dict[str, str]):
         acumulado.append(soma)
     ax.plot(labels, acumulado, marker="o", color=colors["line"], linewidth=2.2, markersize=6)
     ax.fill_between(range(len(acumulado)), acumulado, color=colors["accent_muted"], alpha=0.18)
-    ax.set_title("Evolução acumulada", color=colors["text_primary"], pad=12, fontsize=12, fontweight="bold")
+    ax.set_title("EvoluÃ§Ã£o acumulada", color=colors["text_primary"], pad=12, fontsize=12, fontweight="bold")
     _estilizar_axes(ax, colors)
 
 
 def _criar_figuras(frame_plots, dados_mes, categorias_mes, linha_total, colors):
-    # Mantido por compatibilidade, embora não seja chamado atualmente
+    # Mantido por compatibilidade, embora nÃ£o seja chamado atualmente
     fig = Figure(figsize=(8, 4), dpi=100, facecolor=colors["surface"])
     ax = fig.add_subplot(1, 1, 1, facecolor=colors["panel"])
     _plot_pizza(ax, categorias_mes, colors)
@@ -445,134 +422,87 @@ def abrir_dashboard(parent, empresa_path: Path):
     janela.grab_set()
     janela.transient(parent)
 
-    # Cabeçalho
+    # CabeÃ§alho
     header = ctk.CTkFrame(janela, fg_color="transparent")
     header.pack(fill="x", padx=16, pady=(16, 12))
     ctk.CTkLabel(
         header,
-        text=f"Centro de controle de gastos — {Path(empresa_path).stem}",
+        text=f"Centro de controle de gastos â€” {Path(empresa_path).stem}",
         font=FONT_TITLE,
         text_color=colors["text_primary"],
     ).pack(anchor="w")
     ctk.CTkLabel(
         header,
-        text="Visão consolidada das suas despesas.",
+        text="VisÃ£o consolidada das suas despesas.",
         font=FONT_SUBTITLE,
         text_color=colors["text_secondary"],
     ).pack(anchor="w", pady=(2, 0))
 
-    # Scroll container para caber gráfico inteiro
+    # Scroll container para caber grÃ¡fico inteiro
     scroll = ctk.CTkScrollableFrame(janela, fg_color="transparent")
     scroll.pack(fill="both", expand=True, padx=0, pady=0)
 
-    # meses disponíveis e estado atual
-    meses_disponiveis = list(_agrupa_por_mes(despesas).keys())
-    if not meses_disponiveis:
-        meses_disponiveis = []
-    current_idx = len(meses_disponiveis) - 1 if meses_disponiveis else 0
+    # Estado inicial via serviÃ§o
+    dto = dashboard_dto(despesas)
+    meses_disponiveis = list(dto["meses"])
+    current_idx = dto["mes_idx"]
+    categorias_orig: dict[str, float] = dto["categorias"] or {}
+    kpi_data = dto["kpis"]
 
     # mapa de cores para todas as categorias do dataset
     todas_categorias = sorted({str(reg.get("tipo") or reg.get("categoria") or "Sem categoria") for reg in despesas})
     palette_base = colors["pie"]
     color_map_global = {nome: palette_base[i % len(palette_base)] for i, nome in enumerate(todas_categorias)}
-
-    agrupado = _agrupa_por_mes(despesas)
-
-    def calcular_kpi_idx(idx: int) -> dict[str, str | bool]:
-        if not meses_disponiveis:
-            return {
-                "mes_atual_label": "—",
-                "mes_anterior_label": "—",
-                "total_mes_atual": _fmt_brl(0.0),
-                "total_mes_anterior": _fmt_brl(0.0),
-                "variacao": "+0.0%",
-                "variacao_up": True,
-                "maior_categoria": "—",
-            }
-        atual_key = meses_disponiveis[idx]
-        prev_key = meses_disponiveis[idx - 1] if idx - 1 >= 0 else None
-        atual_total = agrupado.get(atual_key, 0.0)
-        prev_total = agrupado.get(prev_key, 0.0) if prev_key else 0.0
-        variacao = 0.0
-        if prev_total:
-            variacao = ((atual_total - prev_total) / prev_total) * 100
-        cats_mes = _total_por_categoria(despesas, atual_key)
-        maior_cat = max(cats_mes.items(), key=lambda x: x[1])[0] if cats_mes else "N/A"
-
-        def fmt_mes(chave: str | None) -> str:
-            if not chave:
-                return "—"
-            dt = datetime.strptime(chave, "%Y-%m")
-            return dt.strftime("%b/%Y")
-
-        return {
-            "mes_atual_label": fmt_mes(atual_key),
-            "mes_anterior_label": fmt_mes(prev_key),
-            "total_mes_atual": _fmt_brl(atual_total),
-            "total_mes_anterior": _fmt_brl(prev_total),
-            "variacao": f"{variacao:+.1f}%",
-            "variacao_up": variacao >= 0,
-            "maior_categoria": maior_cat,
-        }
-
-    if meses_disponiveis:
-        mes_atual = meses_disponiveis[current_idx]
-        categorias_orig: dict[str, float] = _total_por_categoria(despesas, mes_atual)
-        if not categorias_orig:
-            categorias_orig = _total_por_categoria(despesas, None)
-    else:
-        categorias_orig = _total_por_categoria(despesas, None)
     color_map: dict[str, str] = {nome: color_map_global.get(nome, palette_base[i % len(palette_base)]) for i, nome in enumerate(categorias_orig.keys())}
 
     # KPIs (grid 4 col)
-    kpi_data = calcular_kpi_idx(current_idx)
     kpi_wrap = ctk.CTkFrame(scroll, fg_color="transparent")
     kpi_wrap.pack(fill="x", padx=12, pady=(0, 8))
-
     for i in range(4):
         kpi_wrap.grid_columnconfigure(i, weight=1)
 
     card1 = _criar_kpi(
         kpi_wrap,
-        f"Total do mês — {kpi_data['mes_atual_label']}",
+        f"Total do mÃªs â€” {kpi_data['mes_atual_label']}",
         kpi_data["total_mes_atual"],
     )
     card1.grid(row=0, column=0, sticky="nsew", padx=4, pady=2, ipady=0)
 
     card2 = _criar_kpi(
         kpi_wrap,
-        f"Total do mês anterior — {kpi_data['mes_anterior_label']}",
+        f"Total do mÃªs anterior â€” {kpi_data['mes_anterior_label']}",
         kpi_data["total_mes_anterior"],
     )
     card2.grid(row=0, column=1, sticky="nsew", padx=4, pady=2, ipady=0)
 
     card3 = _criar_kpi(
         kpi_wrap,
-        "Variação frente ao mês anterior",
+        "VariaÃ§Ã£o frente ao mÃªs anterior",
         kpi_data["variacao"],
-        cor_valor=colors["success"] if kpi_data["variacao_up"] else colors["danger"],
+        cor_valor=colors["success"] if kpi_data.get("variacao_up") else colors["danger"],
     )
     card3.grid(row=0, column=2, sticky="nsew", padx=4, pady=2, ipady=0)
 
     card4 = _criar_kpi(
         kpi_wrap,
-        "Despesa com maior impacto no mês",
+        "Despesa com maior impacto no mÃªs",
         kpi_data["maior_categoria"],
     )
     card4.grid(row=0, column=3, sticky="nsew", padx=4, pady=2, ipady=0)
 
-    def atualizar_kpis(idx: int) -> None:
-        kpi = calcular_kpi_idx(idx)
-        card1.lbl_titulo.configure(text=f"Total do mês — {kpi['mes_atual_label']}")
+    def atualizar_kpis() -> None:
+        kpi = kpi_data
+        card1.lbl_titulo.configure(text=f"Total do mÃªs â€” {kpi['mes_atual_label']}")
         card1.lbl_valor.configure(text=kpi["total_mes_atual"])
-        card2.lbl_titulo.configure(text=f"Total do mês anterior — {kpi['mes_anterior_label']}")
+        card2.lbl_titulo.configure(text=f"Total do mÃªs anterior â€” {kpi['mes_anterior_label']}")
         card2.lbl_valor.configure(text=kpi["total_mes_anterior"])
         card3.lbl_valor.configure(
             text=kpi["variacao"],
             text_color=colors["success"] if kpi.get("variacao_up") else colors["danger"],
         )
         card4.lbl_valor.configure(text=kpi["maior_categoria"])
-    atualizar_kpis(current_idx)
+
+    atualizar_kpis()
 
     # Plots (somente pizza com legenda)
     plots_frame = ctk.CTkFrame(scroll, fg_color=colors["surface"], corner_radius=18)
@@ -584,51 +514,14 @@ def abrir_dashboard(parent, empresa_path: Path):
         dt = datetime.strptime(meses_disponiveis[idx], "%Y-%m")
         return dt.strftime("%b/%Y")
 
-    agrupado = _agrupa_por_mes(despesas)
-
-    def calcular_kpi_idx(idx: int) -> dict[str, str | bool]:
-        if not meses_disponiveis:
-            return {
-                "mes_atual_label": "—",
-                "mes_anterior_label": "—",
-                "total_mes_atual": _fmt_brl(0.0),
-                "total_mes_anterior": _fmt_brl(0.0),
-                "variacao": "+0.0%",
-                "variacao_up": True,
-                "maior_categoria": "—",
-            }
-        atual_key = meses_disponiveis[idx]
-        prev_key = meses_disponiveis[idx - 1] if idx - 1 >= 0 else None
-        atual_total = agrupado.get(atual_key, 0.0)
-        prev_total = agrupado.get(prev_key, 0.0) if prev_key else 0.0
-        variacao = 0.0
-        if prev_total:
-            variacao = ((atual_total - prev_total) / prev_total) * 100
-        cats_mes = _total_por_categoria(despesas, atual_key)
-        maior_cat = max(cats_mes.items(), key=lambda x: x[1])[0] if cats_mes else "N/A"
-        def fmt_mes(chave: str | None) -> str:
-            if not chave:
-                return "—"
-            dt = datetime.strptime(chave, "%Y-%m")
-            return dt.strftime("%b/%Y")
-        return {
-            "mes_atual_label": fmt_mes(atual_key),
-            "mes_anterior_label": fmt_mes(prev_key),
-            "total_mes_atual": _fmt_brl(atual_total),
-            "total_mes_anterior": _fmt_brl(prev_total),
-            "variacao": f"{variacao:+.1f}%",
-            "variacao_up": variacao >= 0,
-            "maior_categoria": maior_cat,
-        }
-
-    # estado do filtro
+# estado do filtro
     selected_categories: set[str] = set(categorias_orig.keys())
 
-    # header de filtros dentro do frame de gráficos
+    # header de filtros dentro do frame de grÃ¡ficos
     toolbar = ctk.CTkFrame(plots_frame, fg_color="transparent")
     toolbar.pack(fill="x", padx=10, pady=(8, 0))
 
-    # Controles de navegação de mês
+    # Controles de navegaÃ§Ã£o de mÃªs
     month_nav = ctk.CTkFrame(toolbar, fg_color="transparent")
     month_nav.pack(side="left", padx=(0, 8))
 
@@ -640,20 +533,20 @@ def abrir_dashboard(parent, empresa_path: Path):
     )
 
     def mudar_mes(delta: int):
-        nonlocal current_idx, categorias_orig, selected_categories
+        nonlocal current_idx, categorias_orig, selected_categories, meses_disponiveis, kpi_data
         if not meses_disponiveis:
             return
         new_idx = max(0, min(len(meses_disponiveis) - 1, current_idx + delta))
-        if new_idx == current_idx:
-            return
-        current_idx = new_idx
-        lbl_mes.configure(text=mes_label(current_idx))
-        mes_atual = meses_disponiveis[current_idx]
-        categorias_orig = _total_por_categoria(despesas, mes_atual)
+        dto_local = dashboard_dto(despesas, new_idx)
+        meses_disponiveis = list(dto_local["meses"])
+        current_idx = dto_local["mes_idx"]
+        categorias_orig = dto_local["categorias"] or {}
+        kpi_data = dto_local["kpis"]
         selected_categories = set(categorias_orig.keys())
         atualizar_colors(categorias_orig)
+        lbl_mes.configure(text=mes_label(current_idx))
         render_pie(categorias_orig)
-        atualizar_kpis(current_idx)
+        atualizar_kpis()
 
     btn_prev = ctk.CTkButton(
         month_nav,
@@ -683,13 +576,13 @@ def abrir_dashboard(parent, empresa_path: Path):
 
     ctk.CTkLabel(
         toolbar,
-        text="Visão por categoria",
+        text="VisÃ£o por categoria",
         font=FONT_KPI_TITLE,
         text_color=colors["text_primary"],
     ).pack(side="left", padx=6)
 
     def render_pie(cats: dict[str, float]):
-        # destrói canvas anterior, se existir
+        # destrÃ³i canvas anterior, se existir
         nonlocal canvas_pie
         if canvas_pie:
             try:
@@ -793,7 +686,7 @@ def abrir_dashboard(parent, empresa_path: Path):
         corner_radius=10,
     ).pack(side="right")
 
-    # corpo do gráfico + legenda em duas colunas
+    # corpo do grÃ¡fico + legenda em duas colunas
     body = ctk.CTkFrame(plots_frame, fg_color=colors["surface"])
     body.pack(fill="both", expand=True, padx=8, pady=(6, 10))
     body.grid_columnconfigure(0, weight=2)
@@ -824,7 +717,7 @@ def abrir_dashboard(parent, empresa_path: Path):
         for nome, val, pct, cor in sorted(items, key=lambda x: x[1], reverse=True):
             row = ctk.CTkFrame(legend_frame, fg_color="transparent")
             row.pack(fill="x", padx=10, pady=4)
-            ctk.CTkLabel(row, text="●", font=ctk.CTkFont(size=16), text_color=cor).pack(side="left", padx=(0, 8))
+            ctk.CTkLabel(row, text="â—", font=ctk.CTkFont(size=16), text_color=cor).pack(side="left", padx=(0, 8))
             text_container = ctk.CTkFrame(row, fg_color="transparent")
             text_container.pack(side="left", fill="x", expand=True)
             ctk.CTkLabel(
@@ -850,7 +743,7 @@ def abrir_dashboard(parent, empresa_path: Path):
 
     def atualizar_colors(cats_ref: dict[str, float]):
         nonlocal color_map
-        # recalcula color_map baseado no global para consistência
+        # recalcula color_map baseado no global para consistÃªncia
         color_map = {nome: color_map_global.get(nome, palette_base[i % len(palette_base)]) for i, nome in enumerate(cats_ref.keys())}
 
     def render_pie(cats: dict[str, float]):
@@ -875,10 +768,11 @@ def abrir_dashboard(parent, empresa_path: Path):
 
 
 if __name__ == "__main__":
-    # Execução isolada para depuração manual
+    # ExecuÃ§Ã£o isolada para depuraÃ§Ã£o manual
     ctk.set_appearance_mode("dark")
     root = ctk.CTk()
     root.withdraw()
     arquivo = Path.cwd() / "gastos_empresa.json"
     abrir_dashboard(root, arquivo)
     root.mainloop()
+

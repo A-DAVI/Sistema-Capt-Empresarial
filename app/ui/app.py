@@ -18,9 +18,10 @@ from typing import Any, Iterable
 from app.utils.formatting import format_brl, validar_data, validar_valor
 
 from app.utils.report import generate_pdf_report
+from app.services.export import export_pdf, export_csv
 from app.ui.dashboard import abrir_dashboard
 
-from app.data.store import load_data, save_data
+from app.data.repository import JsonDataRepository
 
 from app.ui.widgets import ReadOnlyComboBox
 from app.utils.paths import runtime_path, workspace_path
@@ -98,7 +99,8 @@ class ControleGastosApp(ctk.CTk):
 
         self.empresa_slug = self._gerar_slug(self.empresa_razao or self.empresa_nome or self.empresa_id)
 
-        self.gastos: list[dict[str, Any]] = load_data(self.arquivo_dados)
+        self.repo = JsonDataRepository(self.arquivo_dados)
+        self.gastos: list[dict[str, Any]] = self.repo.load()
         self.fornecedores: list[str] = sorted({str(g.get("fornecedor") or "").strip() for g in self.gastos if (g.get("fornecedor") or "").strip()})
 
         # Estado janela de gestão (lista com filtros por campos simples)
@@ -2580,7 +2582,7 @@ class ControleGastosApp(ctk.CTk):
 
         self.gastos.append(registro)
 
-        if not save_data(self.arquivo_dados, self.gastos):
+        if not self.repo.save(self.gastos):
 
             messagebox.showerror("Erro", "Não foi possível salvar os dados em disco.")
 
@@ -3481,7 +3483,7 @@ class ControleGastosApp(ctk.CTk):
 
         del self.gastos[indice]
 
-        save_ok = save_data(self.arquivo_dados, self.gastos)
+        save_ok = self.repo.save(self.gastos)
 
         self.atualizar_stats()
 
