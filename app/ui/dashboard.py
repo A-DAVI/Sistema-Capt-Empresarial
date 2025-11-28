@@ -199,8 +199,8 @@ def _kpis(despesas: list[dict]) -> dict[str, str]:
 FONT_TITLE = ("Segoe UI Semibold", 22)
 FONT_SUBTITLE = ("Segoe UI", 12)
 FONT_KPI_TITLE = ("Segoe UI Semibold", 13)
-FONT_KPI_VALUE = ("Segoe UI Semibold", 18)
-FONT_KPI_LABEL = ("Segoe UI", 10)
+FONT_KPI_VALUE = ("Segoe UI Semibold", 16)
+FONT_KPI_LABEL = ("Segoe UI", 9)
 
 
 def _center(win: ctk.CTkToplevel | ctk.CTk, w: int = 1150, h: int = 760) -> None:
@@ -220,10 +220,10 @@ def _criar_kpi(parent, titulo: str, valor: str, subtitulo: str | None = None, *,
     card = ctk.CTkFrame(
         parent,
         fg_color=colors["card"],
-        corner_radius=10,
+        corner_radius=8,
         border_width=1,
         border_color=colors["divider"],
-        height=110,
+        height=96,
     )
     card.grid_propagate(False)
     card.pack_propagate(False)
@@ -234,7 +234,7 @@ def _criar_kpi(parent, titulo: str, valor: str, subtitulo: str | None = None, *,
         text_color=colors["text_secondary"],
         anchor="w",
     )
-    lbl_titulo.pack(fill="x", padx=12, pady=(4, 1))
+    lbl_titulo.pack(fill="x", padx=10, pady=(2, 1))
     lbl_valor = ctk.CTkLabel(
         card,
         text=valor,
@@ -242,7 +242,7 @@ def _criar_kpi(parent, titulo: str, valor: str, subtitulo: str | None = None, *,
         text_color=cor_valor or colors["text_primary"],
         anchor="w",
     )
-    lbl_valor.pack(fill="x", padx=12, pady=(0, 1))
+    lbl_valor.pack(fill="x", padx=10, pady=(0, 1))
     if subtitulo:
         ctk.CTkLabel(
             card,
@@ -250,7 +250,7 @@ def _criar_kpi(parent, titulo: str, valor: str, subtitulo: str | None = None, *,
             font=FONT_KPI_LABEL,
             text_color=colors["text_secondary"],
             anchor="w",
-        ).pack(fill="x", padx=12, pady=(0, 6))
+        ).pack(fill="x", padx=10, pady=(0, 4))
     card.lbl_titulo = lbl_titulo  # type: ignore[attr-defined]
     card.lbl_valor = lbl_valor  # type: ignore[attr-defined]
     return card
