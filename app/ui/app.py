@@ -3483,7 +3483,7 @@ class ControleGastosApp(ctk.CTk):
             return
         destino_dir_path = Path(destino_dir)
         destino_dir_path.mkdir(parents=True, exist_ok=True)
-        nome_arquivo = f"CSV - GRUPO14D.csv"
+        nome_arquivo = f"CSV - GRUPO14D - {self.empresa_slug}.csv"
         caminho_destino = destino_dir_path / nome_arquivo
         try:
             import csv

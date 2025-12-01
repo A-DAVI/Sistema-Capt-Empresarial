@@ -86,7 +86,8 @@ class EmpresaSelector(ctk.CTk):
         self.selected_info: dict[str, str] | None = None
 
         self.empresas = EMPRESAS_PRE_CONFIGURADAS.copy()
-        self.empresas_map = {item["nome_fantasia"]: item for item in self.empresas}
+        # Usar razão social como display
+        self.empresas_map = {item["razao_social"]: item for item in self.empresas}
 
         self._construir_layout()
         self._priorizar()
@@ -179,7 +180,7 @@ class EmpresaSelector(ctk.CTk):
         )
         self.combo_empresas.pack(fill="x", padx=40, pady=(0, 20))
         if self.empresas:
-            self.combo_empresas.set(self.empresas[0]["nome_fantasia"])
+            self.combo_empresas.set(self.empresas[0]["razao_social"])
 
         botoes = ctk.CTkFrame(container, fg_color="transparent")
         botoes.pack(fill="x", padx=40, pady=(10, 0))
