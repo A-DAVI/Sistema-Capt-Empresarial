@@ -81,8 +81,7 @@ class ConfigManager:
 
     @property
     def theme(self) -> str:
-        tema = str(self._data.get("tema", "dark")).lower()
-        return "dark" if tema not in {"dark", "light"} else tema
+        return "light"
 
     @property
     def logo_path(self) -> Path:

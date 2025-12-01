@@ -25,20 +25,6 @@ from app.data.store import load_data, save_data
 from app.ui.widgets import ReadOnlyComboBox
 from app.utils.paths import runtime_path, workspace_path
 
-DARK_COLORS = {
-    "background": "#0B0B0B",
-    "surface": "#121212",
-    "panel": "#1A1A1A",
-    "accent": "#007BFF",
-    "accent_hover": "#0056B3",
-    "neutral": "#1F1F1F",
-    "text_primary": "#FFFFFF",
-    "text_secondary": "#CCCCCC",
-    "text_muted": "#8A8A8A",
-    "success": "#1ABC9C",
-    "danger": "#C0392B",
-}
-
 LIGHT_COLORS = {
     "background": "#F5F7FA",
     "surface": "#FFFFFF",
@@ -55,7 +41,7 @@ LIGHT_COLORS = {
 
 BRAND_COLORS: dict[str, str] = {}
 
-ctk.set_default_color_theme("dark-blue")
+ctk.set_default_color_theme("blue")
 FONT_FAMILY = "Segoe UI"
 
 USE_EMOJI = False
@@ -66,12 +52,12 @@ def e(txt: str, emoji: str) -> str:
 
 class ControleGastosApp(ctk.CTk):
 
-    def __init__(self, arquivo_dados: str | None = None, empresa_nome: str | None = None, empresa_id: str | None = None, empresa_razao: str | None = None, *, theme_mode: str = "dark", config_path: str | None = None):
+    def __init__(self, arquivo_dados: str | None = None, empresa_nome: str | None = None, empresa_id: str | None = None, empresa_razao: str | None = None, *, theme_mode: str = "light", config_path: str | None = None):
 
         super().__init__()
 
-        # tema inicial
-        self.theme_mode = theme_mode if theme_mode in ("dark", "light") else "dark"
+        # tema fixo (apenas claro)
+        self.theme_mode = "light"
         self.config_path = config_path
         self._apply_theme(self.theme_mode)
 
@@ -343,7 +329,7 @@ class ControleGastosApp(ctk.CTk):
 
         return widget
 
-    def _criar_card_resumo(self, parent: ctk.CTkFrame, titulo: str, valor: str, column: int):
+    def _criar_card_resumo(self, parent: ctk.CTkFrame, titulo: str, valor: str, column: int, extra_widget=None):
 
         card = ctk.CTkFrame(
 
@@ -385,7 +371,13 @@ class ControleGastosApp(ctk.CTk):
 
         )
 
-        valor_label.pack(anchor="w", padx=16, pady=(0, 16))
+        valor_label.pack(anchor="w", padx=16, pady=(0, 8))
+
+        if extra_widget:
+            try:
+                extra_widget(card).pack(anchor="e", padx=12, pady=(0, 12))
+            except Exception:
+                pass
 
         return valor_label
 
@@ -416,13 +408,9 @@ class ControleGastosApp(ctk.CTk):
 
     def _apply_theme(self, mode: str):
 
-        palette = DARK_COLORS if mode == "dark" else LIGHT_COLORS
-
         BRAND_COLORS.clear()
-
-        BRAND_COLORS.update(palette)
-
-        ctk.set_appearance_mode("dark" if mode == "dark" else "light")
+        BRAND_COLORS.update(LIGHT_COLORS)
+        ctk.set_appearance_mode("light")
 
         try:
 
@@ -432,39 +420,6 @@ class ControleGastosApp(ctk.CTk):
 
             pass
 
-    def _theme_label(self) -> str:
-
-        return "Tema claro" if self.theme_mode == "dark" else "Tema escuro"
-
-    def _toggle_theme(self):
-
-        self.theme_mode = "light" if self.theme_mode == "dark" else "dark"
-
-        self._apply_theme(self.theme_mode)
-
-        # fecha janelas secundarias antes de redesenhar para evitar "quadros" antigos
-        self._fechar_janelas_secundarias()
-
-        # recria interface com nova paleta
-        self._reset_ui()
-
-        self.criar_widgets()
-
-        self._aplicar_icone_janela()
-
-        try:
-            self.btn_theme.configure(text=self._theme_label())
-        except Exception:
-            pass
-
-        self.update_idletasks()
-        try:
-            if self.scroll_container and hasattr(self.scroll_container, "_parent_canvas"):
-                self.scroll_container._parent_canvas.yview_moveto(0)  # type: ignore[attr-defined]
-        except Exception:
-            pass
-
-        self._persistir_tema()
 
     def _fechar_janelas_secundarias(self):
 
@@ -1338,8 +1293,6 @@ class ControleGastosApp(ctk.CTk):
 
         *,
 
-        allow_clear: bool = False,
-
         parent: ctk.CTk | ctk.CTkToplevel | None = None,
 
     ):
@@ -1563,7 +1516,23 @@ class ControleGastosApp(ctk.CTk):
 
             botoes,
 
-            "Cancelar",
+            "Limpar filtros",
+
+            limpar,
+
+            fg_color=BRAND_COLORS["neutral"],
+
+            hover_color="#3B3B3B",
+
+            height=42,
+
+        ).pack(side="left", expand=True, fill="x", padx=6)
+
+        self._criar_botao(
+
+            botoes,
+
+            "Fechar",
 
             modal.destroy,
 
@@ -1574,24 +1543,6 @@ class ControleGastosApp(ctk.CTk):
             height=42,
 
         ).pack(side="left", expand=True, fill="x", padx=(6, 0))
-
-        if allow_clear:
-
-            self._criar_botao(
-
-                conteudo,
-
-                "Limpar filtros",
-
-                limpar,
-
-                fg_color=BRAND_COLORS["neutral"],
-
-                hover_color="#3B3B3B",
-
-                height=40,
-
-            ).pack(fill="x", padx=12, pady=(6, 12))
 
     def criar_widgets(self):
 
@@ -1672,24 +1623,6 @@ class ControleGastosApp(ctk.CTk):
             height=32,
 
         ).pack(side='right')
-
-        self.btn_theme = self._criar_botao(
-
-            top_actions,
-
-            self._theme_label(),
-
-            self._toggle_theme,
-
-            fg_color=BRAND_COLORS['neutral'],
-
-            hover_color="#3B3B3B",
-
-            height=32,
-
-        )
-
-        self.btn_theme.pack(side='right', padx=(0, 8))
 
         if self.logo_image:
 
@@ -2026,8 +1959,8 @@ class ControleGastosApp(ctk.CTk):
         cards_container.pack(fill='x', padx=4, pady=(0, 10))
 
         cards_container.grid_columnconfigure(0, weight=1)
-
         cards_container.grid_columnconfigure(1, weight=1)
+        cards_container.grid_columnconfigure(2, weight=0)
 
         self.total_card_value = self._criar_card_resumo(
 
@@ -2042,34 +1975,23 @@ class ControleGastosApp(ctk.CTk):
         )
 
         self.quantidade_card_value = self._criar_card_resumo(
-
             cards_container,
-
             'Total de Despesas Lançadas',
-
             '0 registros',
-
             1,
-
+            extra_widget=lambda parent: self._criar_botao(
+                parent,
+                'Filtro',
+                self.abrir_modal_filtro_resumo,
+                fg_color=BRAND_COLORS['neutral'],
+                hover_color='#3B3B3B',
+                height=28,
+            ),
         )
 
         botoes_relatorios = ctk.CTkFrame(main_frame, fg_color='transparent')
 
         botoes_relatorios.pack(fill='x', padx=12, pady=(4, 18))
-
-        self._criar_botao(
-
-            botoes_relatorios,
-
-            'Filtro do Resumo',
-
-            self.abrir_modal_filtro_resumo,
-
-            fg_color=BRAND_COLORS['neutral'],
-
-            hover_color='#3B3B3B',
-
-        ).pack(side='left', expand=True, fill='x', padx=(0, 9))
 
         self._criar_botao(
 
@@ -2307,8 +2229,6 @@ class ControleGastosApp(ctk.CTk):
 
             self._aplicar_filtros_resumo,
 
-            allow_clear=True,
-
         )
 
     def _aplicar_filtros_resumo(self, filtros: dict[str, str] | None):
@@ -2338,8 +2258,6 @@ class ControleGastosApp(ctk.CTk):
             self.relatorio_filtros,
 
             self._aplicar_filtros_relatorio,
-
-            allow_clear=True,
 
             parent=self.relatorio_window,
 
