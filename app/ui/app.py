@@ -1303,7 +1303,8 @@ class ControleGastosApp(ctk.CTk):
 
         modal.title(titulo)
 
-        modal.geometry("460x440")
+        modal.geometry("520x560")
+        modal.minsize(480, 520)
 
         modal.resizable(False, False)
 
@@ -1432,7 +1433,7 @@ class ControleGastosApp(ctk.CTk):
 
         botoes = ctk.CTkFrame(conteudo, fg_color="transparent")
 
-        botoes.pack(fill="x", padx=12, pady=(20, 8))
+        botoes.pack(fill="x", padx=12, pady=(20, 12))
 
         def aplicar():
 
@@ -1510,7 +1511,7 @@ class ControleGastosApp(ctk.CTk):
 
             height=42,
 
-        ).pack(side="left", expand=True, fill="x", padx=(0, 6))
+        ).pack(side="left", expand=True, fill="x", padx=(0, 6), pady=4)
 
         self._criar_botao(
 
@@ -1526,7 +1527,7 @@ class ControleGastosApp(ctk.CTk):
 
             height=42,
 
-        ).pack(side="left", expand=True, fill="x", padx=6)
+        ).pack(side="left", expand=True, fill="x", padx=6, pady=4)
 
         self._criar_botao(
 
@@ -1542,7 +1543,7 @@ class ControleGastosApp(ctk.CTk):
 
             height=42,
 
-        ).pack(side="left", expand=True, fill="x", padx=(6, 0))
+        ).pack(side="left", expand=True, fill="x", padx=(6, 0), pady=4)
 
     def criar_widgets(self):
 
@@ -2031,22 +2032,6 @@ class ControleGastosApp(ctk.CTk):
 
         ).pack(side='left', expand=True, fill='x', padx=(8, 0))
 
-        self._criar_botao(
-
-            botoes_relatorios,
-
-            'Central de relatórios',
-
-            self.abrir_central_relatorios,
-
-            fg_color=BRAND_COLORS['neutral'],
-
-            hover_color='#3B3B3B',
-
-            height=40,
-
-        ).pack(side='right', expand=False, padx=(8, 0))
-
 
         ctk.CTkLabel(
 
@@ -2063,161 +2048,6 @@ class ControleGastosApp(ctk.CTk):
         # atualiza cards/resumo ao finalizar criacao
 
         self.atualizar_stats()
-
-    def _abrir_arquivo(self, caminho: Path) -> None:
-
-        try:
-
-            if os.name == "nt":
-
-                os.startfile(caminho)  # type: ignore[attr-defined]
-
-            else:
-
-                import webbrowser
-
-                webbrowser.open(caminho.as_uri())
-
-        except Exception as exc:  # noqa: BLE001
-
-            messagebox.showerror("Erro", f"Não foi possível abrir o arquivo:\n{exc}")
-
-    def _copiar_arquivo_para(self, origem: Path) -> None:
-
-        destino_dir = filedialog.askdirectory(title="Escolha a pasta de destino")
-
-        if not destino_dir:
-
-            return
-
-        destino_dir_path = Path(destino_dir)
-
-        try:
-
-            destino_dir_path.mkdir(parents=True, exist_ok=True)
-
-            destino_final = destino_dir_path / origem.name
-
-            shutil.copy2(origem, destino_final)
-
-            messagebox.showinfo("Sucesso", f"Relatório copiado para:\n{destino_final}")
-
-        except Exception as exc:  # noqa: BLE001
-
-            messagebox.showerror("Erro", f"Não foi possível copiar o relatório:\n{exc}")
-
-    def abrir_central_relatorios(self):
-
-        origem = workspace_path("relatorios")
-        arquivos = sorted(
-            [p for p in origem.glob(f"relatorio_{self.empresa_slug}*") if p.is_file()],
-            key=lambda p: p.stat().st_mtime,
-            reverse=True,
-        )
-        if not arquivos:
-            messagebox.showinfo("Informação", "Nenhum relatório disponível para esta empresa.")
-            return
-
-        modal = ctk.CTkToplevel(self)
-        modal.title("Centro de relatórios")
-        modal.geometry("720x480")
-        modal.resizable(False, False)
-        modal.configure(fg_color=BRAND_COLORS["surface"])
-        modal.transient(self)
-        modal.grab_set()
-        self._priorizar_janela(modal)
-        self._centralizar_janela(modal)
-
-        wrapper = ctk.CTkFrame(
-            modal,
-            fg_color=BRAND_COLORS["panel"],
-            corner_radius=16,
-            border_color=BRAND_COLORS["neutral"],
-            border_width=1,
-        )
-        wrapper.pack(fill="both", expand=True, padx=16, pady=16)
-
-        header = ctk.CTkLabel(
-            wrapper,
-            text=f"Relatórios — {self.empresa_nome}",
-            font=self.fonts["section"],
-            text_color=BRAND_COLORS["text_primary"],
-        )
-        header.pack(anchor="w", padx=12, pady=(12, 8))
-
-        lista = ctk.CTkScrollableFrame(wrapper, fg_color=BRAND_COLORS["panel"])
-        lista.pack(fill="both", expand=True, padx=12, pady=(0, 12))
-
-        for arq in arquivos:
-            linha = ctk.CTkFrame(
-                lista,
-                fg_color=BRAND_COLORS["surface"],
-                corner_radius=12,
-                border_color=BRAND_COLORS["neutral"],
-                border_width=1,
-            )
-            linha.pack(fill="x", pady=6, padx=4)
-
-            # identifica tipo pela extensão
-            ext = arq.suffix.lower()
-            tipo_label = "PDF" if ext == ".pdf" else "CSV" if ext == ".csv" else ext.replace(".", "").upper()
-            display_nome = f"Relatorio {self.empresa_nome}"
-            info = ctk.CTkLabel(
-                linha,
-                text=f"{display_nome} - {datetime.fromtimestamp(arq.stat().st_mtime).strftime('%d/%m/%Y %H:%M')}",
-                font=self.fonts["label"],
-                text_color=BRAND_COLORS["text_primary"],
-            )
-            info.pack(side="left", padx=12, pady=10)
-
-            botoes = ctk.CTkFrame(linha, fg_color="transparent")
-            botoes.pack(side="right", padx=12, pady=6)
-
-            ctk.CTkLabel(
-                botoes,
-                text=tipo_label,
-                font=self.fonts["label"],
-                text_color=BRAND_COLORS["text_secondary"],
-                width=36,
-            ).pack(side="left", padx=(0, 6))
-
-            self._criar_botao(
-                botoes,
-                "Abrir",
-                lambda p=arq: self._abrir_arquivo(p),
-                fg_color=BRAND_COLORS["neutral"],
-                hover_color="#3B3B3B",
-                height=34,
-                width=120,
-            ).pack(side="left", padx=4)
-
-            self._criar_botao(
-                botoes,
-                "Download",
-                lambda p=arq: self._copiar_arquivo_para(p),
-                fg_color=BRAND_COLORS["neutral"],
-                hover_color="#3B3B3B",
-                height=34,
-                width=130,
-            ).pack(side="left", padx=6)
-
-            def remover(p: Path, linha_ref=linha):
-                if not messagebox.askyesno("Confirmar exclusao", f"Deseja remover o relatorio\n{p.stem}?"):
-                    return
-                try:
-                    p.unlink(missing_ok=True)
-                    linha_ref.destroy()
-                except Exception as exc:  # noqa: BLE001
-                    messagebox.showerror("Erro", f"Nao foi possivel remover o relatorio:\n{exc}")
-
-            self._criar_botao(
-                botoes,
-                "Excluir",
-                lambda p=arq, ref=linha: remover(p, ref),
-                fg_color=BRAND_COLORS["danger"],
-                hover_color="#962d22",
-                height=32,
-            ).pack(side="left", padx=4)
 
     def abrir_modal_filtro_resumo(self):
 
@@ -2297,11 +2127,11 @@ class ControleGastosApp(ctk.CTk):
 
         frame = self.relatorio_scroll_frame
 
-        frame.grid_columnconfigure(0, weight=2)
-        frame.grid_columnconfigure(1, weight=4)
-        frame.grid_columnconfigure(2, weight=3)
-        frame.grid_columnconfigure(3, weight=2)
-        frame.grid_columnconfigure(4, weight=3)
+        frame.grid_columnconfigure(0, weight=0, minsize=90)
+        frame.grid_columnconfigure(1, weight=2, minsize=220)
+        frame.grid_columnconfigure(2, weight=1, minsize=140)
+        frame.grid_columnconfigure(3, weight=0, minsize=90)
+        frame.grid_columnconfigure(4, weight=2, minsize=220)
 
         if not registros_ordenados:
 
@@ -2349,7 +2179,14 @@ class ControleGastosApp(ctk.CTk):
 
             data_label = ctk.CTkLabel(frame, text=gasto.get("data", "--"), font=row_font)
 
-            tipo_label = ctk.CTkLabel(frame, text=gasto.get("tipo", "--"), font=row_font)
+            tipo_label = ctk.CTkLabel(
+                frame,
+                text=gasto.get("tipo", "--"),
+                font=row_font,
+                anchor="w",
+                justify="left",
+                wraplength=300,
+            )
 
             forma_label = ctk.CTkLabel(frame, text=gasto.get("forma_pagamento", "--"), font=row_font)
 
@@ -2364,7 +2201,14 @@ class ControleGastosApp(ctk.CTk):
                 text_color=BRAND_COLORS["text_primary"],
 
             )
-            fornecedor_label = ctk.CTkLabel(frame, text=gasto.get("fornecedor", "--") or "--", font=row_font)
+            fornecedor_label = ctk.CTkLabel(
+                frame,
+                text=gasto.get("fornecedor", "--") or "--",
+                font=row_font,
+                anchor="w",
+                justify="left",
+                wraplength=260,
+            )
 
             data_label.grid(row=i, column=0, padx=10, pady=6, sticky="w")
 
