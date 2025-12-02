@@ -17,11 +17,11 @@ from typing import Any, Iterable
 
 from app.utils.formatting import format_brl, validar_data, validar_valor
 
-from app.utils.report import generate_pdf_report
 from app.services.export import export_pdf, export_csv
+from app.services.expenses import filtro_registros, resumo_kpis
 from app.ui.dashboard import abrir_dashboard
 
-from app.data.repository import JsonDataRepository
+from app.data.repository import get_repository
 
 from app.ui.widgets import ReadOnlyComboBox
 from app.utils.paths import runtime_path, workspace_path
@@ -85,7 +85,7 @@ class ControleGastosApp(ctk.CTk):
 
         self.empresa_slug = self._gerar_slug(self.empresa_razao or self.empresa_nome or self.empresa_id)
 
-        self.repo = JsonDataRepository(self.arquivo_dados)
+        self.repo = get_repository("sqlite", self.arquivo_dados, self.empresa_id)
         self.gastos: list[dict[str, Any]] = self.repo.load()
         self.fornecedores: list[str] = sorted({str(g.get("fornecedor") or "").strip() for g in self.gastos if (g.get("fornecedor") or "").strip()})
 
@@ -1015,44 +1015,8 @@ class ControleGastosApp(ctk.CTk):
             return None
 
     def _normalizar_filtros(self, filtros: dict[str, str] | None) -> dict[str, Any]:
-
-        if not filtros:
-
-            return {}
-
-        normalizados: dict[str, Any] = {}
-
-        data_inicio = self._parse_data_str(filtros.get("data_inicio"))
-
-        data_fim = self._parse_data_str(filtros.get("data_fim"))
-
-        if data_inicio:
-
-            normalizados["data_inicio"] = data_inicio
-
-        if data_fim:
-
-            normalizados["data_fim"] = data_fim
-
-        tipo = self._normalizar_categoria(filtros.get("tipo"))
-
-        if tipo and tipo != "TODOS":
-
-            normalizados["tipo"] = tipo
-
-        forma = (filtros.get("forma") or "").strip()
-
-        if forma and forma != "Todos":
-
-            normalizados["forma"] = forma
-
-        fornecedor = self._normalizar_fornecedor(filtros.get("fornecedor"))
-
-        if fornecedor and fornecedor != "TODOS":
-
-            normalizados["fornecedor"] = fornecedor
-
-        return normalizados
+        from app.services.expenses import normalizar_filtros
+        return normalizar_filtros(filtros)
 
     def _normalizar_categoria(self, nome: str | None) -> str:
         """Normaliza o nome da categoria para comparação e exibição."""
@@ -1259,63 +1223,9 @@ class ControleGastosApp(ctk.CTk):
 
         return texto or "empresa"
 
-    def _registro_atende_filtros(self, gasto: dict[str, Any], filtros: dict[str, Any]) -> bool:
-
-        if not filtros:
-
-            return True
-
-        data_gasto = self._parse_data_str(str(gasto.get("data", "")))
-
-        data_inicio = filtros.get("data_inicio")
-
-        data_fim = filtros.get("data_fim")
-
-        if data_inicio and (not data_gasto or data_gasto < data_inicio):
-
-            return False
-
-        if data_fim and (not data_gasto or data_gasto > data_fim):
-
-            return False
-
-        tipo = filtros.get("tipo")
-
-        if tipo and self._normalizar_categoria(gasto.get("tipo")) != tipo:
-
-            return False
-
-        forma = filtros.get("forma")
-
-        if forma and gasto.get("forma_pagamento") != forma:
-
-            return False
-
-        fornecedor = filtros.get("fornecedor")
-
-        if fornecedor and self._normalizar_fornecedor(gasto.get("fornecedor")) != fornecedor:
-
-            return False
-
-        return True
-
     def _filtrar_registros(self, registros: Iterable[dict[str, Any]], filtros: dict[str, str] | None) -> list[dict[str, Any]]:
-
-        filtros_norm = self._normalizar_filtros(filtros)
-
-        if not filtros_norm:
-
-            return list(registros)
-
-        filtrados: list[dict[str, Any]] = []
-
-        for registro in registros:
-
-            if self._registro_atende_filtros(registro, filtros_norm):
-
-                filtrados.append(registro)
-
-        return filtrados
+        """Aplica filtros usando o serviço de despesas."""
+        return filtro_registros(registros, filtros or {})
 
     def _abrir_modal_filtros(
 
@@ -2917,83 +2827,37 @@ class ControleGastosApp(ctk.CTk):
         filtros_basicos: dict[str, str] = {}
 
         inicio = self.filtro_data_inicio_entry.get().strip() if self.filtro_data_inicio_entry else ""
-
         fim = self.filtro_data_fim_entry.get().strip() if self.filtro_data_fim_entry else ""
-
         if inicio:
-
             filtros_basicos["data_inicio"] = inicio
-
         if fim:
-
             filtros_basicos["data_fim"] = fim
 
         tipo_filtro = self.filtro_tipo_combo.get() if self.filtro_tipo_combo else "Todos"
-
         if tipo_filtro and tipo_filtro != "Todos":
-
             filtros_basicos["tipo"] = tipo_filtro
 
         forma_filtro = self.filtro_forma_combo.get() if self.filtro_forma_combo else "Todos"
-
         if forma_filtro and forma_filtro != "Todos":
-
             filtros_basicos["forma"] = forma_filtro
 
         fornecedor_filtro = self.filtro_fornecedor_combo.get() if getattr(self, "filtro_fornecedor_combo", None) else "Todos"
-
         if fornecedor_filtro and fornecedor_filtro != "Todos":
-
             filtros_basicos["fornecedor"] = fornecedor_filtro
 
         valor_filtro = self.filtro_valor_combo.get() if self.filtro_valor_combo else "Todos"
+        filtros_basicos["valor"] = valor_filtro
 
-        filtros_norm = self._normalizar_filtros(filtros_basicos)
-
-        def corresponde_valor(valor, criterio):
-
-            if criterio == "Todos":
-
-                return True
-
-            if criterio == "Até 100":
-
-                return valor <= 100
-
-            if criterio == "100 a 500":
-
-                return 100 < valor <= 500
-
-            if criterio == "500 a 1000":
-
-                return 500 < valor <= 1000
-
-            if criterio == "Acima de 1000":
-
-                return valor > 1000
-
-            return True
+        # aplica filtro de serviço nos gastos (sem índices) e depois cruza com índices originais
+        registros_somente = [g for _, g in gastos_ordenados]
+        from app.services.expenses import filtro_com_faixa
+        filtrados = filtro_com_faixa(registros_somente, filtros_basicos)
+        filtrados_ids = {id(g) for g in filtrados}
 
         resultado = []
-
         for indice, gasto in gastos_ordenados:
-
-            if filtros_norm and not self._registro_atende_filtros(gasto, filtros_norm):
-
+            if id(gasto) not in filtrados_ids:
                 continue
-
-            try:
-
-                valor_float = float(gasto.get("valor", 0) or 0)
-
-            except (TypeError, ValueError):
-
-                valor_float = 0
-
-            if not corresponde_valor(valor_float, valor_filtro):
-
-                continue
-
             resultado.append((indice, gasto))
 
         return resultado
@@ -3229,19 +3093,13 @@ class ControleGastosApp(ctk.CTk):
 
             )
 
-            save_ok = save_data(self.arquivo_dados, self.gastos)
+            self.repo.save(self.gastos)
 
             self.atualizar_stats()
 
             self.renderizar_lista_gastos()
 
-            if not save_ok:
-
-                messagebox.showerror("Erro", "Não foi possível salvar os dados em disco.")
-
-            else:
-
-                messagebox.showinfo("Sucesso", "Despesa atualizada com sucesso!")
+            messagebox.showinfo("Sucesso", "Despesa atualizada com sucesso!")
 
             editor.destroy()
 
@@ -3435,30 +3293,28 @@ class ControleGastosApp(ctk.CTk):
         destino_dir = filedialog.askdirectory(title="Escolha a pasta para salvar o PDF")
         if not destino_dir:
             return
-        destino_dir_path = Path(destino_dir)
-        destino_dir_path.mkdir(parents=True, exist_ok=True)
-
-        nome_arquivo = f"Relatorio_{self.empresa_slug}.pdf"
-        caminho_destino = destino_dir_path / nome_arquivo
 
         try:
             logo_param = str(self.logo_path) if self.logo_path and self.logo_path.exists() else None
             company_label = f"{self.empresa_razao} - Captacao de Despesas-14D"
-            caminho = generate_pdf_report(
-                registros_validos,
-                str(caminho_destino),
-                company_name=company_label,
-                logo_path=logo_param,
-            )
-        except RuntimeError as exc:
-            messagebox.showerror(
-                "Erro ao gerar PDF",
-                f"{exc}\n\nInstale a dependencia e tente novamente.",
-            )
-            return
+            caminho = export_pdf(registros_validos, self.empresa_slug, company_label, logo_param)
+            if not caminho:
+                messagebox.showinfo("Informação", "Nenhum dado para exportar.")
+                return
         except Exception as exc:  # noqa: BLE001
             messagebox.showerror("Erro ao gerar PDF", f"Ocorreu um erro inesperado:\n{exc}")
             return
+
+        # mover para a pasta escolhida, se diferente do padrão
+        try:
+            origem = Path(caminho)
+            destino_final = Path(destino_dir) / origem.name
+            if origem.resolve() != destino_final.resolve():
+                destino_final.parent.mkdir(parents=True, exist_ok=True)
+                shutil.move(str(origem), destino_final)
+            caminho = destino_final
+        except Exception:
+            pass
 
         messagebox.showinfo(
             "Relatório criado",
@@ -3483,31 +3339,26 @@ class ControleGastosApp(ctk.CTk):
         destino_dir = filedialog.askdirectory(title="Escolha a pasta para salvar o CSV")
         if not destino_dir:
             return
-        destino_dir_path = Path(destino_dir)
-        destino_dir_path.mkdir(parents=True, exist_ok=True)
-        nome_arquivo = f"CSV - GRUPO14D - {self.empresa_slug}.csv"
-        caminho_destino = destino_dir_path / nome_arquivo
         try:
-            import csv
-            with open(caminho_destino, "w", encoding="utf-8", newline="") as csvfile:
-                writer = csv.writer(csvfile, delimiter=";")
-                writer.writerow(["Data", "Tipo", "Forma", "Valor", "Fornecedor"])
-                for gasto in registros_validos:
-                    fornecedor_bruto = gasto.get("fornecedor")
-                    fornecedor_csv = (
-                        fornecedor_bruto if isinstance(fornecedor_bruto, str) else ""
-                    )
-                    fornecedor_csv = fornecedor_csv.strip().upper() if fornecedor_csv else ""
-                    writer.writerow([
-                        gasto.get("data", ""),
-                        gasto.get("tipo", ""),
-                        gasto.get("forma_pagamento", ""),
-                        f"{float(gasto.get('valor', 0) or 0):.2f}".replace(".", ","),
-                        fornecedor_csv,
-                    ])
-            messagebox.showinfo("Relatório criado", f"Arquivo CSV criado em: {caminho_destino}")
+            caminho = export_csv(registros_validos, self.empresa_slug)
+            if not caminho:
+                messagebox.showinfo("Informação", "Nenhum dado para exportar.")
+                return
         except Exception as exc:  # noqa: BLE001
             messagebox.showerror("Erro", f"Não foi possível gerar o arquivo CSV: {exc}")
+            return
+
+        try:
+            origem = Path(caminho)
+            destino_final = Path(destino_dir) / origem.name
+            if origem.resolve() != destino_final.resolve():
+                destino_final.parent.mkdir(parents=True, exist_ok=True)
+                shutil.move(str(origem), destino_final)
+            caminho = destino_final
+        except Exception:
+            pass
+
+        messagebox.showinfo("Relatório criado", f"Arquivo CSV criado em: {caminho}")
 
     def abrir_modal_exportar_relatorio(self):
         modal = ctk.CTkToplevel(self)

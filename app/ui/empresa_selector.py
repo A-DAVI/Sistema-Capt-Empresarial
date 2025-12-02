@@ -232,16 +232,8 @@ class EmpresaSelector(ctk.CTk):
             return
 
         empresa_id = empresa_info['id']
-        arquivo = self.data_dir / f'{empresa_id}.json'
-        try:
-            arquivo.parent.mkdir(parents=True, exist_ok=True)
-            if not arquivo.exists():
-                arquivo.write_text("[]", encoding="utf-8")
-                logger.info("Arquivo de empresa criado: %s", arquivo)
-        except Exception as exc:
-            logger.error("Falha ao preparar arquivo da empresa %s: %s", empresa_id, exc)
-            messagebox.showerror("Erro", "Não foi possível preparar os dados da empresa selecionada.")
-            return
+        # banco central único
+        arquivo = workspace_path("gastos_empresas.sqlite")
 
         self.selected_info = {
             "arquivo": str(arquivo),
