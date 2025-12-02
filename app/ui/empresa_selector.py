@@ -10,8 +10,6 @@ from tkinter import messagebox
 
 from app.ui.widgets import ReadOnlyComboBox
 from app.utils.paths import runtime_path, workspace_path
-from app.data.repository import JsonDataRepository, load_empresas_lista
-from app.services.catalogs import merge_fornecedores
 import json
 
 
@@ -87,8 +85,9 @@ class EmpresaSelector(ctk.CTk):
         self.logo_image = self._carregar_logo(self.logo_path)
         self.selected_info: dict[str, str] | None = None
 
-        self.empresas = self._carregar_empresas()
-        self.empresas_map = {item["nome_fantasia"]: item for item in self.empresas}
+        self.empresas = EMPRESAS_PRE_CONFIGURADAS.copy()
+        # Usar razão social como display
+        self.empresas_map = {item["razao_social"]: item for item in self.empresas}
 
         self._construir_layout()
         self._priorizar()
@@ -114,28 +113,6 @@ class EmpresaSelector(ctk.CTk):
             ctk.set_appearance_mode("dark" if tema == "dark" else "light")
         except Exception:
             pass
-
-    def _carregar_empresas(self) -> list[dict[str, str]]:
-        # Carrega JSONs de empresas no diretório e garante pelo menos as pré-configuradas
-        empresas_detectadas: list[dict[str, str]] = []
-        try:
-            arquivos = load_empresas_lista()
-            for arq in arquivos:
-                nome = arq.stem
-                empresas_detectadas.append({
-                    "id": nome,
-                    "razao_social": nome,
-                    "nome_fantasia": nome,
-                    "arquivo": str(arq),
-                })
-        except Exception:
-            empresas_detectadas = []
-        # garante que as preconfiguradas apareçam
-        mapa = {e["id"]: e for e in empresas_detectadas}
-        for base in EMPRESAS_PRE_CONFIGURADAS:
-            if base["id"] not in mapa:
-                mapa[base["id"]] = base
-        return list(mapa.values())
 
     def _priorizar(self) -> None:
         try:
@@ -203,7 +180,7 @@ class EmpresaSelector(ctk.CTk):
         )
         self.combo_empresas.pack(fill="x", padx=40, pady=(0, 20))
         if self.empresas:
-            self.combo_empresas.set(self.empresas[0]["nome_fantasia"])
+            self.combo_empresas.set(self.empresas[0]["razao_social"])
 
         botoes = ctk.CTkFrame(container, fg_color="transparent")
         botoes.pack(fill="x", padx=40, pady=(10, 0))
@@ -254,8 +231,8 @@ class EmpresaSelector(ctk.CTk):
             messagebox.showerror("Seleção necessária", "Escolha uma de suas empresas para continuar.")
             return
 
-        empresa_id = empresa_info["id"]
-        arquivo = Path(empresa_info.get("arquivo")) if empresa_info.get("arquivo") else (self.data_dir / f"{empresa_id}.json")
+        empresa_id = empresa_info['id']
+        arquivo = self.data_dir / f'{empresa_id}.json'
         try:
             arquivo.parent.mkdir(parents=True, exist_ok=True)
             if not arquivo.exists():
@@ -287,7 +264,3 @@ def selecionar_empresa() -> dict[str, str] | None:
     if selector.selected_info:
         return selector.selected_info
     return None
-
-
-
-

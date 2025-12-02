@@ -49,7 +49,7 @@ if canvas is not None:
         def _draw_footer(self, total_pages: int):
             width, _ = self._pagesize  # type: ignore[attr-defined]
             footer_y = 1.5 * cm
-            tagline = "Emitido automaticamente pelo Sistema CAPT Empresarial - Grupo 14D"
+            tagline = "Emitido automaticamente pela Central Controle - Grupo 14D"
             self.setFont("Helvetica-Oblique", 9)
             self.drawCentredString(width / 2, footer_y, tagline)
             self.setFont("Helvetica", 9)
@@ -158,8 +158,9 @@ def generate_pdf_report(
                 pass
 
     # Cabeçalho textual
+    display_company = company_name.split(" - ")[0] if company_name else "Sua Empresa"
     c.setFont("Helvetica-Bold", 16)
-    c.drawString(x_margin, top_margin - 0.3 * cm, company_name)
+    c.drawString(x_margin, top_margin - 0.3 * cm, display_company)
 
     c.setFont("Helvetica", 10)
     c.drawString(
