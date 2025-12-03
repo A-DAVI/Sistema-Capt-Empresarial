@@ -1,4 +1,4 @@
-﻿# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 
 from __future__ import annotations
 
@@ -1847,11 +1847,10 @@ class ControleGastosApp(ctk.CTk):
         self.combo_tipo.set('Selecione o tipo')
 
         self.formas_pagamento = [
-            "Banco 1",
-            "Banco 2",
-            "Banco 3",
-            "Banco 4",
-            "Banco 5",
+            "E. G. FONSECA — Cresol 104687-0",
+            "M X FONSECA CAPELLO — Sicoob 131.309-6",
+            "R. G. FONSECA & CIA. LTDA — Cresol 115676-4",
+            "R. G. FONSECA & CIA. LTDA — Sicoob 90.569-0",
             "Dinheiro",
         ]
 
@@ -2473,6 +2472,17 @@ class ControleGastosApp(ctk.CTk):
 
         self.janela_gestao.configure(fg_color=BRAND_COLORS['surface'])
 
+        # Garantir que a janela fique em primeiro plano ao abrir
+        try:
+            self.janela_gestao.transient(self)
+            self.janela_gestao.grab_set()
+            self.janela_gestao.lift()
+            self.janela_gestao.focus_force()
+            self.janela_gestao.attributes("-topmost", True)
+            self.janela_gestao.after(400, lambda: self.janela_gestao.attributes("-topmost", False))
+        except Exception:
+            pass
+
         self._priorizar_janela(self.janela_gestao)
 
         ctk.CTkLabel(
@@ -2645,7 +2655,7 @@ class ControleGastosApp(ctk.CTk):
 
         botoes_filtro = ctk.CTkFrame(filtros_frame, fg_color='transparent')
 
-        botoes_filtro.grid(row=4, column=0, columnspan=4, pady=(0, 12), sticky='ew')
+        botoes_filtro.grid(row=4, column=0, columnspan=5, pady=(0, 12), sticky='ew')
 
         self._criar_botao(
 
@@ -2667,7 +2677,7 @@ class ControleGastosApp(ctk.CTk):
 
             fg_color=BRAND_COLORS['neutral'],
 
-            hover_color='#3B3B3B',
+            hover_color=BRAND_COLORS['accent_hover'],
 
         ).pack(side='left', expand=True, fill='x', padx=(6, 0))
 
@@ -3535,16 +3545,29 @@ class ControleGastosApp(ctk.CTk):
             text_color=BRAND_COLORS["text_secondary"],
         ).pack(pady=(0, 12))
 
+        # Pré-preenche intervalo com menor/maior data dos lançamentos atuais
+        registros_base = self._obter_registros_exportacao(self.gastos)
+        if registros_base is None:
+            modal.destroy()
+            return
+        datas_validas = []
+        for reg in registros_base:
+            dt = self._parse_data_str(reg.get("data"))
+            if dt:
+                datas_validas.append(dt)
+        data_min = min(datas_validas).strftime("%d/%m/%Y") if datas_validas else ""
+        data_max = max(datas_validas).strftime("%d/%m/%Y") if datas_validas else ""
+
         ctk.CTkLabel(frame, text="Data Início (DD/MM/AAAA)", font=self.fonts["subtitle"], text_color=BRAND_COLORS["text_secondary"]).pack(anchor="w", padx=12, pady=(4, 2))
         entry_inicio = ctk.CTkEntry(frame, height=36, font=self.fonts["label"])
         entry_inicio.pack(fill="x", padx=12)
-        entry_inicio.insert(0, "")
+        entry_inicio.insert(0, data_min)
         entry_inicio.bind("<KeyRelease>", lambda event, w=entry_inicio: self._formatar_data_widget(w))
 
         ctk.CTkLabel(frame, text="Data Fim (DD/MM/AAAA)", font=self.fonts["subtitle"], text_color=BRAND_COLORS["text_secondary"]).pack(anchor="w", padx=12, pady=(8, 2))
         entry_fim = ctk.CTkEntry(frame, height=36, font=self.fonts["label"])
         entry_fim.pack(fill="x", padx=12)
-        entry_fim.insert(0, "")
+        entry_fim.insert(0, data_max)
         entry_fim.bind("<KeyRelease>", lambda event, w=entry_fim: self._formatar_data_widget(w))
 
         ctk.CTkLabel(frame, text="Formato", font=self.fonts["subtitle"], text_color=BRAND_COLORS["text_secondary"]).pack(anchor="w", padx=12, pady=(10, 2))

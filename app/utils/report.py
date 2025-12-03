@@ -68,6 +68,65 @@ else:  # pragma: no cover
     NumberedCanvas = None  # type: ignore[assignment]
 
 
+def abreviar_fornecedor(nome: str) -> str:
+    """Abrevia termos comuns de fornecedores para caber na coluna do relatório."""
+    mapa = {
+        "TRANSPORTES": "TRANSP.",
+        "TRANSPORTE": "TRANSP.",
+        "RODOVIARIOS": "RODOV.",
+        "RODOVIARIO": "RODOV.",
+        "DISTRIBUIDORA": "DISTR.",
+        "DISTRIBUICAO": "DISTR.",
+        "COMERCIO": "COM.",
+        "COMERCIAL": "COM.",
+        "REPRESENTACOES": "REPR.",
+        "REPRESENTACOES": "REPR.",
+        "SERVICOS": "SERV.",
+        "SERVICO": "SERV.",
+        "LOGISTICA": "LOG.",
+        "LOGISTICO": "LOG.",
+        "COOPERATIVA": "COOP.",
+        "INDUSTRIAIS": "IND.",
+        "INDUSTRIA": "IND.",
+        "INGREDIENTES": "ING.",
+        "ALIMENTOS": "ALIM.",
+        "EMBALAGENS": "EMB.",
+        "PRODUTOS": "PROD.",
+        "AGRONEGOCIOS": "AGRONEG.",
+        "TRANSPORTES": "TRANS.",
+        "APUCARANA": "APUC.",
+        "RODOVIARIOS": "ROD.",
+        "COMERCIO": "COM.",
+        "REPRESENTACOES": "REPR.",
+        "SERVICOS": "SERV.",
+        "LOGISTICA": "LOG.",
+        "DISTRIBUIDORA": "DIST.",
+        "DISTRIBUICAO": "DIST.",
+    }
+    tokens = str(nome).split()
+    abreviado = []
+    for t in tokens:
+        upper = t.upper()
+        if upper in {"LTDA", "Ltda", "LTDA.", "Ltda.", "S.A.", "S.A", "SA"}:
+            continue
+        ab = mapa.get(upper)
+        abreviado.append(ab if ab else t)
+    return " ".join(abreviado)
+
+
+def abreviar_forma(forma: str) -> str:
+    """Retorna apenas a inicial da razão social da forma + o sufixo do banco."""
+    texto = str(forma or "").strip()
+    if "—" in texto:
+        partes = [p.strip() for p in texto.split("—") if p.strip()]
+        if len(partes) >= 2:
+            razao = partes[0]
+            banco = " — ".join(partes[1:])
+            inicial = razao[:1]
+            return f"{inicial}. — {banco}"
+    return texto
+
+
 def generate_pdf_report(
     gastos: Iterable[dict[str, Any]],
     output_path: str,
@@ -229,8 +288,8 @@ def generate_pdf_report(
 
         data = gasto.get("data", "")
         tipo = str(gasto.get("tipo", "") or "")
-        forma = str(gasto.get("forma_pagamento", "") or "")
-        fornecedor = str(gasto.get("fornecedor", "") or "")
+        forma = abreviar_forma(gasto.get("forma_pagamento", "") or "")
+        fornecedor = abreviar_fornecedor(gasto.get("fornecedor", "") or "")
         valor = format_brl(float(gasto.get("valor", 0) or 0))
 
         # limites menores para evitar sobreposição de colunas

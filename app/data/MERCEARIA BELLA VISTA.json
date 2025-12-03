@@ -12,5 +12,21 @@
     "forma_pagamento": "Banco",
     "valor": 2000.0,
     "timestamp": "2025-11-24T17:09:24.203129"
+  },
+  {
+    "data": "03/12/2025",
+    "tipo": "FORNECEDORES DE MATÉRIA PRIMA, EMBALAGENS E INSUMOS",
+    "forma_pagamento": "E. G. FONSECA — Cresol 104687-0",
+    "valor": 2000.0,
+    "fornecedor": "TRANS APUCARANA TRANSPORTES RODOVIARIOS LTDA",
+    "timestamp": "2025-12-03T12:40:36.581952"
+  },
+  {
+    "data": "03/12/2025",
+    "tipo": "IMOBILIZADO - MAQUINA E EQUIPAMENTOS",
+    "forma_pagamento": "R. G. FONSECA & CIA. LTDA — Cresol 115676-4",
+    "valor": 7000.0,
+    "fornecedor": "KASSIA FLORES LTDA",
+    "timestamp": "2025-12-03T13:23:50.132103"
   }
 ]

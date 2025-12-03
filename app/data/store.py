@@ -10,6 +10,9 @@ from typing import Any
 from app.utils.security import checksum_is_valid, persist_checksum
 from app.utils.paths import workspace_path
 
+# Cache simples em memória para evitar reaberturas repetidas do JSON
+_DATA_CACHE: dict[Path, tuple[float, list[dict[str, Any]]]] = {}
+
 
 def _mock_gastos() -> list[dict[str, Any]]:
     """Mock de dados para ambiente de desenvolvimento."""
@@ -87,20 +90,33 @@ def _resolve_data_path(path: str | Path) -> Path:
 
 
 def load_data(path: str | Path) -> list[dict[str, Any]]:
-    """Carrega os dados do JSON; em ambiente de dev sempre usa mock."""
+    """Carrega os dados do JSON; em ambiente de dev sempre usa mock.
+
+    Com cache em memória: se o arquivo não mudou (mtime idêntico), reutiliza
+    a leitura anterior para evitar I/O custoso em arquivos grandes.
+    """
     if os.getenv("APP_ENV", "").lower() == "dev":
         return _mock_gastos()
 
     file_path = _resolve_data_path(path)
     if file_path.exists():
         if not checksum_is_valid(file_path):
+            _DATA_CACHE.pop(file_path, None)
             return []
         try:
+            mtime = file_path.stat().st_mtime
+            cached = _DATA_CACHE.get(file_path)
+            if cached and cached[0] == mtime:
+                return cached[1]
+
             with open(file_path, "r", encoding="utf-8") as f:
                 data = json.load(f)
+            data = data if isinstance(data, list) else []
             persist_checksum(file_path)
-            return data if isinstance(data, list) else []
+            _DATA_CACHE[file_path] = (mtime, data)
+            return data
         except Exception:
+            _DATA_CACHE.pop(file_path, None)
             return []
     return []
 
@@ -112,6 +128,11 @@ def save_data(path: str | Path, data: list[dict[str, Any]]) -> bool:
         with open(file_path, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2, ensure_ascii=False)
         persist_checksum(file_path)
+        try:
+            mtime = file_path.stat().st_mtime
+            _DATA_CACHE[file_path] = (mtime, data)
+        except Exception:
+            pass
         return True
     except Exception:
         return False
