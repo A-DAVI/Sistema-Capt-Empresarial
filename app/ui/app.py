@@ -1690,7 +1690,7 @@ class ControleGastosApp(ctk.CTk):
             header_frame,
 
     
-            text='Meu Negócio — Central de Controle',
+            text='CENTRAL DE LANÇAMENTOS',
 
             font=self.fonts['title'],
 
@@ -3555,8 +3555,17 @@ class ControleGastosApp(ctk.CTk):
             dt = self._parse_data_str(reg.get("data"))
             if dt:
                 datas_validas.append(dt)
-        data_min = min(datas_validas).strftime("%d/%m/%Y") if datas_validas else ""
-        data_max = max(datas_validas).strftime("%d/%m/%Y") if datas_validas else ""
+        hoje = datetime.now().date()
+        primeiro_dia_mes = hoje.replace(day=1)
+
+        if datas_validas:
+            minimo = max(min(datas_validas).date(), primeiro_dia_mes)
+            maximo = max(max(datas_validas).date(), hoje)
+            data_min = minimo.strftime("%d/%m/%Y")
+            data_max = maximo.strftime("%d/%m/%Y")
+        else:
+            data_min = primeiro_dia_mes.strftime("%d/%m/%Y")
+            data_max = hoje.strftime("%d/%m/%Y")
 
         ctk.CTkLabel(frame, text="Data Início (DD/MM/AAAA)", font=self.fonts["subtitle"], text_color=BRAND_COLORS["text_secondary"]).pack(anchor="w", padx=12, pady=(4, 2))
         entry_inicio = ctk.CTkEntry(frame, height=36, font=self.fonts["label"])

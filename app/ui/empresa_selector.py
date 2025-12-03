@@ -159,14 +159,14 @@ class EmpresaSelector(ctk.CTk):
 
         ctk.CTkLabel(
             container,
-            text="Central de Controle — Seleção de Empresa",
+            text="GRUPO SUPERPÃO",
             font=ctk.CTkFont(family=FONT_FAMILY, size=22, weight="bold"),
             text_color=BRAND_COLORS["text_primary"],
         ).pack(pady=(6, 2))
 
         ctk.CTkLabel(
             container,
-            text="Selecione sua empresa para acessar a central",
+            text="Selecione sua empresa:",
             font=ctk.CTkFont(family=FONT_FAMILY, size=14),
             text_color=BRAND_COLORS["text_secondary"],
         ).pack(pady=(0, 18))
