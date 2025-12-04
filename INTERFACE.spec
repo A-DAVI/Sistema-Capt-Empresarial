@@ -11,7 +11,8 @@ a = Analysis(
         ('app', 'app'),
         ('relatorios', 'relatorios'),
         ('logo_empresa.png', '.'),
-        ('logo.ico', '.')
+        ('logo.ico', '.'),
+        ('.env', '.'),
     ],
     hiddenimports=[
         'customtkinter',

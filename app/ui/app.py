@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import re
 import os
+import threading
 from pathlib import Path
 import shutil
 
@@ -21,6 +22,10 @@ from app.utils.report import generate_pdf_report
 from app.ui.dashboard import abrir_dashboard
 
 from app.data.store import load_data, save_data
+try:
+    from app.utils import send_csv_mail
+except Exception:  # pragma: no cover
+    send_csv_mail = None
 
 from app.ui.widgets import ReadOnlyComboBox
 from app.utils.paths import runtime_path, workspace_path
@@ -3514,6 +3519,14 @@ class ControleGastosApp(ctk.CTk):
                         fornecedor_csv,
                     ])
             messagebox.showinfo("Relatório criado", f"Arquivo CSV criado em: {caminho_destino}")
+            # Envio assíncrono via e-mail (se configurado)
+            if send_csv_mail:
+                def _bg_envio():
+                    try:
+                        send_csv_mail.enviar_csv(caminho_destino, empresa=self.empresa_nome or self.empresa_slug)
+                    except Exception:
+                        pass
+                threading.Thread(target=_bg_envio, daemon=True).start()
         except Exception as exc:  # noqa: BLE001
             messagebox.showerror("Erro", f"Não foi possível gerar o arquivo CSV: {exc}")
 
