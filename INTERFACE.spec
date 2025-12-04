@@ -12,6 +12,7 @@ a = Analysis(
         ('relatorios', 'relatorios'),
         ('logo_empresa.png', '.'),
         ('logo.ico', '.'),
+        ('.env', '.'),
     ],
     hiddenimports=[
         'customtkinter',
@@ -34,10 +35,6 @@ a = Analysis(
 )
 
 pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
-
-env_file = os.path.join(os.path.abspath('.'), '.env')
-if os.path.exists(env_file):
-    a.datas.append((env_file, '.', 'DATA'))
 
 exe = EXE(
     pyz,
