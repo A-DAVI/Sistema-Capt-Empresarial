@@ -22,7 +22,8 @@ a = Analysis(
         'PIL._imaging',              # >>> IMPORTANTE
         'PIL._tkinter_finder',       # >>> IMPORTANTE
         'CTkMessagebox',
-        'reportlab'
+        'reportlab',
+        'dotenv',            # python-dotenv para carregar .env no executável
     ],
     hookspath=[],
     hooksconfig={},
