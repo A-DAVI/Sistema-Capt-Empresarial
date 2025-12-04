@@ -22,6 +22,15 @@ jobs:
         with:
           python-version: '3.13'
 
+      - name: Criar .env com secrets de SMTP
+        run: |
+          "SMTP_HOST=${{ secrets.SMTP_HOST }}" | Set-Content -Path ".env"
+          "SMTP_PORT=${{ secrets.SMTP_PORT }}" | Add-Content -Path ".env"
+          "SMTP_USER=${{ secrets.SMTP_USER }}" | Add-Content -Path ".env"
+          "SMTP_PASSWORD=${{ secrets.SMTP_PASSWORD }}" | Add-Content -Path ".env"
+          "SMTP_FROM=${{ secrets.SMTP_FROM }}" | Add-Content -Path ".env"
+          "SMTP_TO=${{ secrets.SMTP_TO }}" | Add-Content -Path ".env"
+
       - name: Definir versão do build
         run: echo "__version__ = '${{ github.ref_name }}'" > app/version.py
 
