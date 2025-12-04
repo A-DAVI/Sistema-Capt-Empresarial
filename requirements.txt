@@ -4,5 +4,6 @@ CTkMessagebox
 reportlab
 Pillow
 matplotlib
+dotenv
 
 
