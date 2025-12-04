@@ -38,24 +38,7 @@ PIE_PALETTE = [
     "#0EA5E9",
 ]
 
-# Paletas para acompanhar o tema atual (dark/light)
-DARK_COLORS = {
-    "background": "#0B0B0B",
-    "surface": "#121212",
-    "panel": "#1A1A1A",
-    "card": "#1E1E1E",
-    "accent": "#4C7DFF",
-    "accent_muted": "#7FA2FF",
-    "accent_alt": "#7B61FF",
-    "bar": "#2D6DFF",
-    "line": "#6FA6FF",
-    "pie": PIE_PALETTE,
-    "text_primary": "#FFFFFF",
-    "text_secondary": "#C7CCD4",
-    "divider": "#2C2F36",
-    "success": "#22C55E",
-    "danger": "#F87171",
-}
+# Paleta fixa (somente tema claro)
 LIGHT_COLORS = {
     "background": "#F5F7FA",
     "surface": "#FFFFFF",
@@ -76,8 +59,7 @@ LIGHT_COLORS = {
 
 
 def _palette() -> dict[str, str]:
-    modo = ctk.get_appearance_mode().lower()
-    return DARK_COLORS if modo == "dark" else LIGHT_COLORS
+    return LIGHT_COLORS
 
 
 # ---------------------- Dados e KPIs ---------------------- #
@@ -876,7 +858,7 @@ def abrir_dashboard(parent, empresa_path: Path):
 
 if __name__ == "__main__":
     # Execução isolada para depuração manual
-    ctk.set_appearance_mode("dark")
+    ctk.set_appearance_mode("light")
     root = ctk.CTk()
     root.withdraw()
     arquivo = Path.cwd() / "gastos_empresa.json"

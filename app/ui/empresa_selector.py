@@ -13,17 +13,6 @@ from app.utils.paths import runtime_path, workspace_path
 import json
 
 
-DARK_COLORS = {
-    "background": "#0B0B0B",
-    "surface": "#121212",
-    "panel": "#1A1A1A",
-    "accent": "#007BFF",
-    "accent_hover": "#0056B3",
-    "neutral": "#1F1F1F",
-    "text_primary": "#FFFFFF",
-    "text_secondary": "#CCCCCC",
-}
-
 LIGHT_COLORS = {
     "background": "#F5F7FA",
     "surface": "#FFFFFF",
@@ -34,7 +23,7 @@ LIGHT_COLORS = {
     "text_primary": "#111827",
     "text_secondary": "#4B5563",
 }
-BRAND_COLORS = DARK_COLORS.copy()
+BRAND_COLORS = LIGHT_COLORS.copy()
 FONT_FAMILY = "Segoe UI"
 
 EMPRESAS_PRE_CONFIGURADAS = [
@@ -94,23 +83,11 @@ class EmpresaSelector(ctk.CTk):
         self._centralizar_janela(self)
 
     def _aplicar_tema_preferido(self) -> None:
-        tema = "dark"
-        try:
-            cfg_path = workspace_path("config.json")
-            if cfg_path.exists():
-                data = json.loads(cfg_path.read_text(encoding="utf-8"))
-                tema = str(data.get("tema", "dark")).lower()
-        except Exception:
-            tema = "dark"
-
-        if tema not in ("dark", "light"):
-            tema = "dark"
-
-        palette = DARK_COLORS if tema == "dark" else LIGHT_COLORS
+        """Tema fixo claro para evitar fundo escuro no executável."""
         BRAND_COLORS.clear()
-        BRAND_COLORS.update(palette)
+        BRAND_COLORS.update(LIGHT_COLORS)
         try:
-            ctk.set_appearance_mode("dark" if tema == "dark" else "light")
+            ctk.set_appearance_mode("light")
         except Exception:
             pass
 
@@ -222,7 +199,7 @@ class EmpresaSelector(ctk.CTk):
         escala = min(max_largura / largura, max_altura / altura, 1.0)
         nova_largura = max(1, int(largura * escala))
         nova_altura = max(1, int(altura * escala))
-        return ctk.CTkImage(light_image=imagem, dark_image=imagem, size=(nova_largura, nova_altura))
+        return ctk.CTkImage(light_image=imagem, size=(nova_largura, nova_altura))
 
     def _entrar(self) -> None:
         nome_display = self.combo_empresas.get().strip()

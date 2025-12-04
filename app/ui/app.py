@@ -67,12 +67,15 @@ class ControleGastosApp(ctk.CTk):
         self._apply_theme(self.theme_mode)
 
         self.title("Central de Controle")
+        self.geometry("820x900")
+        # Centraliza após a janela ter sido renderizada
+        self.after(60, lambda: self._centralizar_janela(self))
 
-        self.geometry("860x1000")
+        self.geometry("820x900")
 
         self.resizable(True, True)
 
-        self.minsize(640, 720)
+        self.minsize(620, 700)
 
         self.configure(fg_color=BRAND_COLORS["background"])
 
@@ -303,8 +306,6 @@ class ControleGastosApp(ctk.CTk):
         return ctk.CTkImage(
 
             light_image=imagem,
-
-            dark_image=imagem,
 
             size=(nova_largura, nova_altura),
 
@@ -2477,6 +2478,9 @@ class ControleGastosApp(ctk.CTk):
 
         self.janela_gestao.configure(fg_color=BRAND_COLORS['surface'])
 
+        # Centraliza a janela de gestão
+        self.janela_gestao.after(40, lambda: self._centralizar_janela(self.janela_gestao))
+
         # Garantir que a janela fique em primeiro plano ao abrir
         try:
             self.janela_gestao.transient(self)
@@ -3662,7 +3666,7 @@ def main(theme_mode: str | None = None, config_path: str | None = None):
         empresa_nome=empresa_info.get("empresa_nome"),
         empresa_id=empresa_info.get("empresa_id"),
         empresa_razao=empresa_info.get("empresa_razao"),
-        theme_mode=theme_mode or "dark",
+        theme_mode="light",
         config_path=config_path,
     )
     app.mainloop()

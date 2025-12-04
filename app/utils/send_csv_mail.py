@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import sys
 import smtplib
 from email.message import EmailMessage
 from pathlib import Path
@@ -28,15 +29,29 @@ except Exception:  # pragma: no cover
     load_dotenv = None
 
 
-BASE_DIR = Path(__file__).resolve().parents[2]
+DEV_BASE = Path(__file__).resolve().parents[2]
+
+
+def runtime_base() -> Path:
+    """Retorna o diretório base em execução (PyInstaller ou dev)."""
+    if getattr(sys, "frozen", False):
+        exe_dir = Path(sys.executable).resolve().parent
+        internal = exe_dir / "_internal"
+        return internal if internal.exists() else exe_dir
+    return DEV_BASE
+
+
+BASE_DIR = runtime_base()
 ENTRADA_DIR = BASE_DIR / "entrada"
+ENV_FILE = BASE_DIR / ".env"
 
 
 def _carregar_smtp() -> dict[str, str]:
     """Lê as credenciais do ambiente (e .env, se disponível)."""
     # carrega .env na raiz, se houver
     if load_dotenv:
-        load_dotenv(BASE_DIR / ".env")
+        if ENV_FILE.exists():
+            load_dotenv(ENV_FILE)
     cfg = {
         "host": os.getenv("SMTP_HOST", ""),
         "port": os.getenv("SMTP_PORT", "587"),
