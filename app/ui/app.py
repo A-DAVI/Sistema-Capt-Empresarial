@@ -15,10 +15,25 @@ import tkinter as tk
 from tkinter import messagebox, filedialog
 from typing import Any, Iterable
 
-from app.utils.formatting import format_brl, validar_data, validar_valor
+from app.utils.formatting import format_brl
 
 from app.services.export import export_pdf, export_csv
-from app.services.expenses import filtro_registros, resumo_kpis
+from app.services.expenses import (
+    filtro_registros,
+    resumo_kpis,
+    montar_registro,
+    atualizar_registro,
+    remover_registro,
+    montar_filtros_ui,
+)
+from app.services.catalogs import (
+    CATEGORIAS_FLAGS_BASE,
+    FORNECEDORES_BASE,
+    FORMAS_BASE,
+    merge_fornecedores,
+    build_catalogs,
+    categoria_exige_fornecedor,
+)
 from app.ui.dashboard import abrir_dashboard
 
 from app.data.repository import get_repository
@@ -147,84 +162,16 @@ class ControleGastosApp(ctk.CTk):
 
         self.quantidade_card_value = None
 
-        fornecedores_base = [
-            "PMAN SERVICOS REPRESENTACOES COM E IND LTDA",
-            "COLMEIA DISTRIBUIDORA LTDA",
-            "SOLUCAO, INGREDIENTES INDUSTRIAIS LTDA",
-            "KASSIA FLORES LTDA",
-            "ETIQUETAS MARINGA LTDA",
-            "SANTA ROSA COMERCIO DE EMBALAGENS LTDA-EPP",
-            "COMERCIO DE CHAPAS DE MDF LAMINIL LTDA",
-            "CLEVERSON GERALDO RODRIGUES - ME",
-            "ALMEVAN DISTRIBUIDORA DE ALIMENTOS LTDA",
-            "BEBIDAS WHITE RIVER LTDA",
-            "USINA ALTO ALEGRE S.A - ACUCAR E ALCOOL",
-            "PALUMA VARIEDADES LTDA",
-            "SUNNYVALE COM E REPRES LTDA",
-            "CELERITAS DISTRIBUICAO DE BEBIDAS EM GERAL LTDA",
-            "IND. COM. BEBIDAS FUNADA LTDA",
-            "L DUARTE ALVES LTDA",
-            "DIFRIPAR LOGISTICA E DISTRIBUICAO LTDA",
-            "COFERPAN - COM FERM E PROD PANIF LTDA",
-            "ARILU DISTRIBUIDORA S/A",
-            "OESA COMERCIO E REPRESENTACOES S/A",
-            "DISTRIBUIDORA DE GEN ALIM COLUMBIA LTDA",
-            "TRANS APUCARANA TRANSPORTES RODOVIARIOS LTDA",
-            "RODOVIARIO AFONSO LTDA",
-            "ATACADAO S.A.",
-            "SUPERMERCADO GUGUY LTDA",
-            "M.J. DISTRIBUIDORA",
-            "BAKER FAF LTDA",
-            "COAGRU COOPERATIVA AGROINDUSTRIAL UNIAO",
-        ]
-        base_fornecedores = sorted({nome.strip().upper() for nome in fornecedores_base if nome.strip()})
-        if not self.fornecedores:
-            self.fornecedores = base_fornecedores
-        else:
-            # mescla base + existentes sem duplicar
-            atuais = {f.upper() for f in self.fornecedores}
-            self.fornecedores = sorted(atuais.union(base_fornecedores))
-
-        categorias_flags = [
-            ("Água e esgoto", False),
-            ("Energia Elétrica", False),
-            ("Telefone", False),
-            ("Correios e Malotes", False),
-            ("FGTS", False),
-            ("DARF INSS", False),
-            ("ICMS", False),
-            ("Impostos Fiscais (PIS, Cofins, IRP e CSLL)", False),
-            ("Simples Nacional", False),
-            ("Salários (Funcionários)", False),
-            ("Férias (Funcionários)", False),
-            ("Rescisão (Funcionários)", False),
-            ("13º Salário (Funcionários)", False),
-            ("Pro-labore (Sócios)", False),
-            ("Aluguel", False),
-            ("Tarifas bancarias", False),
-            ("combustível lubrificante", True),
-            ("serviços de terceiros", True),
-            ("Internet", False),
-            ("Fretes e transportes", True),
-            ("materiais de consumo", True),
-            ("comissão de venda", True),
-            ("despesa de viagem", False),
-            ("Fornecedores de matéria prima, embalagens e insumos", True),
-            ("Honorários", False),
-            ("Consultoria jurídica", True),
-            ("manutenção de equipamentos", True),
-            ("bens de pequeno valor", True),
-            ("Imobilizado - Veiculo", True),
-            ("Imobilizado - Maquina e equipamentos", True),
-            ("Imobilizado - Computadores e Periféricos", True),
-            ("Manutenção de veículos", True),
-            ("Alvara e taxa de licença sanitária", False),
-            ("IPVA e licenciamento", False),
-            ("IPTU", False),
-        ]
-        categorias_flags = [(self._normalizar_categoria(nome), precisa) for nome, precisa in categorias_flags]
-        self.categorias_requer_fornecedor = {nome for nome, precisa in categorias_flags if precisa}
-        self.tipos_despesa = sorted({nome for nome, _ in categorias_flags})
+        catalogs = build_catalogs(
+            existentes_categorias=[g.get("tipo", "") for g in self.gastos],
+            existentes_fornecedores=self.fornecedores or [],
+            normalizar_categoria=self._normalizar_categoria,
+            normalizar_fornecedor=self._normalizar_fornecedor,
+        )
+        self.tipos_despesa = catalogs["categorias"]
+        self.categorias_requer_fornecedor = catalogs["categorias_requer_fornecedor"]
+        self.fornecedores = catalogs["fornecedores"]
+        self.formas_pagamento = catalogs["formas"]
 
         self.criar_widgets()
 
@@ -698,46 +645,37 @@ class ControleGastosApp(ctk.CTk):
                 cat_combo.set(cats[0])
 
         def add_categoria():
-            nome = cat_entry.get().strip()
-            if not nome:
-                messagebox.showerror("Erro", "Informe o nome da categoria.")
+            from app.services.catalogs import add_categoria as svc_add_cat
+            ok, res = svc_add_cat(self.tipos_despesa, cat_entry.get(), self._normalizar_categoria)
+            if not ok:
+                messagebox.showerror("Erro", str(res))
                 return
-            if any(nome.lower() == c.lower() for c in self.tipos_despesa):
-                messagebox.showinfo("Aviso", "Categoria já existe.")
-                return
-            self.tipos_despesa.append(nome)
+            self.tipos_despesa = res  # type: ignore[assignment]
             self._atualizar_listas_categorias()
             refresh_categorias()
             cat_entry.delete(0, tk.END)
 
         def renomear_categoria():
-            atual = cat_combo.get().strip()
-            novo = cat_entry.get().strip()
-            if not atual:
-                messagebox.showerror("Erro", "Selecione uma categoria.")
+            from app.services.catalogs import renomear_categoria as svc_ren_cat
+            ok, res = svc_ren_cat(self.tipos_despesa, cat_combo.get(), cat_entry.get(), self._normalizar_categoria)
+            if not ok:
+                messagebox.showerror("Erro", str(res))
                 return
-            if not novo:
-                messagebox.showerror("Erro", "Informe o novo nome.")
-                return
-            if any(novo.lower() == c.lower() for c in self.tipos_despesa if c.lower() != atual.lower()):
-                messagebox.showerror("Erro", "Já existe uma categoria com esse nome.")
-                return
-            for i, c in enumerate(self.tipos_despesa):
-                if c.lower() == atual.lower():
-                    self.tipos_despesa[i] = novo
-                    break
+            self.tipos_despesa = res  # type: ignore[assignment]
             self._atualizar_listas_categorias()
             refresh_categorias()
             cat_entry.delete(0, tk.END)
 
         def remover_categoria():
-            atual = cat_combo.get().strip()
-            if not atual:
-                messagebox.showerror("Erro", "Selecione uma categoria.")
+            from app.services.catalogs import remover_categoria as svc_rem_cat
+            alvo = cat_combo.get().strip()
+            if not messagebox.askyesno("Confirmar", f"Remover categoria \"{alvo}\"?"):
                 return
-            if not messagebox.askyesno("Confirmar", f"Remover categoria \"{atual}\"?"):
+            ok, res = svc_rem_cat(self.tipos_despesa, alvo, self._normalizar_categoria)
+            if not ok:
+                messagebox.showerror("Erro", str(res))
                 return
-            self.tipos_despesa = [c for c in self.tipos_despesa if c.lower() != atual.lower()]
+            self.tipos_despesa = res  # type: ignore[assignment]
             self._atualizar_listas_categorias()
             refresh_categorias()
             cat_entry.delete(0, tk.END)
@@ -765,44 +703,35 @@ class ControleGastosApp(ctk.CTk):
                 forn_combo.set(lista[0])
 
         def add_fornecedor():
-            nome = forn_entry.get().strip()
-            if not nome:
-                messagebox.showerror("Erro", "Informe o nome do fornecedor.")
+            from app.services.catalogs import add_fornecedor as svc_add_f
+            ok, res = svc_add_f(self.fornecedores, forn_entry.get(), self._normalizar_fornecedor)
+            if not ok:
+                messagebox.showerror("Erro", str(res))
                 return
-            if any(nome.lower() == f.lower() for f in self.fornecedores):
-                messagebox.showinfo("Aviso", "Fornecedor já existe.")
-                return
-            self.fornecedores.append(nome)
+            self.fornecedores = res  # type: ignore[assignment]
             refresh_fornecedores()
             forn_entry.delete(0, tk.END)
 
         def renomear_fornecedor():
-            atual = forn_combo.get().strip()
-            novo = forn_entry.get().strip()
-            if not atual:
-                messagebox.showerror("Erro", "Selecione um fornecedor.")
+            from app.services.catalogs import renomear_fornecedor as svc_ren_f
+            ok, res = svc_ren_f(self.fornecedores, forn_combo.get(), forn_entry.get(), self._normalizar_fornecedor)
+            if not ok:
+                messagebox.showerror("Erro", str(res))
                 return
-            if not novo:
-                messagebox.showerror("Erro", "Informe o novo nome.")
-                return
-            if any(novo.lower() == f.lower() for f in self.fornecedores if f.lower() != atual.lower()):
-                messagebox.showerror("Erro", "Já existe um fornecedor com esse nome.")
-                return
-            for i, f in enumerate(self.fornecedores):
-                if f.lower() == atual.lower():
-                    self.fornecedores[i] = novo
-                    break
+            self.fornecedores = res  # type: ignore[assignment]
             refresh_fornecedores()
             forn_entry.delete(0, tk.END)
 
         def remover_fornecedor():
-            atual = forn_combo.get().strip()
-            if not atual:
-                messagebox.showerror("Erro", "Selecione um fornecedor.")
+            from app.services.catalogs import remover_fornecedor as svc_rem_f
+            alvo = forn_combo.get().strip()
+            if not messagebox.askyesno("Confirmar", f"Remover fornecedor \"{alvo}\"?"):
                 return
-            if not messagebox.askyesno("Confirmar", f"Remover fornecedor \"{atual}\"?"):
+            ok, res = svc_rem_f(self.fornecedores, alvo, self._normalizar_fornecedor)
+            if not ok:
+                messagebox.showerror("Erro", str(res))
                 return
-            self.fornecedores = [f for f in self.fornecedores if f.lower() != atual.lower()]
+            self.fornecedores = res  # type: ignore[assignment]
             refresh_fornecedores()
             forn_entry.delete(0, tk.END)
 
@@ -1134,8 +1063,8 @@ class ControleGastosApp(ctk.CTk):
 
     def _on_tipo_change(self, *_args) -> None:
         """Ativa/desativa fornecedor automaticamente conforme a categoria."""
-        tipo_atual = self._normalizar_categoria(self.combo_tipo.get())
-        exige = tipo_atual in getattr(self, "categorias_requer_fornecedor", set())
+        tipo_atual = self.combo_tipo.get()
+        exige = categoria_exige_fornecedor(getattr(self, "categorias_requer_fornecedor", set()), tipo_atual, self._normalizar_categoria)
         try:
             if exige:
                 self.fornecedor_ativo.set(1)
@@ -1154,23 +1083,13 @@ class ControleGastosApp(ctk.CTk):
             return
         try:
             self._formatando_valor = True
+            from app.services.expenses import formatar_valor_input
             texto = widget.get() or ""
-            digits = "".join(ch for ch in texto if ch.isdigit())
-            if not digits:
-                widget.delete(0, "end")
-                return
-            valor_centavos = int(digits)
-            valor_float = valor_centavos / 100
-            formatado = (
-                f"{valor_float:,.2f}"
-                .replace(",", "X")
-                .replace(".", ",")
-                .replace("X", ".")
-            )
-            cursor = len(formatado)
+            formatado = formatar_valor_input(texto)
             widget.delete(0, "end")
-            widget.insert(0, formatado)
-            widget.icursor(cursor)
+            if formatado:
+                widget.insert(0, formatado)
+                widget.icursor(len(formatado))
         except Exception:
             try:
                 widget.icursor("end")
@@ -1187,24 +1106,13 @@ class ControleGastosApp(ctk.CTk):
             return
         try:
             self._formatando_data = True
+            from app.services.expenses import formatar_data_input
             texto = widget.get() or ""
-            digits = "".join(ch for ch in texto if ch.isdigit())[:8]
-            partes = []
-            if len(digits) >= 2:
-                partes.append(digits[:2])
-            else:
-                partes.append(digits)
-            if len(digits) >= 4:
-                partes.append(digits[2:4])
-            elif len(digits) > 2:
-                partes.append(digits[2:])
-            if len(digits) > 4:
-                partes.append(digits[4:])
-            formatado = "/".join(partes)
-            cursor = len(formatado)
+            formatado = formatar_data_input(texto)
             widget.delete(0, "end")
-            widget.insert(0, formatado)
-            widget.icursor(cursor)
+            if formatado:
+                widget.insert(0, formatado)
+                widget.icursor("end")
         except Exception:
             try:
                 widget.icursor("end")
@@ -1385,59 +1293,23 @@ class ControleGastosApp(ctk.CTk):
 
         def aplicar():
 
-            inicio_val = entry_inicio.get().strip()
+            novos_filtros = montar_filtros_ui(
+                data_inicio=entry_inicio.get().strip(),
+                data_fim=entry_fim.get().strip(),
+                tipo=combo_tipo.get().strip(),
+                forma=combo_forma.get().strip(),
+                fornecedor=combo_fornecedor.get().strip(),
+                valor="Todos",
+            )
 
-            fim_val = entry_fim.get().strip()
-
-            if inicio_val and not validar_data(inicio_val):
-
-                messagebox.showerror("Erro", "Data inicial inválida. Use o formato DD/MM/AAAA.")
-
-                return
-
-            if fim_val and not validar_data(fim_val):
-
-                messagebox.showerror("Erro", "Data final inválida. Use o formato DD/MM/AAAA.")
-
-                return
-
-            dt_inicio = self._parse_data_str(inicio_val)
-
-            dt_fim = self._parse_data_str(fim_val)
+            dt_inicio = self._parse_data_str(novos_filtros.get("data_inicio", ""))
+            dt_fim = self._parse_data_str(novos_filtros.get("data_fim", ""))
 
             if dt_inicio and dt_fim and dt_inicio > dt_fim:
 
                 messagebox.showerror("Erro", "A data inicial não pode ser posterior à data final.")
 
                 return
-
-            novos_filtros: dict[str, str] = {}
-
-            if inicio_val:
-
-                novos_filtros["data_inicio"] = inicio_val
-
-            if fim_val:
-
-                novos_filtros["data_fim"] = fim_val
-
-            tipo_valor = combo_tipo.get().strip()
-
-            if tipo_valor and tipo_valor != "Todos":
-
-                novos_filtros["tipo"] = tipo_valor
-
-            forma_valor = combo_forma.get().strip()
-
-            if forma_valor and forma_valor != "Todos":
-
-                novos_filtros["forma"] = forma_valor
-
-            fornecedor_valor = combo_fornecedor.get().strip().upper()
-
-            if fornecedor_valor and fornecedor_valor != "TODOS":
-
-                novos_filtros["fornecedor"] = fornecedor_valor
 
             on_apply(novos_filtros or None)
 
@@ -1757,15 +1629,6 @@ class ControleGastosApp(ctk.CTk):
         self.combo_tipo.configure(command=self._on_tipo_change)
 
         self.combo_tipo.set('Selecione o tipo')
-
-        self.formas_pagamento = [
-            "Banco 1",
-            "Banco 2",
-            "Banco 3",
-            "Banco 4",
-            "Banco 5",
-            "Dinheiro",
-        ]
 
         self.combo_pagamento = self._criar_input_group(
 
@@ -2244,72 +2107,52 @@ class ControleGastosApp(ctk.CTk):
 
         novo_app.mainloop()
     def salvar_despesa(self):
-
         data = (self.entry_data.get() or "").strip()
-
         tipo_raw = (self.combo_tipo.get() or "").strip()
-        tipo = self._normalizar_categoria(tipo_raw)
-
         pagamento = self.combo_pagamento.get()
-
         valor_str = (self.entry_valor.get() or "").strip()
 
-        if not validar_data(data):
-
-            messagebox.showerror("Erro", "Data inválida. Use o formato DD/MM/AAAA.")
-
-            return
-
-        if not tipo_raw or tipo_raw == "Selecione o tipo":
-
-            messagebox.showerror("Erro", "Selecione um tipo de despesa!")
-
-            return
-
-        if pagamento == "Selecione a forma":
-
-            messagebox.showerror("Erro", "Selecione uma forma de pagamento!")
-
-            return
-
-        valor = validar_valor(valor_str)
-
-        if valor is None:
-
-            messagebox.showerror("Erro", "Valor inválido! Digite um número maior que zero.")
-
-            return
-
         fornecedor = ""
-        if getattr(self, "fornecedor_ativo", tk.IntVar(value=0)).get():
-            fornecedor = self._normalizar_fornecedor(self.combo_fornecedor.get())
+        exige_fornecedor = False
+        try:
+            exige_fornecedor = bool(getattr(self, "fornecedor_ativo", tk.IntVar(value=0)).get())
+            if exige_fornecedor:
+                fornecedor = self.combo_fornecedor.get()
+        except Exception:
+            exige_fornecedor = False
 
-        registro = {
-            "data": data,
-            "tipo": tipo,
-            "forma_pagamento": pagamento,
-            "valor": valor,
-            "fornecedor": fornecedor or None,
-            "timestamp": datetime.now().isoformat(),
-        }
+        ok, resultado = montar_registro(
+            data=data,
+            tipo=tipo_raw,
+            forma_pagamento=pagamento,
+            valor_str=valor_str,
+            fornecedor=fornecedor,
+            fornecedor_obrigatorio=exige_fornecedor,
+            normalizar_categoria=self._normalizar_categoria,
+            normalizar_fornecedor=self._normalizar_fornecedor,
+        )
+        if not ok:
+            messagebox.showerror("Erro", str(resultado))
+            return
 
+        registro = resultado
         self.gastos.append(registro)
 
         if not self.repo.save(self.gastos):
-
             messagebox.showerror("Erro", "Não foi possível salvar os dados em disco.")
 
         self.atualizar_stats()
 
         try:
-
             self.renderizar_lista_gastos()
-
         except Exception:
-
             pass
 
-        messagebox.showinfo("Sucesso", f"Despesa de {format_brl(valor)} registrada com sucesso!")
+        try:
+            valor_num = registro.get("valor", 0.0)
+            messagebox.showinfo("Sucesso", f"Despesa de {format_brl(valor_num)} registrada com sucesso!")
+        except Exception:
+            pass
 
         self.limpar_campos()
 
@@ -2336,24 +2179,16 @@ class ControleGastosApp(ctk.CTk):
     def atualizar_stats(self):
 
         registros = []
-
         if isinstance(self.gastos, list):
-
             registros = self._filtrar_registros(self.gastos, self.resumo_filtros)
 
-        total = sum((g.get("valor", 0.0) if isinstance(g, dict) else 0.0) for g in registros)
-
-        quantidade = len(registros)
+        kpis = resumo_kpis(registros)
 
         if self.total_card_value:
-
-            self.total_card_value.configure(text=format_brl(total))
+            self.total_card_value.configure(text=kpis.get("total_str", "R$ 0,00"))
 
         if self.quantidade_card_value:
-
-            sufixo = "lançamento" if quantidade == 1 else "lançamentos"
-
-            self.quantidade_card_value.configure(text=f"{quantidade} {sufixo}")
+            self.quantidade_card_value.configure(text=kpis.get("quantidade_str", "0 registros"))
 
     # ------- Gestão com múltiplos filtros simples -------
 
@@ -2565,7 +2400,7 @@ class ControleGastosApp(ctk.CTk):
 
             'Aplicar filtros',
 
-            self.renderizar_lista_gastos,
+            self._aplicar_filtros_gerenciamento,
 
         ).pack(side='left', expand=True, fill='x', padx=(0, 6))
 
@@ -2824,29 +2659,14 @@ class ControleGastosApp(ctk.CTk):
 
     def filtrar_gastos(self, gastos_ordenados):
 
-        filtros_basicos: dict[str, str] = {}
-
-        inicio = self.filtro_data_inicio_entry.get().strip() if self.filtro_data_inicio_entry else ""
-        fim = self.filtro_data_fim_entry.get().strip() if self.filtro_data_fim_entry else ""
-        if inicio:
-            filtros_basicos["data_inicio"] = inicio
-        if fim:
-            filtros_basicos["data_fim"] = fim
-
-        tipo_filtro = self.filtro_tipo_combo.get() if self.filtro_tipo_combo else "Todos"
-        if tipo_filtro and tipo_filtro != "Todos":
-            filtros_basicos["tipo"] = tipo_filtro
-
-        forma_filtro = self.filtro_forma_combo.get() if self.filtro_forma_combo else "Todos"
-        if forma_filtro and forma_filtro != "Todos":
-            filtros_basicos["forma"] = forma_filtro
-
-        fornecedor_filtro = self.filtro_fornecedor_combo.get() if getattr(self, "filtro_fornecedor_combo", None) else "Todos"
-        if fornecedor_filtro and fornecedor_filtro != "Todos":
-            filtros_basicos["fornecedor"] = fornecedor_filtro
-
-        valor_filtro = self.filtro_valor_combo.get() if self.filtro_valor_combo else "Todos"
-        filtros_basicos["valor"] = valor_filtro
+        filtros_basicos = montar_filtros_ui(
+            data_inicio=self.filtro_data_inicio_entry.get().strip() if self.filtro_data_inicio_entry else "",
+            data_fim=self.filtro_data_fim_entry.get().strip() if self.filtro_data_fim_entry else "",
+            tipo=self.filtro_tipo_combo.get() if self.filtro_tipo_combo else "Todos",
+            forma=self.filtro_forma_combo.get() if self.filtro_forma_combo else "Todos",
+            fornecedor=self.filtro_fornecedor_combo.get() if getattr(self, "filtro_fornecedor_combo", None) else "Todos",
+            valor=self.filtro_valor_combo.get() if self.filtro_valor_combo else "Todos",
+        )
 
         # aplica filtro de serviço nos gastos (sem índices) e depois cruza com índices originais
         registros_somente = [g for _, g in gastos_ordenados]
@@ -3046,52 +2866,30 @@ class ControleGastosApp(ctk.CTk):
         def salvar_edicao():
 
             nova_data = entry_data.get().strip()
-
-            if not validar_data(nova_data):
-
-                messagebox.showerror("Erro", "Data inválida. Use o formato DD/MM/AAAA.")
-
-                return
-
             novo_tipo = combo_tipo.get().strip()
-
-            if not novo_tipo or novo_tipo == "Selecione o tipo":
-
-                messagebox.showerror("Erro", "Escolha um tipo de despesa.")
-
-                return
-
             novo_pagamento = combo_pagamento.get().strip()
+            valor_str = entry_valor.get().strip()
 
-            if not novo_pagamento or novo_pagamento == "Selecione a forma":
-
-                messagebox.showerror("Erro", "Escolha uma forma de pagamento.")
-
-                return
-
-            novo_valor = validar_valor(entry_valor.get())
-
-            if novo_valor is None:
-
-                messagebox.showerror("Erro", "Valor inválido! Digite um número maior que zero.")
-
-                return
-
-            gasto.update(
-
-                {
-
-                    "data": nova_data,
-
-                    "tipo": novo_tipo,
-
-                    "forma_pagamento": novo_pagamento,
-
-                    "valor": novo_valor,
-
-                }
-
+            ok, resultado = atualizar_registro(
+                self.gastos,
+                indice,
+                data=nova_data,
+                tipo=novo_tipo,
+                forma_pagamento=novo_pagamento,
+                valor_str=valor_str,
+                fornecedor=gasto.get("fornecedor"),
+                fornecedor_obrigatorio=gasto.get("fornecedor") is not None,
+                normalizar_categoria=self._normalizar_categoria,
+                normalizar_fornecedor=self._normalizar_fornecedor,
             )
+
+            if not ok:
+
+                messagebox.showerror("Erro", str(resultado))
+
+                return
+
+            self.gastos = resultado  # type: ignore[assignment]
 
             self.repo.save(self.gastos)
 
@@ -3134,18 +2932,20 @@ class ControleGastosApp(ctk.CTk):
         gasto = self.gastos[indice]
 
         valor = gasto.get("valor", 0)
-
         data = gasto.get("data", "--")
-
         tipo = gasto.get("tipo", "--")
 
         confirmar = messagebox.askyesno("Confirmar exclusão", f"Deseja excluir a despesa de {data} ({tipo}) no valor de {format_brl(valor)}?")
 
         if not confirmar:
-
             return
 
-        del self.gastos[indice]
+        ok, resultado = remover_registro(self.gastos, indice)
+        if not ok:
+            messagebox.showerror("Erro", str(resultado))
+            return
+
+        self.gastos = resultado  # type: ignore[assignment]
 
         save_ok = self.repo.save(self.gastos)
 
@@ -3416,19 +3216,20 @@ class ControleGastosApp(ctk.CTk):
             if not inicio_val or not fim_val:
                 messagebox.showerror("Erro", "Informe data inicial e final para exportar.")
                 return
-            if not validar_data(inicio_val):
-                messagebox.showerror("Erro", "Data inicial inválida. Use o formato DD/MM/AAAA.")
-                return
-            if not validar_data(fim_val):
-                messagebox.showerror("Erro", "Data final inválida. Use o formato DD/MM/AAAA.")
-                return
-            dt_inicio = self._parse_data_str(inicio_val)
-            dt_fim = self._parse_data_str(fim_val)
+            filtros_periodo = montar_filtros_ui(
+                data_inicio=inicio_val,
+                data_fim=fim_val,
+                tipo="Todos",
+                forma="Todos",
+                fornecedor="Todos",
+                valor="Todos",
+            )
+            dt_inicio = self._parse_data_str(filtros_periodo.get("data_inicio", ""))
+            dt_fim = self._parse_data_str(filtros_periodo.get("data_fim", ""))
             if dt_inicio and dt_fim and dt_inicio > dt_fim:
                 messagebox.showerror("Erro", "A data inicial não pode ser posterior à data final.")
                 return
 
-            filtros_periodo = {"data_inicio": inicio_val, "data_fim": fim_val}
             registros_periodo = self._filtrar_registros(self.gastos, filtros_periodo)
             if not registros_periodo:
                 messagebox.showinfo("Aviso", "Nenhum registro no período informado.")

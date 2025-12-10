@@ -1,0 +1,36 @@
+PLANO – 2025-12-04 14:35
+Objetivo: consolidar separação UI x lógica na branch refatoração-UI e manter registro centralizado de passos.
+
+Passos atuais
+1) Remover acessos diretos no app.py [EM PROGRESSO]
+   - Trocar qualquer load_data/save_data por repository/services.
+   - Exportar apenas via services.export (PDF/CSV), sem generate_pdf_report direto.
+
+2) Unificar filtros/resumo via services [EM PROGRESSO]
+   - Usar services.expenses.filtro_registros em gestão, resumo e relatório.
+   - ✔️ Card/resumo já usa services.expenses.resumo_kpis.
+   - Faltante: se houver somas em outros pontos, mover para services.dashboard.
+
+3) Limpar combos/catálogos [EM PROGRESSO]
+   - ✔️ Categorias/fornecedores/formas agora vindas de services.catalogs (bases centralizadas).
+   - Faltante: revisar se ainda existe lista hardcoded residual nos modais/edição; alinhar updates com service se necessário.
+
+4) Revisão de imports/encoding [PENDENTE]
+   - UI depende apenas de services/repo/utils (sem util/report direto).
+   - Garantir UTF-8 intacto nos arquivos tocados.
+
+5) Verificação rápida [PENDENTE]
+   - Validar fluxo manual (filtros → resumo/cards → export) ou py_compile app/ui/app.py.
+
+6) Próximos ajustes para UI 100% sem lógica [PENDENTE]
+   - Extrair CRUD de despesas (add/editar/excluir) e normalização de registro para services/repo.
+   - Mover regras de “categoria exige fornecedor” e merges de catálogos para services.catalogs (UI apenas consome).
+   - Centralizar validação de campos (datas/valores) e filtros em services (UI só lê campos e chama funções).
+   - Deixar UI apenas com: leitura de campos, chamadas a services/repo, e renderização de resultados.
+
+7) Lógica ainda na UI (app.py) a migrar [EM PROGRESSO]
+   - ✔️ Edição/atualização e exclusão agora via services.expenses (montar/atualizar/remover).
+   - Pendente: regras de categoria x fornecedor (fornecedor_ativo, toggle) e normalizações ligadas ao tipo.
+   - Pendente: formatação/validação de campos (datas/valores) e configuração de filtros/combos diretamente na UI.
+   - 🟢 Formatação de data/valor e montagem de filtros agora via services.expenses (montar_filtros_ui, formatar_*_input).
+   - Pendente final: revisar se ainda há validações/normalizações residuais nos modais/filtros e combos; ajustar se necessário.
