@@ -1,0 +1,525 @@
+import QtQuick 2.15
+import QtQuick.Controls 2.15
+import QtQuick.Layouts 1.15
+import Qt5Compat.GraphicalEffects
+
+ApplicationWindow {
+    id: window
+    width: 1120
+    height: 740
+    visible: true
+    title: "Central de Controle - Grupo 14D"
+    color: "#F5F7FA"
+
+    property bool sidebarOpen: false
+    property int sidebarWidth: sidebarOpen ? 210 : 72
+    property int currentPage: 0
+    property string iconFont: "Segoe MDL2 Assets"
+    property var empresasModel: bridge.listarEmpresas()
+
+    // dados reativos da bridge
+    property var despesasModel: []
+    property var catalogos: {}
+
+    Component.onCompleted: {
+        catalogos = bridge.listarCatalogos()
+    }
+
+    Connections {
+        target: bridge
+        onDespesasChanged: despesasModel = arguments[0]
+        onCatalogosChanged: catalogos = arguments[0]
+    }
+
+    RowLayout {
+        anchors.fill: parent
+
+        // SIDEBAR
+        Rectangle {
+            id: sidebar
+            Layout.preferredWidth: sidebarWidth
+            Layout.fillHeight: true
+            color: "#0D1B2A"
+            Behavior on Layout.preferredWidth { NumberAnimation { duration: 180; easing.type: Easing.InOutQuad } }
+
+            ColumnLayout {
+                anchors.fill: parent
+                anchors.margins: 12
+                spacing: 10
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 6
+                    Image {
+                        source: "logo_empresa.png"
+                        width: 28
+                        height: 28
+                        fillMode: Image.PreserveAspectFit
+                        smooth: true
+                        antialiasing: true
+                    }
+                    Item { Layout.fillWidth: true }
+                    Button {
+                        implicitWidth: 32; implicitHeight: 32
+                        background: Rectangle { radius: 8; color: "#11263A" }
+                        contentItem: Text {
+                            text: sidebarOpen ? "\uE70E" : "\uE70D"   // aberto: seta para a esquerda; fechado: seta para a direita
+                            font.family: iconFont
+                            font.pixelSize: 16
+                            color: "#E0E7FF"
+                            horizontalAlignment: Text.AlignHCenter
+                            verticalAlignment: Text.AlignVCenter
+                        }
+                        onClicked: sidebarOpen = !sidebarOpen
+                    }
+                }
+
+                Rectangle { Layout.fillWidth: true; height: 1; color: "#1F2937" }
+
+                Repeater {
+                    model: [
+                        { icon: "\uE80F", label: "Início" },
+                        { icon: "\uE710", label: "Lançamentos" },
+                        { icon: "\uE9CA", label: "Dashboard" },
+                        { icon: "\uE70F", label: "Gestão" },
+                        { icon: "\uE14C", label: "Relatórios" }
+                    ]
+                    delegate: Rectangle {
+                        Layout.fillWidth: true
+                        height: 40
+                        radius: 10
+                        color: index === currentPage ? "#123454" : (mouse.hovered ? "#11263A" : "transparent")
+                        RowLayout {
+                            anchors.fill: parent
+                            anchors.margins: 10
+                            spacing: 10
+                            Text { text: modelData.icon; font.pixelSize: 17; font.family: iconFont; color: "#E0E7FF" }
+                            Text { visible: sidebarOpen; text: modelData.label; color: "#E0E7FF"; font.pixelSize: 13 }
+                        }
+                        MouseArea {
+                            id: mouse
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            onClicked: currentPage = index
+                            ToolTip.visible: !sidebarOpen && mouse.containsMouse
+                            ToolTip.text: modelData.label
+                        }
+                    }
+                }
+
+                Item { Layout.fillHeight: true }
+                Rectangle { Layout.fillWidth: true; height: 1; color: "#1F2937" }
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    spacing: 4
+                    Text {
+                        visible: sidebarOpen
+                        text: "v1.0 • QML Front"
+                        color: "#9CA3AF"
+                        font.pixelSize: 11
+                    }
+                    Text {
+                        visible: sidebarOpen
+                        text: "Grupo 14D"
+                        color: "#9CA3AF"
+                        font.pixelSize: 11
+                    }
+                }
+            }
+        }
+
+        // CONTEÚDO
+        Rectangle {
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            color: "#FFFFFF"
+            radius: 16
+            anchors.margins: 16
+            layer.enabled: true
+            layer.effect: DropShadow {
+                horizontalOffset: 0
+                verticalOffset: 6
+                radius: 18
+                samples: 20
+                color: "#22000000"
+            }
+
+            ColumnLayout {
+                anchors.fill: parent
+                anchors.margins: 20
+                spacing: 12
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 12
+                    Text {
+                        text: currentPage === 0 ? "Início" :
+                              currentPage === 1 ? "Lançar despesa" :
+                              currentPage === 2 ? "Dashboard" :
+                              currentPage === 3 ? "Gestão de Despesas" :
+                              "Relatórios"
+                        font.pixelSize: 22
+                        font.bold: true
+                        color: "#0F172A"
+                    }
+                    Item { Layout.fillWidth: true }
+                    Button {
+                        text: "Mudar de empresa"
+                        font.pixelSize: 14
+                        background: Rectangle { radius: 10; color: "#0D6EFD" }
+                        contentItem: Text {
+                            text: parent.text
+                            color: "#FFFFFF"
+                            horizontalAlignment: Text.AlignHCenter
+                            verticalAlignment: Text.AlignVCenter
+                            font.bold: true
+                        }
+                        onClicked: empresaPopup.open()
+                    }
+                }
+                Text {
+                    text: currentPage === 0 ? "Visão geral e atalhos rápidos" :
+                          currentPage === 1 ? "Formulário rápido e despesas recentes" :
+                          currentPage === 2 ? "Visão executiva e KPIs" :
+                          currentPage === 3 ? "Cadastros, filtros e lançamentos" :
+                          "Históricos e exportações"
+                    font.pixelSize: 14
+                    color: "#4B5563"
+                }
+                Rectangle { Layout.fillWidth: true; height: 1; color: "#E5E7EB" }
+
+                Loader {
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    sourceComponent: currentPage === 0 ? pageHome :
+                                     currentPage === 1 ? pageLancamentos :
+                                     currentPage === 2 ? pageDashboard :
+                                     currentPage === 3 ? pageGestao :
+                                     pageRelatorios
+                }
+            }
+        }
+    }
+
+    // PÁGINAS
+    Component {
+        id: pageHome
+        Flickable {
+            contentWidth: parent.width
+            contentHeight: colHome.implicitHeight
+            clip: true
+            Column {
+                id: colHome
+                width: parent.width
+                spacing: 16
+
+                // Hero
+                Rectangle {
+                    width: parent.width
+                    radius: 14
+                    color: "#0D6EFD"
+                    border.color: "#0B5ED7"
+                    anchors.margins: 4
+                    ColumnLayout {
+                        anchors.fill: parent
+                        anchors.margins: 18
+                        spacing: 10
+                        Text { text: "Central de Controle — Grupo 14D"; font.pixelSize: 20; font.bold: true; color: "#FFFFFF" }
+                        Text { text: "Lance despesas, acompanhe KPIs e exporte relatórios em um só lugar."; color: "#E8F0FE"; font.pixelSize: 13; wrapMode: Text.WordWrap }
+                        RowLayout {
+                            spacing: 10
+                            Button {
+                                text: "Registrar despesa"
+                                font.bold: true
+                                background: Rectangle { radius: 10; color: "#FFFFFF" }
+                                contentItem: Text { text: parent.text; color: "#0D6EFD"; font.bold: true; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
+                                onClicked: currentPage = 1
+                            }
+                            Button {
+                                text: "Abrir dashboard"
+                                background: Rectangle { radius: 10; color: "#0B5ED7" }
+                                contentItem: Text { text: parent.text; color: "#FFFFFF"; font.bold: true; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
+                                onClicked: currentPage = 2
+                            }
+                        }
+                    }
+                }
+
+                // Cards de resumo
+                Row {
+                    width: parent.width
+                    spacing: 12
+                    Rectangle { width: parent.width/4 - 9; height: 110; radius: 12; color: "#F3F4F6"; border.color: "#E5E7EB"
+                        Column { anchors.centerIn: parent; spacing: 4
+                            Text { text: "Total do mês"; font.pixelSize: 12; color: "#6B7280" }
+                            Text { text: "R$ —"; font.pixelSize: 18; font.bold: true; color: "#0F172A" }
+                        }
+                    }
+                    Rectangle { width: parent.width/4 - 9; height: 110; radius: 12; color: "#F3F4F6"; border.color: "#E5E7EB"
+                        Column { anchors.centerIn: parent; spacing: 4
+                            Text { text: "Mês anterior"; font.pixelSize: 12; color: "#6B7280" }
+                            Text { text: "R$ —"; font.pixelSize: 18; font.bold: true; color: "#0F172A" }
+                        }
+                    }
+                    Rectangle { width: parent.width/4 - 9; height: 110; radius: 12; color: "#F3F4F6"; border.color: "#E5E7EB"
+                        Column { anchors.centerIn: parent; spacing: 4
+                            Text { text: "Variação"; font.pixelSize: 12; color: "#6B7280" }
+                            Text { text: "0.0%"; font.pixelSize: 18; font.bold: true; color: "#16A34A" }
+                        }
+                    }
+                    Rectangle { width: parent.width/4 - 9; height: 110; radius: 12; color: "#F3F4F6"; border.color: "#E5E7EB"
+                        Column { anchors.centerIn: parent; spacing: 4
+                            Text { text: "Maior categoria"; font.pixelSize: 12; color: "#6B7280" }
+                            Text { text: "—"; font.pixelSize: 18; font.bold: true; color: "#0F172A"; elide: Text.ElideRight; maximumLineCount: 1; wrapMode: Text.NoWrap }
+                        }
+                    }
+                }
+
+                // Ações rápidas
+                Row {
+                    width: parent.width
+                    spacing: 10
+                    Button {
+                        text: "Lançar despesa"
+                        background: Rectangle { radius: 10; color: "#E0ECFF" }
+                        contentItem: Text { text: parent.text; color: "#0D6EFD"; font.bold: true; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
+                        onClicked: currentPage = 1
+                    }
+                    Button {
+                        text: "Gestão de despesas"
+                        background: Rectangle { radius: 10; color: "#E0ECFF" }
+                        contentItem: Text { text: parent.text; color: "#0D6EFD"; font.bold: true; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
+                        onClicked: currentPage = 3
+                    }
+                    Button {
+                        text: "Exportar / Relatórios"
+                        background: Rectangle { radius: 10; color: "#E0ECFF" }
+                        contentItem: Text { text: parent.text; color: "#0D6EFD"; font.bold: true; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
+                        onClicked: currentPage = 4
+                    }
+                }
+
+                // Últimas despesas + Suporte
+                Row {
+                    width: parent.width
+                    spacing: 12
+
+                    Rectangle {
+                        width: parent.width * 0.65
+                        radius: 12
+                        color: "#F3F4F6"
+                        border.color: "#E5E7EB"
+                        anchors.margins: 6
+                        ColumnLayout {
+                            anchors.fill: parent
+                            anchors.margins: 14
+                            spacing: 8
+                            Text { text: "Últimas despesas"; font.pixelSize: 16; font.bold: true; color: "#0F172A" }
+                            ListView {
+                                Layout.fillWidth: true
+                                Layout.preferredHeight: 220
+                                clip: true
+                                model: despesasModel
+                                delegate: Rectangle {
+                                    width: parent.width
+                                    height: 56
+                                    radius: 8
+                                    color: index % 2 === 0 ? "#FFFFFF" : "#F9FAFB"
+                                    border.color: "#E5E7EB"
+                                    RowLayout {
+                                        anchors.fill: parent
+                                        anchors.margins: 10
+                                        spacing: 12
+                                        Text { text: model.data; color: "#4B5563"; font.pixelSize: 13 }
+                                        Text { text: model.tipo; color: "#111827"; font.pixelSize: 14; elide: Text.ElideRight; Layout.fillWidth: true }
+                                        Text { text: "R$ " + model.valor; color: "#0F9D58"; font.pixelSize: 14; font.bold: true }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    Rectangle {
+                        width: parent.width * 0.32
+                        radius: 12
+                        color: "#FFFFFF"
+                        border.color: "#E5E7EB"
+                        anchors.margins: 6
+                        ColumnLayout {
+                            anchors.fill: parent
+                            anchors.margins: 14
+                            spacing: 8
+                            Text { text: "Central de atendimento"; font.pixelSize: 16; font.bold: true; color: "#0F172A" }
+                            Text { text: "Email: suporte@grupo14d.com.br"; color: "#4B5563"; font.pixelSize: 13; wrapMode: Text.WordWrap }
+                            Text { text: "Telefone: (00) 0000-0000"; color: "#4B5563"; font.pixelSize: 13 }
+                            Text { text: "Horário: 08h às 18h (seg-sex)"; color: "#4B5563"; font.pixelSize: 13 }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    Component {
+        id: pageLancamentos
+        Flickable {
+            contentWidth: parent.width
+            contentHeight: col.implicitHeight
+            clip: true
+            Column {
+                id: col
+                width: parent.width
+                spacing: 12
+
+                Rectangle {
+                    width: parent.width
+                    radius: 12
+                    color: "#F3F4F6"
+                    border.color: "#E5E7EB"
+                    anchors.margins: 6
+                    ColumnLayout {
+                        anchors.fill: parent
+                        anchors.margins: 14
+                        spacing: 10
+
+                        Text { text: "Registrar despesa"; font.pixelSize: 16; font.bold: true; color: "#0F172A" }
+
+                        Text { text: "Data"; color: "#4B5563"; font.pixelSize: 13 }
+                        TextField { id: fieldData; placeholderText: "DD/MM/AAAA"; font.pixelSize: 14; Layout.fillWidth: true }
+
+                        Text { text: "Tipo de despesa"; color: "#4B5563"; font.pixelSize: 13 }
+                        ComboBox { id: fieldTipo; Layout.fillWidth: true; model: catalogos.categorias || [] }
+
+                        Text { text: "Forma de pagamento"; color: "#4B5563"; font.pixelSize: 13 }
+                        ComboBox { id: fieldForma; Layout.fillWidth: true; model: catalogos.formas || [] }
+
+                        Text { text: "Fornecedor"; color: "#4B5563"; font.pixelSize: 13 }
+                        ComboBox { id: fieldFornecedor; Layout.fillWidth: true; model: catalogos.fornecedores || [] }
+
+                        Text { text: "Valor (R$)"; color: "#4B5563"; font.pixelSize: 13 }
+                        TextField { id: fieldValor; placeholderText: "0,00"; font.pixelSize: 14; Layout.fillWidth: true; inputMethodHints: Qt.ImhFormattedNumbersOnly }
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 10
+                            Button {
+                                Layout.fillWidth: true
+                                text: "Registrar"
+                                font.bold: true
+                                background: Rectangle { radius: 10; color: "#0D6EFD" }
+                                contentItem: Text { text: parent.text; color: "#FFFFFF"; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter; font.bold: true }
+                                onClicked: {
+                                    bridge.adicionarDespesa(fieldData.text, fieldTipo.currentText, fieldForma.currentText, fieldValor.text, fieldFornecedor.currentText)
+                                }
+                            }
+                            Button {
+                                Layout.fillWidth: true
+                                text: "Limpar"
+                                background: Rectangle { radius: 10; color: "#E5E7EB" }
+                                contentItem: Text { text: parent.text; color: "#111827"; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter; font.bold: true }
+                                onClicked: {
+                                    fieldData.text = ""
+                                    fieldTipo.currentIndex = 0
+                                    fieldForma.currentIndex = 0
+                                    fieldFornecedor.currentIndex = 0
+                                    fieldValor.text = ""
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Rectangle {
+                    width: parent.width
+                    radius: 12
+                    color: "#F3F4F6"
+                    border.color: "#E5E7EB"
+                    anchors.margins: 6
+                    ColumnLayout {
+                        anchors.fill: parent
+                        anchors.margins: 14
+                        spacing: 6
+
+                        Text { text: "Despesas recentes"; font.pixelSize: 16; font.bold: true; color: "#0F172A" }
+
+                        ListView {
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: 260
+                            clip: true
+                            model: despesasModel
+                            delegate: Rectangle {
+                                width: parent.width
+                                height: 64
+                                radius: 10
+                                color: index % 2 === 0 ? "#FFFFFF" : "#F9FAFB"
+                                border.color: "#E5E7EB"
+                                RowLayout {
+                                    anchors.fill: parent
+                                    anchors.margins: 10
+                                    spacing: 12
+                                    Text { text: model.data; color: "#4B5563"; font.pixelSize: 13 }
+                                    Text { text: model.tipo; color: "#111827"; font.pixelSize: 14 }
+                                    Text { text: model.forma_pagamento; color: "#4B5563"; font.pixelSize: 13 }
+                                    Item { Layout.fillWidth: true }
+                                    Text { text: "R$ " + model.valor; color: "#0F9D58"; font.pixelSize: 14; font.bold: true }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    Component {
+        id: pageDashboard
+        Rectangle {
+            color: "transparent"
+            Column {
+                anchors.margins: 12
+                anchors.fill: parent
+                spacing: 10
+                Text { text: "KPIs, grÃ¡ficos e cards aqui"; color: "#6B7280"; font.pixelSize: 16 }
+                Rectangle { width: parent.width; height: 140; radius: 12; color: "#F3F4F6"; border.color: "#E5E7EB" }
+                Rectangle { width: parent.width; height: 220; radius: 12; color: "#F3F4F6"; border.color: "#E5E7EB" }
+            }
+        }
+    }
+
+    Component {
+        id: pageGestao
+        Rectangle {
+            color: "transparent"
+            Column {
+                anchors.margins: 12
+                anchors.fill: parent
+                spacing: 10
+                Text { text: "Filtros, lista de despesas e formulÃ¡rios aqui"; color: "#6B7280"; font.pixelSize: 16 }
+                Rectangle { width: parent.width; height: 80; radius: 12; color: "#F3F4F6"; border.color: "#E5E7EB" }
+                Rectangle { width: parent.width; height: 240; radius: 12; color: "#F3F4F6"; border.color: "#E5E7EB" }
+            }
+        }
+    }
+
+    Component {
+        id: pageRelatorios
+        Rectangle {
+            color: "transparent"
+            Column {
+                anchors.margins: 12
+                anchors.fill: parent
+                spacing: 10
+                Text { text: "RelatÃ³rio completo e exportaÃ§Ãµes aqui"; color: "#6B7280"; font.pixelSize: 16 }
+                Rectangle { width: parent.width; height: 180; radius: 12; color: "#F3F4F6"; border.color: "#E5E7EB" }
+                Rectangle { width: parent.width; height: 120; radius: 12; color: "#F3F4F6"; border.color: "#E5E7EB" }
+            }
+        }
+    }
+}
+
+
+
+
+
+
+

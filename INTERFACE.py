@@ -15,23 +15,8 @@ def _prepare_sys_path() -> None:
 
 _prepare_sys_path()
 
-from app.ui.app import main
-from app.utils.bootstrap import bootstrap_application
-from app.bootstrap.updater import auto_update
+from app.ui.main_qml import main
 
 
 if __name__ == "__main__":
-    # Executa auto-update apenas no binario empacotado
-    #if getattr(sys, "frozen", False):
-        #try:
-            #auto_update()
-        #except Exception:
-            #pass
-
-    # Inicializa bootstrap e lock para evitar multiplas instancias
-    bootstrap_ctx = bootstrap_application()
-    try:
-        main(theme_mode=bootstrap_ctx.config.theme, config_path=str(bootstrap_ctx.config.path))
-    finally:
-        # Libera o lock ao sair
-        bootstrap_ctx.instance_lock.release()
+    main()
