@@ -19,37 +19,76 @@ Item {
             padding: 32
 
             // ───────────────── HERO ─────────────────
-            Column {
-                spacing: 6
+            HeroSection { }
 
-                Text {
-                    text: "Bem-vindo de volta, Davi!"
-                    font.pixelSize: 32
-                    font.bold: true
-                    color: "#0F172A"
-                }
-
-                Text {
-                    text: "Gerencie suas despesas e acompanhe seus resultados de forma intuitiva e inteligente."
-                    font.pixelSize: 16
-                    color: "#4B5563"
-                    width: parent.width * 0.7
-                    wrapMode: Text.WordWrap
-                }
-            }
-
-            // ───────────────── KPIs ─────────────────
-            Row {
+           // ───────────────── KPIs (ANIMADOS E VISÍVEIS) ─────────────────
+            RowLayout {
+                id: kpiRow
                 spacing: 16
+                Layout.fillWidth: true
 
-                SummaryCard { title: "Total do mês"; value: "R$ —" }
-                SummaryCard { title: "Mês anterior"; value: "R$ —" }
-                SummaryCard { title: "Variação"; value: "0.0%"; valueColor: "#16A34A" }
-                SummaryCard { title: "Maior categoria"; value: "—" }
-            }
+                property bool startAnimation: false
+                Component.onCompleted: startAnimation = true
 
-            // ───────────── AÇÕES RÁPIDAS (REFINADO) ─────────────
-            Row {
+                Repeater {
+                    model: [
+                        { title: "Total do mês", value: "R$ —" },
+                        { title: "Mês anterior", value: "R$ —" },
+                        { title: "Variação", value: "0.0%", valueColor: "#16A34A" },
+                        { title: "Maior categoria", value: "—" }
+                    ]
+
+                    Item {
+                        id: kpiItem
+
+                        Layout.preferredWidth: 220
+                        Layout.minimumWidth: 180
+                        Layout.preferredHeight: 120
+                        Layout.fillWidth: true
+
+                        opacity: 0
+                        y: 12
+
+                        SummaryCard {
+                            anchors.fill: parent
+                            title: modelData.title
+                            value: modelData.value
+                            valueColor: modelData.valueColor ?? "#0F172A"
+                        }
+
+                        SequentialAnimation {
+                            running: kpiRow.startAnimation
+
+                            PauseAnimation {
+                                duration: index * 90
+                            }
+
+                            ParallelAnimation {
+                                OpacityAnimator {
+                                    target: kpiItem
+                                    from: 0
+                                    to: 1
+                                    duration: 260
+                                    easing.type: Easing.OutCubic
+                                }
+
+                                YAnimator {
+                                    target: kpiItem
+                                    from: 12
+                                    to: 0
+                                    duration: 260
+                                    easing.type: Easing.OutCubic
+                                }
+                            }
+                        }
+                    }
+                }
+                }
+
+
+
+            // ───────────── AÇÕES RÁPIDAS ─────────────
+            RowLayout {
                 spacing: 16
 
                 Repeater {
@@ -74,7 +113,7 @@ Item {
                             text: parent.text
                             font.pixelSize: 14
                             font.bold: true
-                            color: "#0D6EFD"
+                            color: "#2563EB"
                             horizontalAlignment: Text.AlignHCenter
                             verticalAlignment: Text.AlignVCenter
                         }

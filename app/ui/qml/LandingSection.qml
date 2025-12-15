@@ -18,7 +18,7 @@ Item {
             title: "Bem-vindo à Central de Controle — Grupo 14D"
             subtitle: "Inteligência contábil e financeira aplicada ao dia a dia."
             text: "A Central de Controle foi desenvolvida para simplificar o acompanhamento financeiro das empresas atendidas pelo Grupo 14D. Aqui, informações antes dispersas passam a ser organizadas em um único ambiente, permitindo mais clareza, controle e segurança na gestão das despesas e indicadores."
-            illustrationSource: "file:///D:/TESTE/app/ui/assets/illustrations/teamcollaboration.png"
+            illustrationSource: "../assets/illustrations/teamcollaboration.png"
             imageScale: 1.2
         }
 
@@ -28,7 +28,7 @@ Item {
             subtitle: "Experiência contábil aliada à tecnologia."
             text: "O Grupo 14D atua com foco em contabilidade, gestão e consultoria, apoiando empresas que buscam organização financeira e tomada de decisão baseada em dados. Nosso trabalho une conhecimento técnico, proximidade com o cliente e soluções tecnológicas que facilitam a rotina operacional."
             alignRight: true
-            illustrationSource: "file:///D:/TESTE/app/ui/assets/illustrations/dashboard_stats.png"
+            illustrationSource: "../assets/illustrations/dashboard_stats.png"
             imageScale: 1.2
         }
 
@@ -43,7 +43,7 @@ Item {
                 "Relatórios executivos prontos para auditoria e diretoria.",
                 "Histórico completo de empresas, períodos e fornecedores."
             ]
-            illustrationSource: "file:///D:/TESTE/app/ui/assets/illustrations/desktop.png"
+            illustrationSource: "../assets/illustrations/desktop.png"
             imageScale: 1.2
         }
 
@@ -58,7 +58,7 @@ Item {
                 "Exportações rápidas e padronizadas.",
                 "Menos retrabalho e mais consistência nos dados."
             ]
-            illustrationSource: "file:///D:/TESTE/app/ui/assets/illustrations/win.png"
+            illustrationSource: "../assets/illustrations/win.png"
             imageScale: 1.3
             alignRight: true
         }
@@ -73,9 +73,8 @@ Item {
                 "Contabilidade: lançamentos padronizados e organizados.",
                 "Gestão: indicadores claros para decisões mais rápidas."
             ]
-            illustrationSource: "file:///D:/TESTE/app/ui/assets/illustrations/help.png"
+            illustrationSource: "../assets/illustrations/help.png"
             imageScale: 1.0
-            alignRight: false
         }
 
         // ───────────────── BLOCO 6 ─────────────────
@@ -83,11 +82,12 @@ Item {
             title: "Suporte e acompanhamento"
             subtitle: "Você não utiliza o sistema sozinho."
             text: "Além da ferramenta, o Grupo 14D oferece acompanhamento próximo para garantir que o sistema esteja alinhado às rotinas da sua empresa. Nossa equipe está disponível para orientar ajustes, esclarecer dúvidas e apoiar a evolução do uso da plataforma."
-            illustrationSource: "file:///D:/TESTE/app/ui/assets/illustrations/suporte.png"
+            illustrationSource: "../assets/illustrations/suporte.png"
             imageScale: 1.1
             alignRight: true
         }
 
+        // ───────────── LOGOS ─────────────
         Column {
             width: parent.width
             spacing: 16
@@ -100,8 +100,7 @@ Item {
                 color: "#E5E7EB"
                 anchors.horizontalCenter: parent.horizontalCenter
             }
-            
-            
+
             Text {
                 text: "Empresas que utilizam a Central de Controle 14D"
                 font.pixelSize: 16
@@ -113,17 +112,17 @@ Item {
 
             CompanyLogoCarousel {
                 width: parent.width
+                height: 64
                 logos: [
-                    "file:///D:/TESTE/app/ui/assets/logos/logo1.png",
-                    "file:///D:/TESTE/app/ui/assets/logos/logo2.png",
-                    "file:///D:/TESTE/app/ui/assets/logos/logo3.png",
-                    "file:///D:/TESTE/app/ui/assets/logos/logo4.png",
-                    "file:///D:/TESTE/app/ui/assets/logos/logo5.png",
-                    "file:///D:/TESTE/app/ui/assets/logos/logo6.png"
+                    "../assets/logos/logo1.png",
+                    "../assets/logos/logo2.png",
+                    "../assets/logos/logo3.png",
+                    "../assets/logos/logo4.png",
+                    "../assets/logos/logo5.png",
+                    "../assets/logos/logo6.png"
                 ]
             }
         }
-
 
         // ───────────────── CTA FINAL ─────────────────
         Column {
@@ -140,7 +139,7 @@ Item {
             }
 
             Text {
-                text: "Pronto para registrar uma nova despesa ou analisar seus indicadores?"
+                text: "Pronto para registrar uma nova despesa ou acompanhar seus resultados?"
                 font.pixelSize: 22
                 font.bold: true
                 color: "#0F172A"
