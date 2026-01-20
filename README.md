@@ -137,8 +137,8 @@ relatorios/relatorio_despesas.pdf
 ---
 
 ## 📌 8. Roadmap (Melhorias Futuras)
-- [ ] Exportação para Excel/CSV  
-- [ ] Dashboard com gráficos  
+- [x] Exportação para Excel/CSV  
+- [x] Dashboard com gráficos  
 - [ ] Login e controle de usuários  
 - [ ] Backup automático  
 - [ ] Integração com sistemas contábeis  
